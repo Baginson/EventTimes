@@ -6,19 +6,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-  <!-- Firebase -->
- <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <style>
-    body { margin: 0; font-family: Arial; }
+    body { margin: 0; font-family: Arial, sans-serif; }
     #map { height: 100vh; }
     .popup input, .popup button {
       width: 100%;
-      margin-top: 5px;
+      margin-top: 6px;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    .popup ul {
+      padding-left: 18px;
+      margin: 8px 0;
     }
   </style>
 </head>
@@ -27,81 +31,145 @@
 <div id="map"></div>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyA7ioFOQKTjZt6VGJ9aDCJ6te2SsDERsvo",
-  authDomain: "eventtimes-ed063.firebaseapp.com",
-  projectId: "eventtimes-ed063",
-  storageBucket: "eventtimes-ed063.firebasestorage.app",
-  messagingSenderId: "497749838930",
-  appId: "1:497749838930:web:9bdef298a34e5ccbdb638b"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyA7ioFOQKTjZt6VGJ9aDCJ6te2SsDERsvo",
+    authDomain: "eventtimes-ed063.firebaseapp.com",
+    projectId: "eventtimes-ed063",
+    storageBucket: "eventtimes-ed063.firebasestorage.app",
+    messagingSenderId: "497749838930",
+    appId: "1:497749838930:web:9bdef298a34e5ccbdb638b"
+  };
+
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  var map = L.map('map').setView([52.0, 19.0], 6);
+  const map = L.map('map').setView([52.0, 19.0], 6);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
+
+  const markers = {};
 
   function getKey(latlng) {
     return latlng.lat.toFixed(4) + "," + latlng.lng.toFixed(4);
   }
 
-  async function loadEvents() {
-    const snapshot = await db.collection("events").get();
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const coords = data.coords.split(",");
+  function buildPopupContent(key, list) {
+    let html = `<div class="popup"><b>Eventy:</b>`;
 
-      const marker = L.marker([coords[0], coords[1]]).addTo(map);
-
-      let html = "<b>Eventy:</b><ul>";
-      data.list.forEach(e => {
-        html += "<li>" + e + "</li>";
+    if (list.length > 0) {
+      html += "<ul>";
+      list.forEach(eventName => {
+        html += `<li>${escapeHtml(eventName)}</li>`;
       });
       html += "</ul>";
-
-      marker.bindPopup(html);
-    });
-  }
-
-  async function addEvent(key, latlng) {
-    const input = document.getElementById("eventInput");
-    const value = input.value;
-
-    if (!value) return;
-
-    const ref = db.collection("events").doc(key);
-    const doc = await ref.get();
-
-    if (doc.exists) {
-      let list = doc.data().list;
-      list.push(value);
-      await ref.update({ list: list });
     } else {
-      await ref.set({
-        coords: key,
-        list: [value]
-      });
+      html += "<p>Brak eventów w tym miejscu.</p>";
     }
 
-    alert("Dodano event!");
-    location.reload();
+    html += `
+      <input id="eventInput" placeholder="Dodaj event" />
+      <button onclick="addEvent('${key}')">Dodaj</button>
+    </div>`;
+
+    return html;
   }
+
+  function renderMarker(key, coords, list) {
+    if (markers[key]) {
+      markers[key].setPopupContent(buildPopupContent(key, list));
+      return;
+    }
+
+    const marker = L.marker(coords).addTo(map);
+    marker.bindPopup(buildPopupContent(key, list));
+    markers[key] = marker;
+  }
+
+  async function loadEvents() {
+    try {
+      const snapshot = await db.collection("events").get();
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const coordsArr = data.coords.split(",");
+        const coords = [parseFloat(coordsArr[0]), parseFloat(coordsArr[1])];
+        const list = Array.isArray(data.list) ? data.list : [];
+
+        renderMarker(doc.id, coords, list);
+      });
+    } catch (error) {
+      console.error("Błąd loadEvents:", error);
+      alert("Nie udało się wczytać eventów.");
+    }
+  }
+
+  async function addEvent(key) {
+    try {
+      const input = document.getElementById("eventInput");
+      const value = input.value.trim();
+
+      if (!value) {
+        alert("Wpisz nazwę eventu.");
+        return;
+      }
+
+      const ref = db.collection("events").doc(key);
+      const snap = await ref.get();
+
+      let updatedList = [];
+
+      if (snap.exists) {
+        updatedList = Array.isArray(snap.data().list) ? snap.data().list : [];
+        updatedList.push(value);
+        await ref.update({ list: updatedList });
+      } else {
+        updatedList = [value];
+        await ref.set({
+          coords: key,
+          list: updatedList
+        });
+      }
+
+      const coordsArr = key.split(",");
+      const coords = [parseFloat(coordsArr[0]), parseFloat(coordsArr[1])];
+
+      renderMarker(key, coords, updatedList);
+
+      alert("Dodano event!");
+      map.closePopup();
+
+      if (markers[key]) {
+        markers[key].openPopup();
+      }
+    } catch (error) {
+      console.error("Błąd addEvent:", error);
+      alert("Nie udało się dodać eventu.");
+    }
+  }
+
+  window.addEvent = addEvent;
 
   map.on('click', function(e) {
     const key = getKey(e.latlng);
+    const existingMarker = markers[key];
 
-    const html = `
-      <div class="popup">
-        <input id="eventInput" placeholder="Dodaj event">
-        <button onclick="addEvent('${key}', ${JSON.stringify(e.latlng)})">Dodaj</button>
-      </div>
-    `;
+    if (existingMarker) {
+      existingMarker.openPopup();
+      return;
+    }
 
     L.popup()
       .setLatLng(e.latlng)
-      .setContent(html)
+      .setContent(buildPopupContent(key, []))
       .openOn(map);
   });
 
