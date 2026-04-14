@@ -201,10 +201,6 @@
       margin-bottom: 22px;
     }
 
-    .section:last-child {
-      margin-bottom: 0;
-    }
-
     .section-title {
       font-size: 13px;
       font-weight: 800;
@@ -411,14 +407,6 @@
       font-size: 14px;
       line-height: 1.5;
       background: #fafcff;
-    }
-
-    .danger-zone {
-      margin-top: 8px;
-    }
-
-    .sidebar-footer-gap {
-      height: 20px;
     }
 
     @media (max-width: 980px) {
@@ -764,14 +752,12 @@
           </div>
         </div>
 
-        <div class="section danger-zone">
+        <div class="section">
           <div class="section-title">Usuwanie</div>
           <button class="btn btn-danger" onclick="deleteMarker('${placeId}')">
             Usuń całą pineskę
           </button>
         </div>
-
-        <div class="sidebar-footer-gap"></div>
       `;
     }
 
