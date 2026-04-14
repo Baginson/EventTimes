@@ -3,23 +3,33 @@
 <head>
   <title>Mapa Eventów</title>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; }
-    #map { height: 100vh; }
-    .popup input, .popup button {
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+
+    .popup input,
+    .popup button {
       width: 100%;
       margin-top: 6px;
       padding: 8px;
       box-sizing: border-box;
     }
+
     .popup ul {
       padding-left: 18px;
       margin: 8px 0;
@@ -27,154 +37,152 @@
   </style>
 </head>
 <body>
+  <div id="map"></div>
 
-<div id="map"></div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA7ioFOQKTjZt6VGJ9aDCJ6te2SsDERsvo",
+      authDomain: "eventtimes-ed063.firebaseapp.com",
+      projectId: "eventtimes-ed063",
+      storageBucket: "eventtimes-ed063.firebasestorage.app",
+      messagingSenderId: "497749838930",
+      appId: "1:497749838930:web:9bdef298a34e5ccbdb638b"
+    };
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyA7ioFOQKTjZt6VGJ9aDCJ6te2SsDERsvo",
-    authDomain: "eventtimes-ed063.firebaseapp.com",
-    projectId: "eventtimes-ed063",
-    storageBucket: "eventtimes-ed063.firebasestorage.app",
-    messagingSenderId: "497749838930",
-    appId: "1:497749838930:web:9bdef298a34e5ccbdb638b"
-  };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+    const map = L.map("map").setView([52.0, 19.0], 6);
 
-  const map = L.map('map').setView([52.0, 19.0], 6);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap"
+    }).addTo(map);
 
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap'
-  }).addTo(map);
+    const markers = {};
 
-  const markers = {};
-
-  function getKey(latlng) {
-    return latlng.lat.toFixed(4) + "," + latlng.lng.toFixed(4);
-  }
-
-  function escapeHtml(text) {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  function buildPopupContent(key, list) {
-    let html = `<div class="popup"><b>Eventy:</b>`;
-
-    if (list.length > 0) {
-      html += "<ul>";
-      list.forEach(eventName => {
-        html += `<li>${escapeHtml(eventName)}</li>`;
-      });
-      html += "</ul>";
-    } else {
-      html += "<p>Brak eventów w tym miejscu.</p>";
+    function getKey(latlng) {
+      return latlng.lat.toFixed(4) + "," + latlng.lng.toFixed(4);
     }
 
-    html += `
-      <input id="eventInput" placeholder="Dodaj event" />
-      <button onclick="addEvent('${key}')">Dodaj</button>
-    </div>`;
-
-    return html;
-  }
-
-  function renderMarker(key, coords, list) {
-    if (markers[key]) {
-      markers[key].setPopupContent(buildPopupContent(key, list));
-      return;
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
     }
 
-    const marker = L.marker(coords).addTo(map);
-    marker.bindPopup(buildPopupContent(key, list));
-    markers[key] = marker;
-  }
+    function buildPopupContent(key, list) {
+      let html = '<div class="popup"><b>Eventy:</b>';
 
-  async function loadEvents() {
-    try {
-      const snapshot = await db.collection("events").get();
+      if (list.length > 0) {
+        html += "<ul>";
+        list.forEach(function(eventName) {
+          html += "<li>" + escapeHtml(eventName) + "</li>";
+        });
+        html += "</ul>";
+      } else {
+        html += "<p>Brak eventów w tym miejscu.</p>";
+      }
 
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const coordsArr = data.coords.split(",");
-        const coords = [parseFloat(coordsArr[0]), parseFloat(coordsArr[1])];
-        const list = Array.isArray(data.list) ? data.list : [];
+      html +=
+        '<input id="eventInput" placeholder="Dodaj event" />' +
+        '<button onclick="addEvent(\'' + key + '\')">Dodaj</button>' +
+        "</div>";
 
-        renderMarker(doc.id, coords, list);
-      });
-    } catch (error) {
-      console.error("Błąd loadEvents:", error);
-      alert("Nie udało się wczytać eventów.");
+      return html;
     }
-  }
 
-  async function addEvent(key) {
-    try {
-      const input = document.getElementById("eventInput");
-      const value = input.value.trim();
-
-      if (!value) {
-        alert("Wpisz nazwę eventu.");
+    function renderMarker(key, coords, list) {
+      if (markers[key]) {
+        markers[key].setPopupContent(buildPopupContent(key, list));
         return;
       }
 
-      const ref = db.collection("events").doc(key);
-      const snap = await ref.get();
+      const marker = L.marker(coords).addTo(map);
+      marker.bindPopup(buildPopupContent(key, list));
+      markers[key] = marker;
+    }
 
-      let updatedList = [];
+    async function loadEvents() {
+      try {
+        const snapshot = await db.collection("events").get();
 
-      if (snap.exists) {
-        updatedList = Array.isArray(snap.data().list) ? snap.data().list : [];
-        updatedList.push(value);
-        await ref.update({ list: updatedList });
-      } else {
-        updatedList = [value];
-        await ref.set({
-          coords: key,
-          list: updatedList
+        snapshot.forEach(function(doc) {
+          const data = doc.data();
+          const coordsArr = data.coords.split(",");
+          const coords = [parseFloat(coordsArr[0]), parseFloat(coordsArr[1])];
+          const list = Array.isArray(data.list) ? data.list : [];
+
+          renderMarker(doc.id, coords, list);
         });
+      } catch (error) {
+        console.error("Błąd loadEvents:", error);
+        alert("Nie udało się wczytać eventów.");
       }
-
-      const coordsArr = key.split(",");
-      const coords = [parseFloat(coordsArr[0]), parseFloat(coordsArr[1])];
-
-      renderMarker(key, coords, updatedList);
-
-      alert("Dodano event!");
-      map.closePopup();
-
-      if (markers[key]) {
-        markers[key].openPopup();
-      }
-    } catch (error) {
-      console.error("Błąd addEvent:", error);
-      alert("Nie udało się dodać eventu.");
-    }
-  }
-
-  window.addEvent = addEvent;
-
-  map.on('click', function(e) {
-    const key = getKey(e.latlng);
-    const existingMarker = markers[key];
-
-    if (existingMarker) {
-      existingMarker.openPopup();
-      return;
     }
 
-    L.popup()
-      .setLatLng(e.latlng)
-      .setContent(buildPopupContent(key, []))
-      .openOn(map);
-  });
+    async function addEvent(key) {
+      try {
+        const input = document.getElementById("eventInput");
+        const value = input.value.trim();
 
-  loadEvents();
-</script>
+        if (!value) {
+          alert("Wpisz nazwę eventu.");
+          return;
+        }
 
+        const ref = db.collection("events").doc(key);
+        const snap = await ref.get();
+
+        let updatedList = [];
+
+        if (snap.exists) {
+          updatedList = Array.isArray(snap.data().list) ? snap.data().list : [];
+          updatedList.push(value);
+          await ref.update({ list: updatedList });
+        } else {
+          updatedList = [value];
+          await ref.set({
+            coords: key,
+            list: updatedList
+          });
+        }
+
+        const coordsArr = key.split(",");
+        const coords = [parseFloat(coordsArr[0]), parseFloat(coordsArr[1])];
+
+        renderMarker(key, coords, updatedList);
+
+        alert("Dodano event!");
+        map.closePopup();
+
+        if (markers[key]) {
+          markers[key].openPopup();
+        }
+      } catch (error) {
+        console.error("Błąd addEvent:", error);
+        alert("Nie udało się dodać eventu.");
+      }
+    }
+
+    window.addEvent = addEvent;
+
+    map.on("click", function(e) {
+      const key = getKey(e.latlng);
+      const existingMarker = markers[key];
+
+      if (existingMarker) {
+        existingMarker.openPopup();
+        return;
+      }
+
+      L.popup()
+        .setLatLng(e.latlng)
+        .setContent(buildPopupContent(key, []))
+        .openOn(map);
+    });
+
+    loadEvents();
+  </script>
 </body>
 </html>
