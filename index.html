@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mapa Eventów</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Firebase -->
+ <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <style>
+    body { margin: 0; font-family: Arial; }
+    #map { height: 100vh; }
+    .popup input, .popup button {
+      width: 100%;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA7ioFOQKTjZt6VGJ9aDCJ6te2SsDERsvo",
+  authDomain: "eventtimes-ed063.firebaseapp.com",
+  projectId: "eventtimes-ed063",
+  storageBucket: "eventtimes-ed063.firebasestorage.app",
+  messagingSenderId: "497749838930",
+  appId: "1:497749838930:web:9bdef298a34e5ccbdb638b"
+};
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  var map = L.map('map').setView([52.0, 19.0], 6);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+  function getKey(latlng) {
+    return latlng.lat.toFixed(4) + "," + latlng.lng.toFixed(4);
+  }
+
+  async function loadEvents() {
+    const snapshot = await db.collection("events").get();
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const coords = data.coords.split(",");
+
+      const marker = L.marker([coords[0], coords[1]]).addTo(map);
+
+      let html = "<b>Eventy:</b><ul>";
+      data.list.forEach(e => {
+        html += "<li>" + e + "</li>";
+      });
+      html += "</ul>";
+
+      marker.bindPopup(html);
+    });
+  }
+
+  async function addEvent(key, latlng) {
+    const input = document.getElementById("eventInput");
+    const value = input.value;
+
+    if (!value) return;
+
+    const ref = db.collection("events").doc(key);
+    const doc = await ref.get();
+
+    if (doc.exists) {
+      let list = doc.data().list;
+      list.push(value);
+      await ref.update({ list: list });
+    } else {
+      await ref.set({
+        coords: key,
+        list: [value]
+      });
+    }
+
+    alert("Dodano event!");
+    location.reload();
+  }
+
+  map.on('click', function(e) {
+    const key = getKey(e.latlng);
+
+    const html = `
+      <div class="popup">
+        <input id="eventInput" placeholder="Dodaj event">
+        <button onclick="addEvent('${key}', ${JSON.stringify(e.latlng)})">Dodaj</button>
+      </div>
+    `;
+
+    L.popup()
+      .setLatLng(e.latlng)
+      .setContent(html)
+      .openOn(map);
+  });
+
+  loadEvents();
+</script>
+
+</body>
+</html>
