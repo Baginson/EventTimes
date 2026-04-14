@@ -28,14 +28,15 @@
       --danger-hover: #b42318;
       --success: #15803d;
       --success-hover: #11662f;
+      --warning: #f59e0b;
       --soft: #eef2f7;
       --soft-hover: #e4e9f1;
-      --warning: #f59e0b;
       --shadow: 0 12px 32px rgba(18, 25, 38, 0.12);
       --radius: 18px;
     }
 
-    html, body {
+    html,
+    body {
       margin: 0;
       padding: 0;
       height: 100%;
@@ -50,128 +51,127 @@
       width: 100%;
     }
 
-    #topbar {
+    /* SEARCH BAR LIKE GOOGLE MAPS */
+    #search-shell {
       position: absolute;
       top: 14px;
       left: 14px;
       z-index: 1200;
-      width: min(500px, calc(100vw - 28px));
-      background: rgba(255, 255, 255, 0.97);
-      backdrop-filter: blur(10px);
+      width: min(430px, calc(100vw - 28px));
+    }
+
+    #search-bar {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(230, 233, 239, 0.9);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+    }
+
+    #search-bar-icon {
+      font-size: 18px;
+      line-height: 1;
+      color: var(--muted);
+    }
+
+    #search-bar-text {
+      font-size: 15px;
+      color: #3a4658;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    #search-bar-caret {
+      font-size: 14px;
+      color: var(--muted);
+      transition: transform 0.2s ease;
+    }
+
+    #search-shell.open #search-bar-caret {
+      transform: rotate(180deg);
+    }
+
+    #search-panel {
+      margin-top: 10px;
+      background: rgba(255, 255, 255, 0.98);
       border: 1px solid rgba(230, 233, 239, 0.9);
       border-radius: 20px;
       box-shadow: var(--shadow);
-      padding: 16px;
-      max-height: calc(100vh - 28px);
-      overflow-y: auto;
+      overflow: hidden;
+      display: none;
+      max-height: calc(100vh - 110px);
     }
 
-    #topbar h1 {
-      margin: 0 0 6px 0;
-      font-size: 24px;
-      line-height: 1.1;
+    #search-shell.open #search-panel {
+      display: block;
     }
 
-    #topbar p {
-      margin: 0;
+    .search-panel-head {
+      padding: 14px 14px 0 14px;
+    }
+
+    .brand-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin: 0 0 4px 0;
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
       color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
+      line-height: 1.45;
+      margin-bottom: 12px;
     }
 
-    #topbar-buttons {
+    .search-tabs {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 14px;
+      gap: 8px;
+      margin-bottom: 14px;
     }
 
-    .topbar-btn,
-    .btn {
+    .search-tab {
       border: none;
+      background: var(--soft);
+      color: #223047;
+      padding: 10px 12px;
       border-radius: 12px;
-      padding: 11px 14px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
       transition: 0.2s ease;
     }
 
-    .btn {
-      width: 100%;
+    .search-tab:hover {
+      background: var(--soft-hover);
     }
 
-    .primary-btn,
-    .btn-primary {
+    .search-tab.active {
       background: var(--primary);
       color: white;
     }
 
-    .primary-btn:hover,
-    .btn-primary:hover {
-      background: var(--primary-hover);
+    .search-panel-body {
+      padding: 0 14px 14px 14px;
+      overflow-y: auto;
+      max-height: calc(100vh - 220px);
     }
 
-    .secondary-btn,
-    .btn-soft {
-      background: var(--soft);
-      color: #1d2939;
-    }
-
-    .secondary-btn:hover,
-    .btn-soft:hover {
-      background: var(--soft-hover);
-    }
-
-    .btn-success {
-      background: var(--success);
-      color: white;
-    }
-
-    .btn-success:hover {
-      background: var(--success-hover);
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: white;
-    }
-
-    .btn-danger:hover {
-      background: var(--danger-hover);
-    }
-
-    .btn-warning {
-      background: var(--warning);
-      color: white;
-    }
-
-    .active-mode {
-      background: var(--success) !important;
-      color: white !important;
-    }
-
-    #status-badge {
-      margin-top: 12px;
+    .search-section {
       display: none;
-      font-size: 13px;
-      font-weight: 700;
-      color: white;
-      background: var(--success);
-      border-radius: 999px;
-      padding: 8px 12px;
-      width: fit-content;
     }
 
-    .search-box {
-      margin-top: 16px;
-      border-top: 1px solid var(--border);
-      padding-top: 16px;
+    .search-section.active {
+      display: block;
     }
 
     .search-title {
       margin: 0 0 10px 0;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -212,7 +212,58 @@
       font-size: 12px;
       line-height: 1.45;
       color: var(--muted);
-      margin-top: -2px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-soft {
+      background: var(--soft);
+      color: #1d2939;
+    }
+
+    .btn-soft:hover {
+      background: var(--soft-hover);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: var(--success-hover);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger-hover);
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: white;
     }
 
     .search-results {
@@ -292,6 +343,36 @@
       background: #f4f8ff;
     }
 
+    /* ADD PIN BUTTON */
+    #add-pin-floating-btn {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index: 1250;
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      border: none;
+      box-shadow: var(--shadow);
+      color: white;
+      font-size: 26px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.18s ease, background 0.18s ease;
+      background: var(--danger);
+    }
+
+    #add-pin-floating-btn:hover {
+      transform: scale(1.06);
+    }
+
+    #add-pin-floating-btn.active {
+      background: var(--success);
+    }
+
+    /* SIDEBAR */
     #sidebar {
       position: absolute;
       top: 0;
@@ -530,73 +611,107 @@
         max-width: none;
       }
 
-      #topbar {
+      #search-shell {
         width: calc(100vw - 28px);
-        max-width: none;
       }
 
       .two-col,
       .button-row {
         grid-template-columns: 1fr;
       }
+
+      #add-pin-floating-btn {
+        width: 56px;
+        height: 56px;
+        font-size: 24px;
+      }
     }
   </style>
 </head>
 <body>
-  <div id="topbar">
-    <h1>EventTimes</h1>
-    <p>
-      Panel admina. Dodawaj miejsca, edytuj eventy i wyszukuj po miejscu, mieście, rodzaju oraz dacie.
-    </p>
-
-    <div id="topbar-buttons">
-      <button id="toggle-add-pin-btn" class="topbar-btn primary-btn">Dodaj pinezkę</button>
-      <button id="close-sidebar-btn" class="topbar-btn secondary-btn">Zamknij panel</button>
+  <div id="search-shell">
+    <div id="search-bar" onclick="toggleSearchPanel()">
+      <div id="search-bar-icon">🔎</div>
+      <div id="search-bar-text">Wyszukaj eventy lub miejsca</div>
+      <div id="search-bar-caret">▼</div>
     </div>
 
-    <div id="status-badge">Tryb dodawania pinezki jest aktywny</div>
-
-    <div class="search-box">
-      <div class="search-title">Wyszukiwarka eventów</div>
-
-      <div class="form-grid">
-        <div class="autocomplete-wrap">
-          <input id="searchEventName" class="input" placeholder="Nazwa eventu" autocomplete="off" />
-          <div id="searchEventSuggestions" class="autocomplete-list"></div>
+    <div id="search-panel">
+      <div class="search-panel-head">
+        <div class="brand-title">EventTimes</div>
+        <div class="brand-subtitle">
+          Wyszukuj historię eventów oraz miejsca. Kliknij wynik, aby przejść do pineski.
         </div>
 
-        <input id="searchPlaceName" class="input" placeholder="Nazwa miejsca / pineski" />
-        <input id="searchCity" class="input" placeholder="Miasto" />
-
-        <select id="searchEventType" class="select">
-          <option value="">Wszystkie rodzaje eventów</option>
-          <option value="Gala MMA">Gala MMA</option>
-          <option value="Koncert">Koncert</option>
-          <option value="Stand-up">Stand-up</option>
-        </select>
-
-        <input id="searchExactDate" class="input" type="date" />
-
-        <div class="two-col">
-          <input id="searchDateFrom" class="input" type="date" />
-          <input id="searchDateTo" class="input" type="date" />
-        </div>
-
-        <select id="searchSort" class="select">
-          <option value="date_asc">Sortuj: data rosnąco</option>
-          <option value="date_desc">Sortuj: data malejąco</option>
-          <option value="name_asc">Sortuj: nazwa A-Z</option>
-        </select>
-
-        <div class="button-row">
-          <button id="run-search-btn" class="btn btn-primary">Szukaj</button>
-          <button id="clear-search-btn" class="btn btn-soft">Wyczyść</button>
+        <div class="search-tabs">
+          <button id="tab-events" class="search-tab active" onclick="setSearchMode('events')">Wyszukiwarka eventów</button>
+          <button id="tab-places" class="search-tab" onclick="setSearchMode('places')">Wyszukiwarka miejsc</button>
         </div>
       </div>
 
-      <div id="searchResults" class="search-results"></div>
+      <div class="search-panel-body">
+        <div id="search-events-section" class="search-section active">
+          <div class="search-title">Szukaj eventów</div>
+
+          <div class="form-grid">
+            <div class="autocomplete-wrap">
+              <input id="searchEventName" class="input" placeholder="Nazwa eventu" autocomplete="off" />
+              <div id="searchEventSuggestions" class="autocomplete-list"></div>
+            </div>
+
+            <input id="searchEventPlaceName" class="input" placeholder="Nazwa miejsca / pineski" />
+            <input id="searchEventCity" class="input" placeholder="Miasto" />
+
+            <select id="searchEventType" class="select">
+              <option value="">Wszystkie rodzaje eventów</option>
+              <option value="Gala MMA">Gala MMA</option>
+              <option value="Koncert">Koncert</option>
+              <option value="Stand-up">Stand-up</option>
+            </select>
+
+            <input id="searchExactDate" class="input" type="date" />
+
+            <div class="two-col">
+              <input id="searchDateFrom" class="input" type="date" />
+              <input id="searchDateTo" class="input" type="date" />
+            </div>
+
+            <select id="searchSort" class="select">
+              <option value="date_asc">Sortuj: data rosnąco</option>
+              <option value="date_desc">Sortuj: data malejąco</option>
+              <option value="name_asc">Sortuj: nazwa A-Z</option>
+            </select>
+
+            <div class="button-row">
+              <button id="run-event-search-btn" class="btn btn-primary">Szukaj eventów</button>
+              <button id="clear-event-search-btn" class="btn btn-soft">Wyczyść</button>
+            </div>
+          </div>
+
+          <div id="eventSearchResults" class="search-results"></div>
+        </div>
+
+        <div id="search-places-section" class="search-section">
+          <div class="search-title">Szukaj miejsc</div>
+
+          <div class="form-grid">
+            <input id="searchPlaceNameOnly" class="input" placeholder="Nazwa miejsca / pineski" />
+            <input id="searchPlaceCityOnly" class="input" placeholder="Miasto" />
+            <input id="searchPlaceStreetOnly" class="input" placeholder="Ulica" />
+
+            <div class="button-row">
+              <button id="run-place-search-btn" class="btn btn-primary">Szukaj miejsc</button>
+              <button id="clear-place-search-btn" class="btn btn-soft">Wyczyść</button>
+            </div>
+          </div>
+
+          <div id="placeSearchResults" class="search-results"></div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <button id="add-pin-floating-btn" title="Dodaj pinezkę" onclick="toggleAddPinModeFromButton()">📍</button>
 
   <div id="map"></div>
 
@@ -639,25 +754,37 @@
     let addPinMode = false;
     let selectedPlaceId = null;
     let allPlacesCache = [];
+    let currentSearchMode = "events";
 
+    const searchShell = document.getElementById("search-shell");
     const sidebar = document.getElementById("sidebar");
     const sidebarTitle = document.getElementById("sidebar-title");
     const sidebarSubtitle = document.getElementById("sidebar-subtitle");
     const sidebarContent = document.getElementById("sidebar-content");
-    const toggleAddPinBtn = document.getElementById("toggle-add-pin-btn");
-    const closeSidebarBtn = document.getElementById("close-sidebar-btn");
     const closeSidebarX = document.getElementById("close-sidebar");
-    const statusBadge = document.getElementById("status-badge");
-    const searchResults = document.getElementById("searchResults");
+    const addPinFloatingBtn = document.getElementById("add-pin-floating-btn");
+
+    const tabEvents = document.getElementById("tab-events");
+    const tabPlaces = document.getElementById("tab-places");
+    const searchEventsSection = document.getElementById("search-events-section");
+    const searchPlacesSection = document.getElementById("search-places-section");
+
+    const eventSearchResults = document.getElementById("eventSearchResults");
+    const placeSearchResults = document.getElementById("placeSearchResults");
+
     const searchEventNameInput = document.getElementById("searchEventName");
-    const searchPlaceNameInput = document.getElementById("searchPlaceName");
-    const searchCityInput = document.getElementById("searchCity");
+    const searchEventPlaceNameInput = document.getElementById("searchEventPlaceName");
+    const searchEventCityInput = document.getElementById("searchEventCity");
     const searchEventTypeInput = document.getElementById("searchEventType");
     const searchExactDateInput = document.getElementById("searchExactDate");
     const searchDateFromInput = document.getElementById("searchDateFrom");
     const searchDateToInput = document.getElementById("searchDateTo");
     const searchSortInput = document.getElementById("searchSort");
     const searchSuggestionsBox = document.getElementById("searchEventSuggestions");
+
+    const searchPlaceNameOnlyInput = document.getElementById("searchPlaceNameOnly");
+    const searchPlaceCityOnlyInput = document.getElementById("searchPlaceCityOnly");
+    const searchPlaceStreetOnlyInput = document.getElementById("searchPlaceStreetOnly");
 
     function escapeHtml(text) {
       const div = document.createElement("div");
@@ -684,19 +811,36 @@
       return `${day}.${month}.${year}`;
     }
 
+    function toggleSearchPanel(forceOpen = null) {
+      const shouldOpen = forceOpen === null ? !searchShell.classList.contains("open") : forceOpen;
+      searchShell.classList.toggle("open", shouldOpen);
+    }
+
+    function setSearchMode(mode) {
+      currentSearchMode = mode;
+
+      tabEvents.classList.toggle("active", mode === "events");
+      tabPlaces.classList.toggle("active", mode === "places");
+      searchEventsSection.classList.toggle("active", mode === "events");
+      searchPlacesSection.classList.toggle("active", mode === "places");
+    }
+
     function setAddPinMode(isActive) {
       addPinMode = isActive;
 
+      addPinFloatingBtn.classList.toggle("active", addPinMode);
+
       if (addPinMode) {
-        toggleAddPinBtn.classList.add("active-mode");
-        toggleAddPinBtn.textContent = "Anuluj dodawanie";
-        statusBadge.style.display = "inline-block";
         map.getContainer().style.cursor = "crosshair";
       } else {
-        toggleAddPinBtn.classList.remove("active-mode");
-        toggleAddPinBtn.textContent = "Dodaj pinezkę";
-        statusBadge.style.display = "none";
         map.getContainer().style.cursor = "";
+      }
+    }
+
+    function toggleAddPinModeFromButton() {
+      setAddPinMode(!addPinMode);
+      if (addPinMode) {
+        closeSidebar();
       }
     }
 
@@ -814,7 +958,7 @@
               <input id="cityInput" class="input" placeholder="Miasto" />
               <input id="streetInput" class="input" placeholder="Ulica" />
               <div class="helper">
-                Pineska zapisze się jako osobne miejsce z własnym ID. Eventy dodasz później z poziomu tego miejsca.
+                Kliknąłeś mapę w trybie dodawania. Uzupełnij miejsce i zapisz pineskę.
               </div>
               <button class="btn btn-primary" onclick="addPlace(${lat}, ${lng})">Zapisz pineszkę</button>
               <button class="btn btn-soft" onclick="cancelAddPlace()">Anuluj</button>
@@ -846,19 +990,11 @@
         <div class="editing-box">
           <div class="form-grid">
             <input id="editEventName-${eventIndex}" class="input" value="${escapeHtml(eventItem.name)}" placeholder="Nazwa eventu" />
-
             <select id="editEventType-${eventIndex}" class="select">
               ${buildEventTypeOptions(eventItem.type || "")}
             </select>
-
             <input id="editEventDate-${eventIndex}" class="input" type="date" value="${escapeHtml(eventItem.date || "")}" />
-
-            <input
-              id="editEventImage-${eventIndex}"
-              class="input"
-              value="${escapeHtml(eventItem.imageUrl || "")}"
-              placeholder="Link do grafiki eventu (URL)"
-            />
+            <input id="editEventImage-${eventIndex}" class="input" value="${escapeHtml(eventItem.imageUrl || "")}" placeholder="Link do grafiki eventu (URL)" />
 
             <div class="button-row">
               <button class="btn btn-success" onclick="saveEventEdit('${placeId}', ${eventIndex})">Zapisz event</button>
@@ -967,13 +1103,10 @@
           <div class="card">
             <div class="form-grid">
               <input id="eventNameInput" class="input" placeholder="Nazwa eventu" />
-
               <select id="eventTypeInput" class="select">
                 ${buildEventTypeOptions()}
               </select>
-
               <input id="eventDateInput" class="input" type="date" />
-
               <input
                 id="eventImageInput"
                 class="input"
@@ -1228,6 +1361,7 @@
         rebuildPlacesCache();
         refreshEventNameSuggestions();
         renderPlaceSidebar(placeData);
+        runEventSearch();
       } catch (error) {
         console.error("Błąd addEvent:", error);
         alert("Nie udało się dodać eventu.");
@@ -1272,7 +1406,8 @@
         markers[placeId].placeData = placeData;
         rebuildPlacesCache();
         renderPlaceSidebar(placeData);
-        runSearch();
+        runEventSearch();
+        runPlaceSearch();
       } catch (error) {
         console.error("Błąd savePlaceEdit:", error);
         alert("Nie udało się zapisać miejsca.");
@@ -1335,7 +1470,7 @@
         rebuildPlacesCache();
         refreshEventNameSuggestions();
         renderPlaceSidebar(placeData);
-        runSearch();
+        runEventSearch();
       } catch (error) {
         console.error("Błąd saveEventEdit:", error);
         alert("Nie udało się zapisać eventu.");
@@ -1376,7 +1511,7 @@
         rebuildPlacesCache();
         refreshEventNameSuggestions();
         renderPlaceSidebar(placeData);
-        runSearch();
+        runEventSearch();
       } catch (error) {
         console.error("Błąd deleteEvent:", error);
         alert("Nie udało się usunąć eventu.");
@@ -1398,7 +1533,8 @@
         rebuildPlacesCache();
         refreshEventNameSuggestions();
         closeSidebar();
-        runSearch();
+        runEventSearch();
+        runPlaceSearch();
       } catch (error) {
         console.error("Błąd deleteMarker:", error);
         alert("Nie udało się usunąć pineski.");
@@ -1459,7 +1595,7 @@
     function applyEventSuggestion(value) {
       searchEventNameInput.value = value;
       searchSuggestionsBox.style.display = "none";
-      runSearch();
+      runEventSearch();
     }
 
     function isDateInRange(eventDate, exactDate, dateFrom, dateTo) {
@@ -1475,10 +1611,10 @@
       return true;
     }
 
-    function runSearch() {
+    function runEventSearch() {
       const eventNameQuery = normalizeString(searchEventNameInput.value);
-      const placeNameQuery = normalizeString(searchPlaceNameInput.value);
-      const cityQuery = normalizeString(searchCityInput.value);
+      const placeNameQuery = normalizeString(searchEventPlaceNameInput.value);
+      const cityQuery = normalizeString(searchEventCityInput.value);
       const eventTypeQuery = normalizeString(searchEventTypeInput.value);
       const exactDate = searchExactDateInput.value;
       const dateFrom = searchDateFromInput.value;
@@ -1514,8 +1650,7 @@
             lng: place.lng,
             eventName: eventItem.name || "Bez nazwy eventu",
             eventType: eventItem.type || "Brak rodzaju",
-            eventDate: eventItem.date || "",
-            eventImageUrl: eventItem.imageUrl || ""
+            eventDate: eventItem.date || ""
           });
         });
       });
@@ -1532,35 +1667,31 @@
         return (a.eventDate || "").localeCompare(b.eventDate || "");
       });
 
-      renderSearchResults(results);
+      renderEventSearchResults(results);
     }
 
-    function renderSearchResults(results) {
+    function renderEventSearchResults(results) {
       if (
         !searchEventNameInput.value.trim() &&
-        !searchPlaceNameInput.value.trim() &&
-        !searchCityInput.value.trim() &&
+        !searchEventPlaceNameInput.value.trim() &&
+        !searchEventCityInput.value.trim() &&
         !searchEventTypeInput.value.trim() &&
         !searchExactDateInput.value &&
         !searchDateFromInput.value &&
         !searchDateToInput.value
       ) {
-        searchResults.innerHTML = "";
+        eventSearchResults.innerHTML = "";
         return;
       }
 
       if (results.length === 0) {
-        searchResults.innerHTML = `
-          <div class="search-empty">
-            Brak wyników dla podanych filtrów.
-          </div>
-        `;
+        eventSearchResults.innerHTML = `<div class="search-empty">Brak wyników dla podanych filtrów.</div>`;
         return;
       }
 
-      searchResults.innerHTML = results.map(function(item) {
+      eventSearchResults.innerHTML = results.map(function(item) {
         return `
-          <div class="search-result" onclick="openSearchResult('${item.placeId}', ${item.eventIndex})">
+          <div class="search-result" onclick="openEventSearchResult('${item.placeId}', ${item.eventIndex})">
             <div class="search-result-title">${escapeHtml(item.eventName)}</div>
             <div class="search-result-meta">
               <strong>Miejsce:</strong> ${escapeHtml(item.placeName)}<br>
@@ -1573,7 +1704,60 @@
       }).join("");
     }
 
-    function openSearchResult(placeId, eventIndex) {
+    function runPlaceSearch() {
+      const placeNameQuery = normalizeString(searchPlaceNameOnlyInput.value);
+      const cityQuery = normalizeString(searchPlaceCityOnlyInput.value);
+      const streetQuery = normalizeString(searchPlaceStreetOnlyInput.value);
+
+      let results = allPlacesCache.filter(function(place) {
+        const placeNameNorm = normalizeString(place.placeName);
+        const cityNorm = normalizeString(place.city);
+        const streetNorm = normalizeString(place.street);
+
+        if (placeNameQuery && !placeNameNorm.includes(placeNameQuery)) return false;
+        if (cityQuery && !cityNorm.includes(cityQuery)) return false;
+        if (streetQuery && !streetNorm.includes(streetQuery)) return false;
+
+        return true;
+      });
+
+      results.sort(function(a, b) {
+        return (a.placeName || "").localeCompare(b.placeName || "", "pl");
+      });
+
+      renderPlaceSearchResults(results);
+    }
+
+    function renderPlaceSearchResults(results) {
+      if (
+        !searchPlaceNameOnlyInput.value.trim() &&
+        !searchPlaceCityOnlyInput.value.trim() &&
+        !searchPlaceStreetOnlyInput.value.trim()
+      ) {
+        placeSearchResults.innerHTML = "";
+        return;
+      }
+
+      if (results.length === 0) {
+        placeSearchResults.innerHTML = `<div class="search-empty">Brak miejsc dla podanych filtrów.</div>`;
+        return;
+      }
+
+      placeSearchResults.innerHTML = results.map(function(place) {
+        return `
+          <div class="search-result" onclick="openPlaceSearchResult('${place.id}')">
+            <div class="search-result-title">${escapeHtml(place.placeName || "Bez nazwy miejsca")}</div>
+            <div class="search-result-meta">
+              <strong>Miasto:</strong> ${escapeHtml(place.city || "Brak")}<br>
+              <strong>Ulica:</strong> ${escapeHtml(place.street || "Brak")}<br>
+              <strong>Liczba eventów:</strong> ${(place.events || []).length}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function openEventSearchResult(placeId, eventIndex) {
       const marker = markers[placeId];
       if (!marker) return;
 
@@ -1597,31 +1781,38 @@
       }, 250);
     }
 
-    function clearSearch() {
+    function openPlaceSearchResult(placeId) {
+      const marker = markers[placeId];
+      if (!marker) return;
+
+      map.flyTo([marker.placeData.lat, marker.placeData.lng], 14, {
+        animate: true,
+        duration: 0.8
+      });
+
+      renderPlaceSidebar(marker.placeData);
+    }
+
+    function clearEventSearch() {
       searchEventNameInput.value = "";
-      searchPlaceNameInput.value = "";
-      searchCityInput.value = "";
+      searchEventPlaceNameInput.value = "";
+      searchEventCityInput.value = "";
       searchEventTypeInput.value = "";
       searchExactDateInput.value = "";
       searchDateFromInput.value = "";
       searchDateToInput.value = "";
       searchSortInput.value = "date_asc";
-      searchResults.innerHTML = "";
+      eventSearchResults.innerHTML = "";
       searchSuggestionsBox.style.display = "none";
       searchSuggestionsBox.innerHTML = "";
     }
 
-    toggleAddPinBtn.addEventListener("click", function() {
-      setAddPinMode(!addPinMode);
-
-      if (!addPinMode) {
-        closeSidebar();
-      }
-    });
-
-    closeSidebarBtn.addEventListener("click", function() {
-      closeSidebar();
-    });
+    function clearPlaceSearch() {
+      searchPlaceNameOnlyInput.value = "";
+      searchPlaceCityOnlyInput.value = "";
+      searchPlaceStreetOnlyInput.value = "";
+      placeSearchResults.innerHTML = "";
+    }
 
     closeSidebarX.addEventListener("click", function() {
       closeSidebar();
@@ -1643,25 +1834,36 @@
       );
     });
 
-    document.getElementById("run-search-btn").addEventListener("click", runSearch);
-    document.getElementById("clear-search-btn").addEventListener("click", clearSearch);
+    document.getElementById("run-event-search-btn").addEventListener("click", runEventSearch);
+    document.getElementById("clear-event-search-btn").addEventListener("click", clearEventSearch);
+    document.getElementById("run-place-search-btn").addEventListener("click", runPlaceSearch);
+    document.getElementById("clear-place-search-btn").addEventListener("click", clearPlaceSearch);
 
     [
-      searchPlaceNameInput,
-      searchCityInput,
+      searchEventPlaceNameInput,
+      searchEventCityInput,
       searchEventTypeInput,
       searchExactDateInput,
       searchDateFromInput,
       searchDateToInput,
       searchSortInput
     ].forEach(function(el) {
-      el.addEventListener("input", runSearch);
-      el.addEventListener("change", runSearch);
+      el.addEventListener("input", runEventSearch);
+      el.addEventListener("change", runEventSearch);
+    });
+
+    [
+      searchPlaceNameOnlyInput,
+      searchPlaceCityOnlyInput,
+      searchPlaceStreetOnlyInput
+    ].forEach(function(el) {
+      el.addEventListener("input", runPlaceSearch);
+      el.addEventListener("change", runPlaceSearch);
     });
 
     searchEventNameInput.addEventListener("input", function() {
       refreshEventNameSuggestions();
-      runSearch();
+      runEventSearch();
     });
 
     document.addEventListener("click", function(e) {
@@ -1670,6 +1872,9 @@
       }
     });
 
+    window.toggleSearchPanel = toggleSearchPanel;
+    window.setSearchMode = setSearchMode;
+    window.toggleAddPinModeFromButton = toggleAddPinModeFromButton;
     window.addPlace = addPlace;
     window.addEvent = addEvent;
     window.deleteEvent = deleteEvent;
@@ -1681,9 +1886,9 @@
     window.startEditEvent = startEditEvent;
     window.saveEventEdit = saveEventEdit;
     window.renderPlaceSidebarById = renderPlaceSidebarById;
-    window.runSearch = runSearch;
     window.applyEventSuggestion = applyEventSuggestion;
-    window.openSearchResult = openSearchResult;
+    window.openEventSearchResult = openEventSearchResult;
+    window.openPlaceSearchResult = openPlaceSearchResult;
 
     loadPlaces();
   </script>
