@@ -12,33 +12,34 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --border: #e6e9ef;
+      --text: #151a23;
+      --muted: #687386;
+      --primary: #1f6feb;
+      --primary-hover: #1558be;
+      --danger: #d92d20;
+      --danger-hover: #b42318;
+      --success: #15803d;
+      --shadow: 0 12px 32px rgba(18, 25, 38, 0.12);
+      --radius: 18px;
+    }
+
+    html,
     body {
       margin: 0;
+      padding: 0;
+      height: 100%;
       font-family: Arial, sans-serif;
-    }
-
-    #topbar {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 1000;
-      background: white;
-      padding: 12px 14px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-      max-width: 350px;
-    }
-
-    #topbar h1 {
-      margin: 0 0 6px 0;
-      font-size: 20px;
-    }
-
-    #topbar p {
-      margin: 0;
-      font-size: 14px;
-      line-height: 1.4;
-      color: #333;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
     }
 
     #map {
@@ -46,95 +47,391 @@
       width: 100%;
     }
 
-    .popup {
-      min-width: 280px;
+    #topbar {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 1200;
+      width: min(420px, calc(100vw - 28px));
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(230, 233, 239, 0.9);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 16px;
     }
 
-    .popup h3 {
-      margin: 0 0 4px 0;
-      font-size: 18px;
+    #topbar h1 {
+      margin: 0 0 6px 0;
+      font-size: 24px;
+      line-height: 1.1;
     }
 
-    .popup .place-info {
-      margin: 0 0 10px 0;
+    #topbar p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    #topbar-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .topbar-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .primary-btn {
+      background: var(--primary);
+      color: white;
+    }
+
+    .primary-btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .secondary-btn {
+      background: #eef2f7;
+      color: #1d2939;
+    }
+
+    .secondary-btn:hover {
+      background: #e5ebf3;
+    }
+
+    .active-mode {
+      background: var(--success) !important;
+      color: white !important;
+    }
+
+    #status-badge {
+      margin-top: 12px;
+      display: none;
       font-size: 13px;
-      color: #666;
+      font-weight: 700;
+      color: white;
+      background: var(--success);
+      border-radius: 999px;
+      padding: 8px 12px;
+      width: fit-content;
+    }
+
+    #sidebar {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 35vw;
+      min-width: 360px;
+      max-width: 560px;
+      height: 100vh;
+      background: var(--panel);
+      border-left: 1px solid var(--border);
+      box-shadow: -14px 0 34px rgba(18, 25, 38, 0.14);
+      z-index: 1300;
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #sidebar.open {
+      transform: translateX(0);
+    }
+
+    #sidebar-header {
+      padding: 20px 20px 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    #sidebar-title-wrap {
+      min-width: 0;
+    }
+
+    #sidebar-title {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.15;
+      word-break: break-word;
+    }
+
+    #sidebar-subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    #close-sidebar {
+      border: none;
+      background: #eef2f7;
+      color: #111827;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      font-size: 20px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    #close-sidebar:hover {
+      background: #e4e9f1;
+    }
+
+    #sidebar-content {
+      padding: 18px 20px 26px 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .section {
+      margin-bottom: 22px;
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .card {
+      background: #fbfcfe;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .place-meta {
+      display: grid;
+      gap: 10px;
+    }
+
+    .meta-row {
+      display: grid;
+      gap: 4px;
+    }
+
+    .meta-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .meta-value {
+      font-size: 15px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .input,
+    .select {
+      width: 100%;
+      border: 1px solid #d7dde7;
+      border-radius: 12px;
+      padding: 12px 13px;
+      font-size: 14px;
+      background: white;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .input:focus,
+    .select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.12);
+    }
+
+    .helper {
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+      margin-top: -2px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger-hover);
+    }
+
+    .btn-soft {
+      background: #eef2f7;
+      color: #1d2939;
+    }
+
+    .btn-soft:hover {
+      background: #e4e9f1;
+    }
+
+    .event-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .event-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: white;
+      overflow: hidden;
+    }
+
+    .event-image-wrap {
+      width: 100%;
+      height: 180px;
+      background: #f3f5f9;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .event-image-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .event-image-placeholder {
+      padding: 14px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
       line-height: 1.4;
     }
 
-    .popup .section-title {
-      margin: 12px 0 6px 0;
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    .popup input,
-    .popup select,
-    .popup button {
-      width: 100%;
-      margin-top: 6px;
-      padding: 8px;
-      box-sizing: border-box;
-      font-size: 14px;
-    }
-
-    .popup ul {
-      padding-left: 18px;
-      margin: 8px 0;
-    }
-
-    .event-row {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      margin-bottom: 10px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .event-row:last-child {
-      border-bottom: none;
+    .event-body {
+      padding: 14px;
     }
 
     .event-name {
-      font-weight: bold;
+      margin: 0 0 10px 0;
+      font-size: 18px;
+      line-height: 1.25;
+      word-break: break-word;
+    }
+
+    .event-meta-list {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .event-meta-item {
       font-size: 14px;
+      line-height: 1.45;
+      color: #2a3240;
     }
 
-    .event-meta {
+    .event-meta-item strong {
+      color: #111827;
+    }
+
+    .preview-card {
+      border: 1px dashed #cfd7e4;
+      border-radius: 16px;
+      background: #fafcff;
+      padding: 12px;
+    }
+
+    .preview-image {
+      width: 100%;
+      height: 170px;
+      object-fit: cover;
+      border-radius: 12px;
+      display: none;
+      margin-top: 10px;
+      border: 1px solid var(--border);
+      background: #f3f5f9;
+    }
+
+    .preview-message {
       font-size: 13px;
-      color: #555;
-      line-height: 1.4;
+      color: var(--muted);
+      line-height: 1.45;
     }
 
-    .delete-btn {
-      background: #c62828;
-      color: white;
-      border: none;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-
-    .delete-btn:hover {
-      background: #a61f1f;
-    }
-
-    .add-btn {
-      background: #1565c0;
-      color: white;
-      border: none;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-
-    .add-btn:hover {
-      background: #0f4f99;
+    .empty-state {
+      padding: 18px;
+      border: 1px dashed #cfd7e4;
+      border-radius: 16px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      background: #fafcff;
     }
 
     .danger-zone {
-      margin-top: 14px;
-      padding-top: 10px;
-      border-top: 1px solid #ddd;
+      margin-top: 8px;
+    }
+
+    .sidebar-footer-gap {
+      height: 20px;
+    }
+
+    @media (max-width: 980px) {
+      #sidebar {
+        width: 100vw;
+        min-width: 0;
+        max-width: none;
+      }
+
+      #topbar {
+        width: calc(100vw - 28px);
+        max-width: none;
+      }
     }
   </style>
 </head>
@@ -142,12 +439,30 @@
   <div id="topbar">
     <h1>EventTimes</h1>
     <p>
-      Panel admina. Kliknij na mapie, aby dodać nowe miejsce. Kliknij istniejącą pineskę,
-      aby zobaczyć eventy, dodać nowy event albo usunąć dane.
+      Panel admina. Dodawaj miejsca, buduj historię eventów i podepnij do każdego wydarzenia grafikę przez link URL.
     </p>
+
+    <div id="topbar-buttons">
+      <button id="toggle-add-pin-btn" class="topbar-btn primary-btn">Dodaj pinezkę</button>
+      <button id="close-sidebar-btn" class="topbar-btn secondary-btn">Zamknij panel</button>
+    </div>
+
+    <div id="status-badge">Tryb dodawania pinezki jest aktywny</div>
   </div>
 
   <div id="map"></div>
+
+  <aside id="sidebar">
+    <div id="sidebar-header">
+      <div id="sidebar-title-wrap">
+        <h2 id="sidebar-title">EventTimes</h2>
+        <div id="sidebar-subtitle">Wybierz pineskę albo dodaj nowe miejsce.</div>
+      </div>
+      <button id="close-sidebar" type="button">&times;</button>
+    </div>
+
+    <div id="sidebar-content"></div>
+  </aside>
 
   <script>
     const firebaseConfig = {
@@ -162,6 +477,9 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    const EVENT_TYPES = ["Gala MMA", "Koncert", "Stand-up"];
+    const DUPLICATE_RADIUS_METERS = 35;
+
     const map = L.map("map").setView([52.0, 19.0], 6);
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -170,16 +488,17 @@
     }).addTo(map);
 
     const markers = {};
+    let addPinMode = false;
+    let selectedPlaceId = null;
 
-    const EVENT_TYPES = [
-      "Gala MMA",
-      "Koncert",
-      "Stand-up"
-    ];
-
-    function getKey(latlng) {
-      return latlng.lat.toFixed(4) + "," + latlng.lng.toFixed(4);
-    }
+    const sidebar = document.getElementById("sidebar");
+    const sidebarTitle = document.getElementById("sidebar-title");
+    const sidebarSubtitle = document.getElementById("sidebar-subtitle");
+    const sidebarContent = document.getElementById("sidebar-content");
+    const toggleAddPinBtn = document.getElementById("toggle-add-pin-btn");
+    const closeSidebarBtn = document.getElementById("close-sidebar-btn");
+    const closeSidebarX = document.getElementById("close-sidebar");
+    const statusBadge = document.getElementById("status-badge");
 
     function escapeHtml(text) {
       const div = document.createElement("div");
@@ -191,7 +510,7 @@
       if (!dateString) return "Brak daty";
 
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return escapeHtml(dateString);
+      if (isNaN(date.getTime())) return dateString;
 
       const day = String(date.getDate()).padStart(2, "0");
       const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -200,8 +519,36 @@
       return `${day}.${month}.${year}`;
     }
 
+    function setAddPinMode(isActive) {
+      addPinMode = isActive;
+
+      if (addPinMode) {
+        toggleAddPinBtn.classList.add("active-mode");
+        toggleAddPinBtn.textContent = "Anuluj dodawanie";
+        statusBadge.style.display = "inline-block";
+        map.getContainer().style.cursor = "crosshair";
+      } else {
+        toggleAddPinBtn.classList.remove("active-mode");
+        toggleAddPinBtn.textContent = "Dodaj pinezkę";
+        statusBadge.style.display = "none";
+        map.getContainer().style.cursor = "";
+      }
+    }
+
+    function openSidebar(title, subtitle, html) {
+      sidebarTitle.textContent = title;
+      sidebarSubtitle.textContent = subtitle;
+      sidebarContent.innerHTML = html;
+      sidebar.classList.add("open");
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove("open");
+      selectedPlaceId = null;
+    }
+
     function buildEventTypeOptions(selectedValue = "") {
-      let html = `<option value="">Wybierz rodzaj eventu</option>`;
+      let html = '<option value="">Wybierz rodzaj eventu</option>';
 
       EVENT_TYPES.forEach(function(type) {
         const selected = type === selectedValue ? "selected" : "";
@@ -211,95 +558,292 @@
       return html;
     }
 
-    function buildNewPlacePopup(key) {
+    function normalizePlace(doc) {
+      const data = doc.data() || {};
+
+      let lat = data.lat;
+      let lng = data.lng;
+
+      if ((lat === undefined || lng === undefined) && typeof data.coords === "string") {
+        const parts = data.coords.split(",");
+        if (parts.length === 2) {
+          lat = parseFloat(parts[0]);
+          lng = parseFloat(parts[1]);
+        }
+      }
+
+      if (typeof lat !== "number" || typeof lng !== "number" || isNaN(lat) || isNaN(lng)) {
+        return null;
+      }
+
+      return {
+        id: doc.id,
+        placeName: data.placeName || "",
+        city: data.city || "",
+        street: data.street || "",
+        lat: lat,
+        lng: lng,
+        events: Array.isArray(data.events)
+          ? data.events
+          : Array.isArray(data.list)
+            ? data.list.map(function(item) {
+                if (typeof item === "string") {
+                  return {
+                    name: item,
+                    type: "",
+                    date: "",
+                    imageUrl: ""
+                  };
+                }
+                return {
+                  name: item.name || "",
+                  type: item.type || "",
+                  date: item.date || "",
+                  imageUrl: item.imageUrl || item.image || ""
+                };
+              })
+            : []
+      };
+    }
+
+    function findNearbyPlace(latlng) {
+      let closest = null;
+
+      Object.values(markers).forEach(function(marker) {
+        const markerLatLng = marker.getLatLng();
+        const distance = latlng.distanceTo(markerLatLng);
+
+        if (distance <= DUPLICATE_RADIUS_METERS) {
+          if (!closest || distance < closest.distance) {
+            closest = {
+              placeId: marker.placeData.id,
+              distance: distance
+            };
+          }
+        }
+      });
+
+      return closest;
+    }
+
+    function buildAddPlacePanel(lat, lng) {
       return `
-        <div class="popup">
-          <h3>Nowe miejsce</h3>
-          <div class="section-title">Dane miejsca</div>
-          <input id="placeName-${key}" placeholder="Nazwa miejsca" />
-          <input id="city-${key}" placeholder="Miasto" />
-          <input id="street-${key}" placeholder="Ulica" />
-          <button class="add-btn" onclick="addPlace('${key}')">Dodaj pineskę</button>
+        <div class="section">
+          <div class="section-title">Nowa pineska</div>
+          <div class="card">
+            <div class="form-grid">
+              <input id="placeNameInput" class="input" placeholder="Nazwa miejsca" />
+              <input id="cityInput" class="input" placeholder="Miasto" />
+              <input id="streetInput" class="input" placeholder="Ulica" />
+              <div class="helper">
+                Pineska zapisze się jako osobne miejsce z własnym ID. Eventy dodasz później z poziomu tego miejsca.
+              </div>
+              <button class="btn btn-primary" onclick="addPlace(${lat}, ${lng})">Zapisz pineszkę</button>
+              <button class="btn btn-soft" onclick="cancelAddPlace()">Anuluj</button>
+            </div>
+          </div>
         </div>
       `;
     }
 
-    function buildExistingPlacePopup(key, placeData) {
-      const placeName = placeData?.placeName || "";
-      const city = placeData?.city || "";
-      const street = placeData?.street || "";
+    function buildPlaceDetailsPanel(placeData) {
+      const placeName = placeData?.placeName || "Bez nazwy miejsca";
+      const city = placeData?.city || "Brak";
+      const street = placeData?.street || "Brak";
       const events = Array.isArray(placeData?.events) ? placeData.events : [];
+      const placeId = placeData.id;
 
-      let html = `<div class="popup">`;
+      let eventsHtml = "";
 
-      html += `<h3>${escapeHtml(placeName || "Bez nazwy miejsca")}</h3>`;
+      if (events.length === 0) {
+        eventsHtml = `
+          <div class="empty-state">
+            To miejsce nie ma jeszcze żadnych eventów. Dodaj pierwszy event w formularzu poniżej.
+          </div>
+        `;
+      } else {
+        eventsHtml = `<div class="event-list">`;
 
-      html += `
-        <p class="place-info">
-          <strong>Miasto:</strong> ${escapeHtml(city || "Brak")}<br>
-          <strong>Ulica:</strong> ${escapeHtml(street || "Brak")}
-        </p>
-      `;
-
-      html += `<div class="section-title">Eventy</div>`;
-
-      if (events.length > 0) {
         events.forEach(function(eventItem, index) {
-          html += `
-            <div class="event-row">
-              <div class="event-name">${escapeHtml(eventItem.name || "Bez nazwy")}</div>
-              <div class="event-meta">
-                <strong>Rodzaj:</strong> ${escapeHtml(eventItem.type || "Brak")}<br>
-                <strong>Data:</strong> ${formatDate(eventItem.date)}
+          const imageUrl = eventItem.imageUrl ? escapeHtml(eventItem.imageUrl) : "";
+          const eventName = escapeHtml(eventItem.name || "Bez nazwy");
+          const eventType = escapeHtml(eventItem.type || "Brak");
+          const eventDate = escapeHtml(formatDate(eventItem.date || ""));
+
+          eventsHtml += `
+            <div class="event-card">
+              <div class="event-image-wrap">
+                ${
+                  imageUrl
+                    ? `<img src="${imageUrl}" alt="${eventName}" onerror="this.parentElement.innerHTML='<div class=&quot;event-image-placeholder&quot;>Nie udało się wczytać grafiki.</div>';">`
+                    : `<div class="event-image-placeholder">Brak grafiki dla tego eventu.</div>`
+                }
               </div>
-              <button class="delete-btn" onclick="deleteEvent('${key}', ${index})">
-                Usuń ten event
-              </button>
+
+              <div class="event-body">
+                <h3 class="event-name">${eventName}</h3>
+
+                <div class="event-meta-list">
+                  <div class="event-meta-item"><strong>Rodzaj:</strong> ${eventType}</div>
+                  <div class="event-meta-item"><strong>Data:</strong> ${eventDate}</div>
+                </div>
+
+                <button class="btn btn-danger" onclick="deleteEvent('${placeId}', ${index})">
+                  Usuń event
+                </button>
+              </div>
             </div>
           `;
         });
-      } else {
-        html += `<p>Brak eventów w tym miejscu.</p>`;
+
+        eventsHtml += `</div>`;
       }
 
-      html += `<div class="section-title">Dodaj nowy event</div>`;
-      html += `
-        <input id="eventName-${key}" placeholder="Nazwa eventu" />
-        <select id="eventType-${key}">
-          ${buildEventTypeOptions()}
-        </select>
-        <input id="eventDate-${key}" type="date" />
-        <button class="add-btn" onclick="addEvent('${key}')">Dodaj event</button>
+      return `
+        <div class="section">
+          <div class="section-title">Dane miejsca</div>
+          <div class="card place-meta">
+            <div class="meta-row">
+              <div class="meta-label">Nazwa miejsca</div>
+              <div class="meta-value">${escapeHtml(placeName)}</div>
+            </div>
 
-        <div class="danger-zone">
-          <button class="delete-btn" onclick="deleteMarker('${key}')">
+            <div class="meta-row">
+              <div class="meta-label">Miasto</div>
+              <div class="meta-value">${escapeHtml(city)}</div>
+            </div>
+
+            <div class="meta-row">
+              <div class="meta-label">Ulica</div>
+              <div class="meta-value">${escapeHtml(street)}</div>
+            </div>
+
+            <div class="meta-row">
+              <div class="meta-label">Współrzędne</div>
+              <div class="meta-value">${placeData.lat.toFixed(5)}, ${placeData.lng.toFixed(5)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Lista eventów</div>
+          ${eventsHtml}
+        </div>
+
+        <div class="section">
+          <div class="section-title">Dodaj nowy event</div>
+          <div class="card">
+            <div class="form-grid">
+              <input id="eventNameInput" class="input" placeholder="Nazwa eventu" />
+              
+              <select id="eventTypeInput" class="select">
+                ${buildEventTypeOptions()}
+              </select>
+
+              <input id="eventDateInput" class="input" type="date" />
+
+              <input
+                id="eventImageInput"
+                class="input"
+                placeholder="Link do grafiki eventu (URL)"
+                oninput="updateImagePreview()"
+              />
+
+              <div class="preview-card">
+                <div class="preview-message">
+                  Wklej link do plakatu, logo albo grafiki promocyjnej. Jeśli link działa, podgląd pokaże się niżej.
+                </div>
+                <img id="eventImagePreview" class="preview-image" alt="Podgląd grafiki eventu" />
+                <div id="eventImageError" class="helper" style="display:none; color:#b42318; margin-top:10px;">
+                  Nie udało się wczytać grafiki z tego linku.
+                </div>
+              </div>
+
+              <button class="btn btn-primary" onclick="addEvent('${placeId}')">Dodaj event</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section danger-zone">
+          <div class="section-title">Usuwanie</div>
+          <button class="btn btn-danger" onclick="deleteMarker('${placeId}')">
             Usuń całą pineskę
           </button>
         </div>
+
+        <div class="sidebar-footer-gap"></div>
       `;
-
-      html += `</div>`;
-
-      return html;
     }
 
-    function buildPopupContent(key, placeData) {
-      if (!placeData) {
-        return buildNewPlacePopup(key);
+    function renderPlaceSidebar(placeData) {
+      selectedPlaceId = placeData.id;
+      openSidebar(
+        placeData.placeName || "Miejsce",
+        "Tutaj zarządzasz eventami przypisanymi do tej pineski.",
+        buildPlaceDetailsPanel(placeData)
+      );
+
+      setTimeout(function() {
+        bindPreviewHandlers();
+      }, 0);
+    }
+
+    function bindPreviewHandlers() {
+      const input = document.getElementById("eventImageInput");
+      const preview = document.getElementById("eventImagePreview");
+      const error = document.getElementById("eventImageError");
+
+      if (!input || !preview || !error) return;
+
+      preview.onerror = function() {
+        preview.style.display = "none";
+        error.style.display = "block";
+      };
+
+      preview.onload = function() {
+        preview.style.display = "block";
+        error.style.display = "none";
+      };
+    }
+
+    function updateImagePreview() {
+      const input = document.getElementById("eventImageInput");
+      const preview = document.getElementById("eventImagePreview");
+      const error = document.getElementById("eventImageError");
+
+      if (!input || !preview || !error) return;
+
+      const value = input.value.trim();
+
+      if (!value) {
+        preview.style.display = "none";
+        preview.removeAttribute("src");
+        error.style.display = "none";
+        return;
       }
 
-      return buildExistingPlacePopup(key, placeData);
+      error.style.display = "none";
+      preview.style.display = "none";
+      preview.src = value;
     }
 
-    function renderMarker(key, coords, placeData) {
-      if (markers[key]) {
-        markers[key].setPopupContent(buildPopupContent(key, placeData));
+    function renderMarker(placeData) {
+      const coords = [placeData.lat, placeData.lng];
+
+      if (markers[placeData.id]) {
+        markers[placeData.id].placeData = placeData;
+        markers[placeData.id].setLatLng(coords);
         return;
       }
 
       const marker = L.marker(coords).addTo(map);
-      marker.bindPopup(buildPopupContent(key, placeData));
-      markers[key] = marker;
+      marker.placeData = placeData;
+
+      marker.on("click", function() {
+        renderPlaceSidebar(marker.placeData);
+      });
+
+      markers[placeData.id] = marker;
     }
 
     async function loadPlaces() {
@@ -307,16 +851,9 @@
         const snapshot = await db.collection("places").get();
 
         snapshot.forEach(function(doc) {
-          const data = doc.data();
-          const coordsArr = doc.id.split(",");
-          const coords = [parseFloat(coordsArr[0]), parseFloat(coordsArr[1])];
-
-          renderMarker(doc.id, coords, {
-            placeName: data.placeName || "",
-            city: data.city || "",
-            street: data.street || "",
-            events: Array.isArray(data.events) ? data.events : []
-          });
+          const placeData = normalizePlace(doc);
+          if (!placeData) return;
+          renderMarker(placeData);
         });
       } catch (error) {
         console.error("Błąd loadPlaces:", error);
@@ -324,11 +861,11 @@
       }
     }
 
-    async function addPlace(key) {
+    async function addPlace(lat, lng) {
       try {
-        const placeNameInput = document.getElementById(`placeName-${key}`);
-        const cityInput = document.getElementById(`city-${key}`);
-        const streetInput = document.getElementById(`street-${key}`);
+        const placeNameInput = document.getElementById("placeNameInput");
+        const cityInput = document.getElementById("cityInput");
+        const streetInput = document.getElementById("streetInput");
 
         const placeName = placeNameInput ? placeNameInput.value.trim() : "";
         const city = cityInput ? cityInput.value.trim() : "";
@@ -339,43 +876,41 @@
           return;
         }
 
-        const ref = db.collection("places").doc(key);
-        const snap = await ref.get();
-
-        if (snap.exists) {
-          alert("Ta pineska już istnieje.");
+        const nearby = findNearbyPlace(L.latLng(lat, lng));
+        if (nearby) {
+          alert("Bardzo blisko istnieje już pineska. Kliknij istniejące miejsce zamiast tworzyć nowe.");
           return;
         }
 
-        const placeData = {
+        const placePayload = {
           placeName: placeName,
           city: city,
           street: street,
-          coords: key,
-          events: []
+          lat: lat,
+          lng: lng,
+          events: [],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        await ref.set(placeData);
+        const docRef = await db.collection("places").add(placePayload);
 
-        const coordsArr = key.split(",");
-        const coords = [parseFloat(coordsArr[0]), parseFloat(coordsArr[1])];
+        const placeData = {
+          id: docRef.id,
+          ...placePayload
+        };
 
-        renderMarker(key, coords, placeData);
-
-        map.closePopup();
-
-        if (markers[key]) {
-          markers[key].openPopup();
-        }
+        renderMarker(placeData);
+        setAddPinMode(false);
+        renderPlaceSidebar(placeData);
       } catch (error) {
         console.error("Błąd addPlace:", error);
         alert("Nie udało się dodać pineski.");
       }
     }
 
-    async function addEvent(key) {
+    async function addEvent(placeId) {
       try {
-        const ref = db.collection("places").doc(key);
+        const ref = db.collection("places").doc(placeId);
         const snap = await ref.get();
 
         if (!snap.exists) {
@@ -383,16 +918,21 @@
           return;
         }
 
-        const data = snap.data();
-        const events = Array.isArray(data.events) ? data.events : [];
+        const placeData = normalizePlace(snap);
+        if (!placeData) {
+          alert("Nie udało się odczytać danych miejsca.");
+          return;
+        }
 
-        const eventNameInput = document.getElementById(`eventName-${key}`);
-        const eventTypeInput = document.getElementById(`eventType-${key}`);
-        const eventDateInput = document.getElementById(`eventDate-${key}`);
+        const eventNameInput = document.getElementById("eventNameInput");
+        const eventTypeInput = document.getElementById("eventTypeInput");
+        const eventDateInput = document.getElementById("eventDateInput");
+        const eventImageInput = document.getElementById("eventImageInput");
 
         const eventName = eventNameInput ? eventNameInput.value.trim() : "";
-        const eventType = eventTypeInput ? eventTypeInput.value : "";
+        const eventType = eventTypeInput ? eventTypeInput.value.trim() : "";
         const eventDate = eventDateInput ? eventDateInput.value : "";
+        const eventImageUrl = eventImageInput ? eventImageInput.value.trim() : "";
 
         if (!eventName) {
           alert("Wpisz nazwę eventu.");
@@ -409,45 +949,31 @@
           return;
         }
 
-        events.push({
+        placeData.events.push({
           name: eventName,
           type: eventType,
-          date: eventDate
+          date: eventDate,
+          imageUrl: eventImageUrl
         });
 
         await ref.update({
-          events: events
+          events: placeData.events
         });
 
-        const coordsArr = key.split(",");
-        const coords = [parseFloat(coordsArr[0]), parseFloat(coordsArr[1])];
-
-        const updatedPlaceData = {
-          placeName: data.placeName || "",
-          city: data.city || "",
-          street: data.street || "",
-          events: events
-        };
-
-        renderMarker(key, coords, updatedPlaceData);
-
-        map.closePopup();
-
-        if (markers[key]) {
-          markers[key].openPopup();
-        }
+        markers[placeId].placeData = placeData;
+        renderPlaceSidebar(placeData);
       } catch (error) {
         console.error("Błąd addEvent:", error);
         alert("Nie udało się dodać eventu.");
       }
     }
 
-    async function deleteEvent(key, eventIndex) {
+    async function deleteEvent(placeId, eventIndex) {
       try {
         const confirmed = confirm("Na pewno usunąć ten event?");
         if (!confirmed) return;
 
-        const ref = db.collection("places").doc(key);
+        const ref = db.collection("places").doc(placeId);
         const snap = await ref.get();
 
         if (!snap.exists) {
@@ -455,81 +981,93 @@
           return;
         }
 
-        const data = snap.data();
-        const events = Array.isArray(data.events) ? data.events : [];
+        const placeData = normalizePlace(snap);
+        if (!placeData) {
+          alert("Nie udało się odczytać danych miejsca.");
+          return;
+        }
 
-        if (eventIndex < 0 || eventIndex >= events.length) {
+        if (eventIndex < 0 || eventIndex >= placeData.events.length) {
           alert("Nieprawidłowy event.");
           return;
         }
 
-        events.splice(eventIndex, 1);
+        placeData.events.splice(eventIndex, 1);
 
         await ref.update({
-          events: events
+          events: placeData.events
         });
 
-        const coordsArr = key.split(",");
-        const coords = [parseFloat(coordsArr[0]), parseFloat(coordsArr[1])];
-
-        const updatedPlaceData = {
-          placeName: data.placeName || "",
-          city: data.city || "",
-          street: data.street || "",
-          events: events
-        };
-
-        renderMarker(key, coords, updatedPlaceData);
-
-        map.closePopup();
-
-        if (markers[key]) {
-          markers[key].openPopup();
-        }
+        markers[placeId].placeData = placeData;
+        renderPlaceSidebar(placeData);
       } catch (error) {
         console.error("Błąd deleteEvent:", error);
         alert("Nie udało się usunąć eventu.");
       }
     }
 
-    async function deleteMarker(key) {
+    async function deleteMarker(placeId) {
       try {
         const confirmed = confirm("Na pewno usunąć całą pineskę i wszystkie eventy?");
         if (!confirmed) return;
 
-        await db.collection("places").doc(key).delete();
+        await db.collection("places").doc(placeId).delete();
 
-        if (markers[key]) {
-          map.removeLayer(markers[key]);
-          delete markers[key];
+        if (markers[placeId]) {
+          map.removeLayer(markers[placeId]);
+          delete markers[placeId];
         }
 
-        map.closePopup();
+        closeSidebar();
       } catch (error) {
         console.error("Błąd deleteMarker:", error);
         alert("Nie udało się usunąć pineski.");
       }
     }
 
+    function cancelAddPlace() {
+      setAddPinMode(false);
+      closeSidebar();
+    }
+
+    toggleAddPinBtn.addEventListener("click", function() {
+      setAddPinMode(!addPinMode);
+
+      if (!addPinMode) {
+        closeSidebar();
+      }
+    });
+
+    closeSidebarBtn.addEventListener("click", function() {
+      closeSidebar();
+    });
+
+    closeSidebarX.addEventListener("click", function() {
+      closeSidebar();
+    });
+
+    map.on("click", function(e) {
+      if (!addPinMode) return;
+
+      const nearby = findNearbyPlace(e.latlng);
+      if (nearby) {
+        alert("W tym miejscu albo bardzo blisko jest już pineska.");
+        return;
+      }
+
+      openSidebar(
+        "Nowe miejsce",
+        "Uzupełnij dane pineski i zapisz miejsce na mapie.",
+        buildAddPlacePanel(e.latlng.lat, e.latlng.lng)
+      );
+    });
+
     window.addPlace = addPlace;
     window.addEvent = addEvent;
     window.deleteEvent = deleteEvent;
     window.deleteMarker = deleteMarker;
-
-    map.on("click", function(e) {
-      const key = getKey(e.latlng);
-      const existingMarker = markers[key];
-
-      if (existingMarker) {
-        existingMarker.openPopup();
-        return;
-      }
-
-      L.popup()
-        .setLatLng(e.latlng)
-        .setContent(buildNewPlacePopup(key))
-        .openOn(map);
-    });
+    window.cancelAddPlace = cancelAddPlace;
+    window.updateImagePreview = updateImagePreview;
 
     loadPlaces();
   </script>
