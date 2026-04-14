@@ -1172,6 +1172,60 @@
       });
     }
 
+    function normalizePlace(doc) {
+      const data = doc.data() || {};
+      let lat = data.lat;
+      let lng = data.lng;
+
+      if ((lat === undefined || lng === undefined) && typeof data.coords === "string") {
+        const parts = data.coords.split(",");
+        if (parts.length === 2) {
+          lat = parseFloat(parts[0]);
+          lng = parseFloat(parts[1]);
+        }
+      }
+
+      if (typeof lat !== "number" || typeof lng !== "number" || isNaN(lat) || isNaN(lng)) {
+        return null;
+      }
+
+      const originalEvents = Array.isArray(data.events)
+        ? data.events
+        : Array.isArray(data.list)
+          ? data.list.map(function(item) {
+              if (typeof item === "string") {
+                return { name: item, type: "", date: "", imageUrl: "" };
+              }
+              return item;
+            })
+          : [];
+
+      const normalizedEvents = ensureEventIds(originalEvents);
+
+      const needsMigration =
+        originalEvents.length !== normalizedEvents.length ||
+        originalEvents.some(function(eventItem, index) {
+          const normalized = normalizedEvents[index];
+          if (!eventItem || typeof eventItem !== "object") return true;
+          return (
+            !eventItem.id ||
+            typeof eventItem.attendanceCount !== "number" ||
+            eventItem.image !== undefined
+          );
+        });
+
+      return {
+        id: doc.id,
+        placeName: data.placeName || "",
+        city: data.city || "",
+        street: data.street || "",
+        lat: lat,
+        lng: lng,
+        events: normalizedEvents,
+        needsMigration: needsMigration
+      };
+    }
+
     function getFirebaseAuthErrorMessage(error) {
       const code = error && error.code ? error.code : "";
 
@@ -1197,6 +1251,12 @@
         default:
           return "Wystąpił błąd. Spróbuj ponownie.";
       }
+    }
+
+    function rebuildPlacesCache() {
+      allPlacesCache = Object.values(markers).map(function(marker) {
+        return marker.placeData;
+      });
     }
 
     function updateUserUI() {
@@ -1362,71 +1422,6 @@
         html += `<option value="${escapeHtml(type)}" ${selected}>${escapeHtml(type)}</option>`;
       });
       return html;
-    }
-
-    function normalizePlace(doc) {
-      const data = doc.data() || {};
-      let lat = data.lat;
-      let lng = data.lng;
-
-      if ((lat === undefined || lng === undefined) && typeof data.coords === "string") {
-        const parts = data.coords.split(",");
-        if (parts.length === 2) {
-          lat = parseFloat(parts[0]);
-          lng = parseFloat(parts[1]);
-        }
-      }
-
-      if (typeof lat !== "number" || typeof lng !== "number" || isNaN(lat) || isNaN(lng)) {
-        return null;
-      }
-
-      return {
-        id: doc.id,
-        placeName: data.placeName || "",
-        city: data.city || "",
-        street: data.street || "",
-        lat: lat,
-        lng: lng,
-        events: ensureEventIds(
-          Array.isArray(data.events)
-            ? data.events
-            : Array.isArray(data.list)
-              ? data.list.map(function(item) {
-                  if (typeof item === "string") {
-                    return { name: item, type: "", date: "", imageUrl: "" };
-                  }
-                  return item;
-                })
-              : []
-        )
-      };
-    }
-
-    function rebuildPlacesCache() {
-      allPlacesCache = Object.values(markers).map(function(marker) {
-        return marker.placeData;
-      });
-    }
-
-    function findNearbyPlace(latlng) {
-      let closest = null;
-
-      Object.values(markers).forEach(function(marker) {
-        const markerLatLng = marker.getLatLng();
-        const distance = latlng.distanceTo(markerLatLng);
-
-        if (distance <= DUPLICATE_RADIUS_METERS) {
-          if (!closest || distance < closest.distance) {
-            closest = {
-              placeId: marker.placeData.id,
-              distance: distance
-            };
-          }
-        }
-      });
-
-      return closest;
     }
 
     function isEventAttended(placeId, eventId) {
@@ -1857,7 +1852,10 @@
         if (!freshPlaceData) return;
 
         const eventIndex = freshPlaceData.events.findIndex(e => e.id === eventId);
-        if (eventIndex === -1) return;
+        if (eventIndex === -1) {
+          alert("Nie udało się znaleźć eventu. Odśwież stronę i spróbuj ponownie.");
+          return;
+        }
 
         if (currentUserAttendanceMap[attendanceId]) {
           await attendanceRef.delete();
@@ -1938,12 +1936,34 @@
     async function loadPlaces() {
       try {
         const snapshot = await db.collection("places").get();
+        const migrations = [];
 
         snapshot.forEach(function(doc) {
           const placeData = normalizePlace(doc);
           if (!placeData) return;
+
           renderMarker(placeData);
+
+          if (placeData.needsMigration) {
+            migrations.push(
+              db.collection("places").doc(placeData.id).set(
+                {
+                  placeName: placeData.placeName,
+                  city: placeData.city,
+                  street: placeData.street,
+                  lat: placeData.lat,
+                  lng: placeData.lng,
+                  events: placeData.events
+                },
+                { merge: true }
+              )
+            );
+          }
         });
+
+        if (migrations.length) {
+          await Promise.all(migrations);
+        }
 
         rebuildPlacesCache();
         refreshEventNameSuggestions();
@@ -1990,7 +2010,8 @@
 
         const placeData = {
           id: docRef.id,
-          ...placePayload
+          ...placePayload,
+          needsMigration: false
         };
 
         renderMarker(placeData);
