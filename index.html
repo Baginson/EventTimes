@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EventTimes - Panel admina</title>
+  <title>EventTimes</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -35,8 +35,7 @@
       --radius: 18px;
     }
 
-    html,
-    body {
+    html, body {
       margin: 0;
       padding: 0;
       height: 100%;
@@ -49,6 +48,86 @@
     #map {
       height: 100vh;
       width: 100%;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* TOP RIGHT ADMIN BUTTONS */
+    #admin-controls {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 1250;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .admin-top-btn {
+      border: none;
+      border-radius: 14px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+      box-shadow: var(--shadow);
+      background: rgba(255,255,255,0.97);
+      color: #1d2939;
+    }
+
+    .admin-top-btn:hover {
+      background: #ffffff;
+    }
+
+    #admin-status-badge {
+      background: var(--success);
+      color: white;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+    }
+
+    /* ADMIN MODAL */
+    #admin-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 3000;
+      background: rgba(12, 18, 28, 0.45);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    #admin-modal-overlay.open {
+      display: flex;
+    }
+
+    #admin-modal {
+      width: min(420px, 100%);
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+      border: 1px solid rgba(230, 233, 239, 0.9);
+      padding: 24px;
+    }
+
+    #admin-modal h2 {
+      margin: 0 0 8px 0;
+      font-size: 24px;
+    }
+
+    #admin-modal p {
+      margin: 0 0 16px 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
     }
 
     /* SEARCH BAR LIKE GOOGLE MAPS */
@@ -357,11 +436,15 @@
       color: white;
       font-size: 26px;
       cursor: pointer;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       transition: transform 0.18s ease, background 0.18s ease;
       background: var(--danger);
+    }
+
+    #add-pin-floating-btn.admin-visible {
+      display: flex;
     }
 
     #add-pin-floating-btn:hover {
@@ -625,10 +708,41 @@
         height: 56px;
         font-size: 24px;
       }
+
+      #admin-controls {
+        top: auto;
+        right: 14px;
+        bottom: 14px;
+        flex-direction: column;
+        align-items: flex-end;
+      }
     }
   </style>
 </head>
 <body>
+  <div id="admin-controls">
+    <div id="admin-status-badge" class="hidden">Tryb admina</div>
+    <button id="open-admin-modal-btn" class="admin-top-btn">Panel admina</button>
+    <button id="logout-admin-btn" class="admin-top-btn hidden">Wyłącz tryb admina</button>
+  </div>
+
+  <div id="admin-modal-overlay">
+    <div id="admin-modal">
+      <h2>Panel admina</h2>
+      <p>Wpisz hasło, aby włączyć edycję, dodawanie i usuwanie pinezek oraz eventów.</p>
+
+      <div class="form-grid">
+        <input id="admin-password-input" class="input" type="password" placeholder="Hasło admina" />
+        <div id="admin-password-error" class="helper hidden" style="color:#b42318;">Nieprawidłowe hasło.</div>
+
+        <div class="button-row">
+          <button class="btn btn-primary" onclick="loginAsAdmin()">Zaloguj</button>
+          <button class="btn btn-soft" onclick="closeAdminModal()">Anuluj</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="search-shell">
     <div id="search-bar" onclick="toggleSearchPanel()">
       <div id="search-bar-icon">🔎</div>
@@ -743,6 +857,10 @@
     const EVENT_TYPES = ["Gala MMA", "Koncert", "Stand-up"];
     const DUPLICATE_RADIUS_METERS = 35;
 
+    // TESTOWE HASŁO FRONTENDOWE
+    // ZMIEŃ SOBIE TĘ WARTOŚĆ
+    const ADMIN_PASSWORD = "eventtimes123";
+
     const map = L.map("map").setView([52.0, 19.0], 6);
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -755,6 +873,7 @@
     let selectedPlaceId = null;
     let allPlacesCache = [];
     let currentSearchMode = "events";
+    let isAdmin = false;
 
     const searchShell = document.getElementById("search-shell");
     const sidebar = document.getElementById("sidebar");
@@ -763,6 +882,13 @@
     const sidebarContent = document.getElementById("sidebar-content");
     const closeSidebarX = document.getElementById("close-sidebar");
     const addPinFloatingBtn = document.getElementById("add-pin-floating-btn");
+
+    const adminModalOverlay = document.getElementById("admin-modal-overlay");
+    const adminPasswordInput = document.getElementById("admin-password-input");
+    const adminPasswordError = document.getElementById("admin-password-error");
+    const openAdminModalBtn = document.getElementById("open-admin-modal-btn");
+    const logoutAdminBtn = document.getElementById("logout-admin-btn");
+    const adminStatusBadge = document.getElementById("admin-status-badge");
 
     const tabEvents = document.getElementById("tab-events");
     const tabPlaces = document.getElementById("tab-places");
@@ -811,6 +937,51 @@
       return `${day}.${month}.${year}`;
     }
 
+    function updateAdminUI() {
+      addPinFloatingBtn.classList.toggle("admin-visible", isAdmin);
+      adminStatusBadge.classList.toggle("hidden", !isAdmin);
+      logoutAdminBtn.classList.toggle("hidden", !isAdmin);
+      openAdminModalBtn.classList.toggle("hidden", isAdmin);
+
+      if (!isAdmin) {
+        setAddPinMode(false);
+      }
+
+      if (selectedPlaceId && markers[selectedPlaceId]) {
+        renderPlaceSidebar(markers[selectedPlaceId].placeData);
+      }
+    }
+
+    function openAdminModal() {
+      adminModalOverlay.classList.add("open");
+      adminPasswordError.classList.add("hidden");
+      adminPasswordInput.value = "";
+      setTimeout(() => adminPasswordInput.focus(), 50);
+    }
+
+    function closeAdminModal() {
+      adminModalOverlay.classList.remove("open");
+    }
+
+    function loginAsAdmin() {
+      const password = adminPasswordInput.value;
+
+      if (password !== ADMIN_PASSWORD) {
+        adminPasswordError.classList.remove("hidden");
+        return;
+      }
+
+      isAdmin = true;
+      updateAdminUI();
+      closeAdminModal();
+    }
+
+    function logoutAdmin() {
+      isAdmin = false;
+      updateAdminUI();
+      closeSidebar();
+    }
+
     function toggleSearchPanel(forceOpen = null) {
       const shouldOpen = forceOpen === null ? !searchShell.classList.contains("open") : forceOpen;
       searchShell.classList.toggle("open", shouldOpen);
@@ -818,7 +989,6 @@
 
     function setSearchMode(mode) {
       currentSearchMode = mode;
-
       tabEvents.classList.toggle("active", mode === "events");
       tabPlaces.classList.toggle("active", mode === "places");
       searchEventsSection.classList.toggle("active", mode === "events");
@@ -826,18 +996,13 @@
     }
 
     function setAddPinMode(isActive) {
-      addPinMode = isActive;
-
+      addPinMode = isAdmin ? isActive : false;
       addPinFloatingBtn.classList.toggle("active", addPinMode);
-
-      if (addPinMode) {
-        map.getContainer().style.cursor = "crosshair";
-      } else {
-        map.getContainer().style.cursor = "";
-      }
+      map.getContainer().style.cursor = addPinMode ? "crosshair" : "";
     }
 
     function toggleAddPinModeFromButton() {
+      if (!isAdmin) return;
       setAddPinMode(!addPinMode);
       if (addPinMode) {
         closeSidebar();
@@ -858,18 +1023,15 @@
 
     function buildEventTypeOptions(selectedValue = "") {
       let html = '<option value="">Wybierz rodzaj eventu</option>';
-
       EVENT_TYPES.forEach(function(type) {
         const selected = type === selectedValue ? "selected" : "";
         html += `<option value="${escapeHtml(type)}" ${selected}>${escapeHtml(type)}</option>`;
       });
-
       return html;
     }
 
     function normalizePlace(doc) {
       const data = doc.data() || {};
-
       let lat = data.lat;
       let lng = data.lng;
 
@@ -904,12 +1066,7 @@
           : Array.isArray(data.list)
             ? data.list.map(function(item) {
                 if (typeof item === "string") {
-                  return {
-                    name: item,
-                    type: "",
-                    date: "",
-                    imageUrl: ""
-                  };
+                  return { name: item, type: "", date: "", imageUrl: "" };
                 }
                 return {
                   name: item.name || "",
@@ -949,6 +1106,8 @@
     }
 
     function buildAddPlacePanel(lat, lng) {
+      if (!isAdmin) return "";
+
       return `
         <div class="section">
           <div class="section-title">Nowa pineska</div>
@@ -969,13 +1128,14 @@
     }
 
     function buildPlaceEditPanel(placeData) {
+      if (!isAdmin) return "";
+
       return `
         <div class="editing-box">
           <div class="form-grid">
             <input id="editPlaceNameInput" class="input" value="${escapeHtml(placeData.placeName)}" placeholder="Nazwa miejsca" />
             <input id="editPlaceCityInput" class="input" value="${escapeHtml(placeData.city)}" placeholder="Miasto" />
             <input id="editPlaceStreetInput" class="input" value="${escapeHtml(placeData.street)}" placeholder="Ulica" />
-
             <div class="button-row">
               <button class="btn btn-success" onclick="savePlaceEdit('${placeData.id}')">Zapisz miejsce</button>
               <button class="btn btn-soft" onclick="renderPlaceSidebarById('${placeData.id}')">Anuluj</button>
@@ -986,6 +1146,8 @@
     }
 
     function buildEventEditPanel(placeId, eventIndex, eventItem) {
+      if (!isAdmin) return "";
+
       return `
         <div class="editing-box">
           <div class="form-grid">
@@ -995,7 +1157,6 @@
             </select>
             <input id="editEventDate-${eventIndex}" class="input" type="date" value="${escapeHtml(eventItem.date || "")}" />
             <input id="editEventImage-${eventIndex}" class="input" value="${escapeHtml(eventItem.imageUrl || "")}" placeholder="Link do grafiki eventu (URL)" />
-
             <div class="button-row">
               <button class="btn btn-success" onclick="saveEventEdit('${placeId}', ${eventIndex})">Zapisz event</button>
               <button class="btn btn-soft" onclick="renderPlaceSidebarById('${placeId}')">Anuluj</button>
@@ -1017,7 +1178,7 @@
       if (events.length === 0) {
         eventsHtml = `
           <div class="empty-state">
-            To miejsce nie ma jeszcze żadnych eventów. Dodaj pierwszy event w formularzu poniżej.
+            To miejsce nie ma jeszcze żadnych eventów.
           </div>
         `;
       } else {
@@ -1028,6 +1189,17 @@
           const eventName = escapeHtml(eventItem.name || "Bez nazwy");
           const eventType = escapeHtml(eventItem.type || "Brak");
           const eventDate = escapeHtml(formatDate(eventItem.date || ""));
+
+          let adminEventButtons = "";
+          if (isAdmin) {
+            adminEventButtons = `
+              <div class="button-row">
+                <button class="btn btn-warning" onclick="startEditEvent('${placeId}', ${index})">Edytuj event</button>
+                <button class="btn btn-danger" onclick="deleteEvent('${placeId}', ${index})">Usuń event</button>
+              </div>
+              <div id="eventEditBox-${index}"></div>
+            `;
+          }
 
           eventsHtml += `
             <div class="event-card">
@@ -1041,24 +1213,71 @@
 
               <div class="event-body">
                 <h3 class="event-name">${eventName}</h3>
-
                 <div class="event-meta-list">
                   <div class="event-meta-item"><strong>Rodzaj:</strong> ${eventType}</div>
                   <div class="event-meta-item"><strong>Data:</strong> ${eventDate}</div>
                 </div>
-
-                <div class="button-row">
-                  <button class="btn btn-warning" onclick="startEditEvent('${placeId}', ${index})">Edytuj event</button>
-                  <button class="btn btn-danger" onclick="deleteEvent('${placeId}', ${index})">Usuń event</button>
-                </div>
-
-                <div id="eventEditBox-${index}"></div>
+                ${adminEventButtons}
               </div>
             </div>
           `;
         });
 
         eventsHtml += `</div>`;
+      }
+
+      let adminPlaceControls = "";
+      if (isAdmin) {
+        adminPlaceControls = `
+          <div class="button-row single">
+            <button class="btn btn-warning" onclick="startEditPlace('${placeId}')">Edytuj miejsce</button>
+          </div>
+
+          <div id="placeEditBox"></div>
+        `;
+      }
+
+      let adminAddEventSection = "";
+      if (isAdmin) {
+        adminAddEventSection = `
+          <div class="section">
+            <div class="section-title">Dodaj nowy event</div>
+            <div class="card">
+              <div class="form-grid">
+                <input id="eventNameInput" class="input" placeholder="Nazwa eventu" />
+                <select id="eventTypeInput" class="select">
+                  ${buildEventTypeOptions()}
+                </select>
+                <input id="eventDateInput" class="input" type="date" />
+                <input
+                  id="eventImageInput"
+                  class="input"
+                  placeholder="Link do grafiki eventu (URL)"
+                  oninput="updateImagePreview()"
+                />
+
+                <div class="preview-card">
+                  <div class="preview-message">
+                    Wklej link do plakatu, logo albo grafiki promocyjnej. Jeśli link działa, podgląd pokaże się niżej.
+                  </div>
+                  <img id="eventImagePreview" class="preview-image" alt="Podgląd grafiki eventu" />
+                  <div id="eventImageError" class="helper hidden" style="color:#b42318; margin-top:10px;">
+                    Nie udało się wczytać grafiki z tego linku.
+                  </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="addEvent('${placeId}')">Dodaj event</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Usuwanie</div>
+            <button class="btn btn-danger" onclick="deleteMarker('${placeId}')">
+              Usuń całą pineskę
+            </button>
+          </div>
+        `;
       }
 
       return `
@@ -1085,11 +1304,7 @@
               <div class="meta-value">${placeData.lat.toFixed(5)}, ${placeData.lng.toFixed(5)}</div>
             </div>
 
-            <div class="button-row single">
-              <button class="btn btn-warning" onclick="startEditPlace('${placeId}')">Edytuj miejsce</button>
-            </div>
-
-            <div id="placeEditBox"></div>
+            ${adminPlaceControls}
           </div>
         </div>
 
@@ -1098,43 +1313,7 @@
           ${eventsHtml}
         </div>
 
-        <div class="section">
-          <div class="section-title">Dodaj nowy event</div>
-          <div class="card">
-            <div class="form-grid">
-              <input id="eventNameInput" class="input" placeholder="Nazwa eventu" />
-              <select id="eventTypeInput" class="select">
-                ${buildEventTypeOptions()}
-              </select>
-              <input id="eventDateInput" class="input" type="date" />
-              <input
-                id="eventImageInput"
-                class="input"
-                placeholder="Link do grafiki eventu (URL)"
-                oninput="updateImagePreview()"
-              />
-
-              <div class="preview-card">
-                <div class="preview-message">
-                  Wklej link do plakatu, logo albo grafiki promocyjnej. Jeśli link działa, podgląd pokaże się niżej.
-                </div>
-                <img id="eventImagePreview" class="preview-image" alt="Podgląd grafiki eventu" />
-                <div id="eventImageError" class="helper" style="display:none; color:#b42318; margin-top:10px;">
-                  Nie udało się wczytać grafiki z tego linku.
-                </div>
-              </div>
-
-              <button class="btn btn-primary" onclick="addEvent('${placeId}')">Dodaj event</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Usuwanie</div>
-          <button class="btn btn-danger" onclick="deleteMarker('${placeId}')">
-            Usuń całą pineskę
-          </button>
-        </div>
+        ${adminAddEventSection}
       `;
     }
 
@@ -1142,7 +1321,9 @@
       selectedPlaceId = placeData.id;
       openSidebar(
         placeData.placeName || "Miejsce",
-        "Tutaj zarządzasz eventami przypisanymi do tej pineski.",
+        isAdmin
+          ? "Tutaj zarządzasz eventami przypisanymi do tej pineski."
+          : "Tutaj przeglądasz eventy przypisane do tej pineski.",
         buildPlaceDetailsPanel(placeData)
       );
 
@@ -1157,6 +1338,7 @@
     }
 
     function startEditPlace(placeId) {
+      if (!isAdmin) return;
       const place = markers[placeId] ? markers[placeId].placeData : null;
       if (!place) return;
 
@@ -1167,6 +1349,7 @@
     }
 
     function startEditEvent(placeId, eventIndex) {
+      if (!isAdmin) return;
       const place = markers[placeId] ? markers[placeId].placeData : null;
       if (!place || !place.events[eventIndex]) return;
 
@@ -1188,12 +1371,12 @@
 
       preview.onerror = function() {
         preview.style.display = "none";
-        error.style.display = "block";
+        error.classList.remove("hidden");
       };
 
       preview.onload = function() {
         preview.style.display = "block";
-        error.style.display = "none";
+        error.classList.add("hidden");
       };
     }
 
@@ -1209,11 +1392,11 @@
       if (!value) {
         preview.style.display = "none";
         preview.removeAttribute("src");
-        error.style.display = "none";
+        error.classList.add("hidden");
         return;
       }
 
-      error.style.display = "none";
+      error.classList.add("hidden");
       preview.style.display = "none";
       preview.src = value;
     }
@@ -1258,6 +1441,8 @@
     }
 
     async function addPlace(lat, lng) {
+      if (!isAdmin) return;
+
       try {
         const placeNameInput = document.getElementById("placeNameInput");
         const cityInput = document.getElementById("cityInput");
@@ -1279,11 +1464,11 @@
         }
 
         const placePayload = {
-          placeName: placeName,
-          city: city,
-          street: street,
-          lat: lat,
-          lng: lng,
+          placeName,
+          city,
+          street,
+          lat,
+          lng,
           events: [],
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -1306,6 +1491,8 @@
     }
 
     async function addEvent(placeId) {
+      if (!isAdmin) return;
+
       try {
         const ref = db.collection("places").doc(placeId);
         const snap = await ref.get();
@@ -1353,9 +1540,7 @@
           imageUrl: eventImageUrl
         });
 
-        await ref.update({
-          events: placeData.events
-        });
+        await ref.update({ events: placeData.events });
 
         markers[placeId].placeData = placeData;
         rebuildPlacesCache();
@@ -1369,6 +1554,8 @@
     }
 
     async function savePlaceEdit(placeId) {
+      if (!isAdmin) return;
+
       try {
         const ref = db.collection("places").doc(placeId);
         const snap = await ref.get();
@@ -1393,11 +1580,7 @@
           return;
         }
 
-        await ref.update({
-          placeName: placeName,
-          city: city,
-          street: street
-        });
+        await ref.update({ placeName, city, street });
 
         placeData.placeName = placeName;
         placeData.city = city;
@@ -1415,6 +1598,8 @@
     }
 
     async function saveEventEdit(placeId, eventIndex) {
+      if (!isAdmin) return;
+
       try {
         const ref = db.collection("places").doc(placeId);
         const snap = await ref.get();
@@ -1425,13 +1610,8 @@
         }
 
         const placeData = normalizePlace(snap);
-        if (!placeData) {
-          alert("Nie udało się odczytać miejsca.");
-          return;
-        }
-
-        if (!placeData.events[eventIndex]) {
-          alert("Nie znaleziono eventu.");
+        if (!placeData || !placeData.events[eventIndex]) {
+          alert("Nie udało się odczytać eventu.");
           return;
         }
 
@@ -1455,16 +1635,9 @@
           return;
         }
 
-        placeData.events[eventIndex] = {
-          name: name,
-          type: type,
-          date: date,
-          imageUrl: imageUrl
-        };
+        placeData.events[eventIndex] = { name, type, date, imageUrl };
 
-        await ref.update({
-          events: placeData.events
-        });
+        await ref.update({ events: placeData.events });
 
         markers[placeId].placeData = placeData;
         rebuildPlacesCache();
@@ -1478,6 +1651,8 @@
     }
 
     async function deleteEvent(placeId, eventIndex) {
+      if (!isAdmin) return;
+
       try {
         const confirmed = confirm("Na pewno usunąć ten event?");
         if (!confirmed) return;
@@ -1491,21 +1666,14 @@
         }
 
         const placeData = normalizePlace(snap);
-        if (!placeData) {
-          alert("Nie udało się odczytać danych miejsca.");
-          return;
-        }
-
-        if (eventIndex < 0 || eventIndex >= placeData.events.length) {
+        if (!placeData || eventIndex < 0 || eventIndex >= placeData.events.length) {
           alert("Nieprawidłowy event.");
           return;
         }
 
         placeData.events.splice(eventIndex, 1);
 
-        await ref.update({
-          events: placeData.events
-        });
+        await ref.update({ events: placeData.events });
 
         markers[placeId].placeData = placeData;
         rebuildPlacesCache();
@@ -1519,6 +1687,8 @@
     }
 
     async function deleteMarker(placeId) {
+      if (!isAdmin) return;
+
       try {
         const confirmed = confirm("Na pewno usunąć całą pineskę i wszystkie eventy?");
         if (!confirmed) return;
@@ -1600,14 +1770,9 @@
 
     function isDateInRange(eventDate, exactDate, dateFrom, dateTo) {
       if (!eventDate) return false;
-
-      if (exactDate) {
-        return eventDate === exactDate;
-      }
-
+      if (exactDate) return eventDate === exactDate;
       if (dateFrom && eventDate < dateFrom) return false;
       if (dateTo && eventDate > dateTo) return false;
-
       return true;
     }
 
@@ -1635,10 +1800,7 @@
           if (placeNameQuery && !placeNameNorm.includes(placeNameQuery)) return;
           if (cityQuery && !cityNorm.includes(cityQuery)) return;
           if (eventTypeQuery && eventTypeNorm !== eventTypeQuery) return;
-
-          if (exactDate || dateFrom || dateTo) {
-            if (!isDateInRange(eventItem.date || "", exactDate, dateFrom, dateTo)) return;
-          }
+          if ((exactDate || dateFrom || dateTo) && !isDateInRange(eventItem.date || "", exactDate, dateFrom, dateTo)) return;
 
           results.push({
             placeId: place.id,
@@ -1656,14 +1818,8 @@
       });
 
       results.sort(function(a, b) {
-        if (sortMode === "date_desc") {
-          return (b.eventDate || "").localeCompare(a.eventDate || "");
-        }
-
-        if (sortMode === "name_asc") {
-          return a.eventName.localeCompare(b.eventName, "pl");
-        }
-
+        if (sortMode === "date_desc") return (b.eventDate || "").localeCompare(a.eventDate || "");
+        if (sortMode === "name_asc") return a.eventName.localeCompare(b.eventName, "pl");
         return (a.eventDate || "").localeCompare(b.eventDate || "");
       });
 
@@ -1814,12 +1970,24 @@
       placeSearchResults.innerHTML = "";
     }
 
-    closeSidebarX.addEventListener("click", function() {
-      closeSidebar();
+    openAdminModalBtn.addEventListener("click", openAdminModal);
+    logoutAdminBtn.addEventListener("click", logoutAdmin);
+    closeSidebarX.addEventListener("click", closeSidebar);
+
+    adminModalOverlay.addEventListener("click", function(e) {
+      if (e.target === adminModalOverlay) {
+        closeAdminModal();
+      }
+    });
+
+    adminPasswordInput.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        loginAsAdmin();
+      }
     });
 
     map.on("click", function(e) {
-      if (!addPinMode) return;
+      if (!addPinMode || !isAdmin) return;
 
       const nearby = findNearbyPlace(e.latlng);
       if (nearby) {
@@ -1889,7 +2057,12 @@
     window.applyEventSuggestion = applyEventSuggestion;
     window.openEventSearchResult = openEventSearchResult;
     window.openPlaceSearchResult = openPlaceSearchResult;
+    window.openAdminModal = openAdminModal;
+    window.closeAdminModal = closeAdminModal;
+    window.loginAsAdmin = loginAsAdmin;
+    window.logoutAdmin = logoutAdmin;
 
+    updateAdminUI();
     loadPlaces();
   </script>
 </body>
