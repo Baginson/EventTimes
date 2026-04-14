@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="pl">
 <head>
-  <title>Mapa Eventów</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventTimes - Panel admina</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -17,9 +17,54 @@
       font-family: Arial, sans-serif;
     }
 
+    #topbar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      background: white;
+      padding: 12px 14px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+      max-width: 320px;
+    }
+
+    #topbar h1 {
+      margin: 0 0 6px 0;
+      font-size: 20px;
+    }
+
+    #topbar p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.4;
+      color: #333;
+    }
+
     #map {
       height: 100vh;
       width: 100%;
+    }
+
+    .popup {
+      min-width: 260px;
+    }
+
+    .popup h3 {
+      margin: 0 0 4px 0;
+      font-size: 18px;
+    }
+
+    .popup .city {
+      margin: 0 0 10px 0;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .popup .section-title {
+      margin: 12px 0 6px 0;
+      font-weight: bold;
+      font-size: 14px;
     }
 
     .popup input,
@@ -28,15 +73,80 @@
       margin-top: 6px;
       padding: 8px;
       box-sizing: border-box;
+      font-size: 14px;
     }
 
     .popup ul {
       padding-left: 18px;
       margin: 8px 0;
     }
+
+    .popup li {
+      margin-bottom: 8px;
+    }
+
+    .event-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .event-row:last-child {
+      border-bottom: none;
+    }
+
+    .event-name {
+      font-weight: bold;
+    }
+
+    .event-date {
+      font-size: 13px;
+      color: #555;
+    }
+
+    .delete-btn {
+      background: #c62828;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .delete-btn:hover {
+      background: #a61f1f;
+    }
+
+    .add-btn {
+      background: #1565c0;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .add-btn:hover {
+      background: #0f4f99;
+    }
+
+    .danger-zone {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid #ddd;
+    }
   </style>
 </head>
 <body>
+  <div id="topbar">
+    <h1>EventTimes</h1>
+    <p>
+      Panel admina. Kliknij na mapie, aby dodać nowe miejsce. Kliknij istniejącą pineskę,
+      aby dopisać event lub usunąć dane.
+    </p>
+  </div>
+
   <div id="map"></div>
 
   <script>
@@ -67,93 +177,189 @@
 
     function escapeHtml(text) {
       const div = document.createElement("div");
-      div.textContent = text;
+      div.textContent = text || "";
       return div.innerHTML;
     }
 
-    function buildPopupContent(key, list) {
-      let html = '<div class="popup"><b>Eventy:</b>';
+    function formatDate(dateString) {
+      if (!dateString) return "Brak daty";
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return escapeHtml(dateString);
 
-      if (list.length > 0) {
-        html += "<ul>";
-        list.forEach(function(eventName) {
-          html += "<li>" + escapeHtml(eventName) + "</li>";
-        });
-        html += "</ul>";
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+
+      return `${day}.${month}.${year}`;
+    }
+
+    function buildPopupContent(key, placeData) {
+      const placeName = placeData?.placeName || "";
+      const city = placeData?.city || "";
+      const events = Array.isArray(placeData?.events) ? placeData.events : [];
+
+      let html = `<div class="popup">`;
+
+      if (placeName) {
+        html += `<h3>${escapeHtml(placeName)}</h3>`;
       } else {
-        html += "<p>Brak eventów w tym miejscu.</p>";
+        html += `<h3>Nowe miejsce</h3>`;
       }
 
-      html +=
-        '<input id="eventInput" placeholder="Dodaj event" />' +
-        '<button onclick="addEvent(\'' + key + '\')">Dodaj</button>' +
-        "</div>";
+      if (city) {
+        html += `<p class="city">${escapeHtml(city)}</p>`;
+      }
+
+      html += `<div class="section-title">Eventy</div>`;
+
+      if (events.length > 0) {
+        html += `<div>`;
+        events.forEach(function(eventItem, index) {
+          html += `
+            <div class="event-row">
+              <div class="event-name">${escapeHtml(eventItem.name || "Bez nazwy")}</div>
+              <div class="event-date">${formatDate(eventItem.date)}</div>
+              <button class="delete-btn" onclick="deleteEvent('${key}', ${index})">
+                Usuń ten event
+              </button>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      } else {
+        html += `<p>Brak eventów w tym miejscu.</p>`;
+      }
+
+      html += `<div class="section-title">Dodaj nowy event</div>`;
+
+      if (!placeName) {
+        html += `
+          <input id="placeName-${key}" placeholder="Nazwa miejsca" />
+          <input id="city-${key}" placeholder="Miasto" />
+        `;
+      }
+
+      html += `
+        <input id="eventName-${key}" placeholder="Nazwa eventu" />
+        <input id="eventDate-${key}" type="date" />
+        <button class="add-btn" onclick="addEvent('${key}')">Zapisz</button>
+      `;
+
+      if (placeName) {
+        html += `
+          <div class="danger-zone">
+            <button class="delete-btn" onclick="deleteMarker('${key}')">
+              Usuń całą pineskę
+            </button>
+          </div>
+        `;
+      }
+
+      html += `</div>`;
 
       return html;
     }
 
-    function renderMarker(key, coords, list) {
+    function renderMarker(key, coords, placeData) {
       if (markers[key]) {
-        markers[key].setPopupContent(buildPopupContent(key, list));
+        markers[key].setPopupContent(buildPopupContent(key, placeData));
         return;
       }
 
       const marker = L.marker(coords).addTo(map);
-      marker.bindPopup(buildPopupContent(key, list));
+      marker.bindPopup(buildPopupContent(key, placeData));
       markers[key] = marker;
     }
 
     async function loadEvents() {
       try {
-        const snapshot = await db.collection("events").get();
+        const snapshot = await db.collection("places").get();
 
         snapshot.forEach(function(doc) {
           const data = doc.data();
-          const coordsArr = data.coords.split(",");
+          const coordsArr = doc.id.split(",");
           const coords = [parseFloat(coordsArr[0]), parseFloat(coordsArr[1])];
-          const list = Array.isArray(data.list) ? data.list : [];
 
-          renderMarker(doc.id, coords, list);
+          renderMarker(doc.id, coords, {
+            placeName: data.placeName || "",
+            city: data.city || "",
+            events: Array.isArray(data.events) ? data.events : []
+          });
         });
       } catch (error) {
         console.error("Błąd loadEvents:", error);
-        alert("Nie udało się wczytać eventów.");
+        alert("Nie udało się wczytać miejsc.");
       }
     }
 
     async function addEvent(key) {
       try {
-        const input = document.getElementById("eventInput");
-        const value = input.value.trim();
+        const ref = db.collection("places").doc(key);
+        const snap = await ref.get();
 
-        if (!value) {
+        let placeName = "";
+        let city = "";
+        let events = [];
+
+        const eventNameInput = document.getElementById(`eventName-${key}`);
+        const eventDateInput = document.getElementById(`eventDate-${key}`);
+
+        if (!eventNameInput) {
+          alert("Nie znaleziono formularza.");
+          return;
+        }
+
+        const eventName = eventNameInput.value.trim();
+        const eventDate = eventDateInput ? eventDateInput.value : "";
+
+        if (!eventName) {
           alert("Wpisz nazwę eventu.");
           return;
         }
 
-        const ref = db.collection("events").doc(key);
-        const snap = await ref.get();
-
-        let updatedList = [];
-
         if (snap.exists) {
-          updatedList = Array.isArray(snap.data().list) ? snap.data().list : [];
-          updatedList.push(value);
-          await ref.update({ list: updatedList });
+          const data = snap.data();
+          placeName = data.placeName || "";
+          city = data.city || "";
+          events = Array.isArray(data.events) ? data.events : [];
         } else {
-          updatedList = [value];
-          await ref.set({
-            coords: key,
-            list: updatedList
-          });
+          const placeNameInput = document.getElementById(`placeName-${key}`);
+          const cityInput = document.getElementById(`city-${key}`);
+
+          placeName = placeNameInput ? placeNameInput.value.trim() : "";
+          city = cityInput ? cityInput.value.trim() : "";
+
+          if (!placeName) {
+            alert("Wpisz nazwę miejsca.");
+            return;
+          }
+
+          events = [];
         }
+
+        events.push({
+          name: eventName,
+          date: eventDate || ""
+        });
+
+        await ref.set({
+          placeName: placeName,
+          city: city,
+          coords: key,
+          events: events
+        });
 
         const coordsArr = key.split(",");
         const coords = [parseFloat(coordsArr[0]), parseFloat(coordsArr[1])];
 
-        renderMarker(key, coords, updatedList);
+        const updatedPlaceData = {
+          placeName: placeName,
+          city: city,
+          events: events
+        };
 
-        alert("Dodano event!");
+        renderMarker(key, coords, updatedPlaceData);
+
         map.closePopup();
 
         if (markers[key]) {
@@ -161,11 +367,97 @@
         }
       } catch (error) {
         console.error("Błąd addEvent:", error);
-        alert("Nie udało się dodać eventu.");
+        alert("Nie udało się zapisać danych.");
+      }
+    }
+
+    async function deleteEvent(key, eventIndex) {
+      try {
+        const confirmed = confirm("Na pewno usunąć ten event?");
+        if (!confirmed) return;
+
+        const ref = db.collection("places").doc(key);
+        const snap = await ref.get();
+
+        if (!snap.exists) {
+          alert("To miejsce już nie istnieje.");
+          return;
+        }
+
+        const data = snap.data();
+        const events = Array.isArray(data.events) ? data.events : [];
+
+        if (eventIndex < 0 || eventIndex >= events.length) {
+          alert("Nieprawidłowy event.");
+          return;
+        }
+
+        events.splice(eventIndex, 1);
+
+        if (events.length === 0) {
+          const removeWholeMarker = confirm(
+            "To był ostatni event w tym miejscu. Czy usunąć całą pineskę?"
+          );
+
+          if (removeWholeMarker) {
+            await ref.delete();
+
+            if (markers[key]) {
+              map.removeLayer(markers[key]);
+              delete markers[key];
+            }
+
+            map.closePopup();
+            return;
+          }
+        }
+
+        await ref.update({ events: events });
+
+        const coordsArr = key.split(",");
+        const coords = [parseFloat(coordsArr[0]), parseFloat(coordsArr[1])];
+
+        const updatedPlaceData = {
+          placeName: data.placeName || "",
+          city: data.city || "",
+          events: events
+        };
+
+        renderMarker(key, coords, updatedPlaceData);
+
+        map.closePopup();
+
+        if (markers[key]) {
+          markers[key].openPopup();
+        }
+      } catch (error) {
+        console.error("Błąd deleteEvent:", error);
+        alert("Nie udało się usunąć eventu.");
+      }
+    }
+
+    async function deleteMarker(key) {
+      try {
+        const confirmed = confirm("Na pewno usunąć całą pineskę i wszystkie eventy?");
+        if (!confirmed) return;
+
+        await db.collection("places").doc(key).delete();
+
+        if (markers[key]) {
+          map.removeLayer(markers[key]);
+          delete markers[key];
+        }
+
+        map.closePopup();
+      } catch (error) {
+        console.error("Błąd deleteMarker:", error);
+        alert("Nie udało się usunąć pineski.");
       }
     }
 
     window.addEvent = addEvent;
+    window.deleteEvent = deleteEvent;
+    window.deleteMarker = deleteMarker;
 
     map.on("click", function(e) {
       const key = getKey(e.latlng);
@@ -178,7 +470,7 @@
 
       L.popup()
         .setLatLng(e.latlng)
-        .setContent(buildPopupContent(key, []))
+        .setContent(buildPopupContent(key, null))
         .openOn(map);
     });
 
