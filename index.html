@@ -27,12 +27,15 @@
       --danger: #d92d20;
       --danger-hover: #b42318;
       --success: #15803d;
+      --success-hover: #11662f;
+      --soft: #eef2f7;
+      --soft-hover: #e4e9f1;
+      --warning: #f59e0b;
       --shadow: 0 12px 32px rgba(18, 25, 38, 0.12);
       --radius: 18px;
     }
 
-    html,
-    body {
+    html, body {
       margin: 0;
       padding: 0;
       height: 100%;
@@ -52,13 +55,15 @@
       top: 14px;
       left: 14px;
       z-index: 1200;
-      width: min(420px, calc(100vw - 28px));
-      background: rgba(255, 255, 255, 0.96);
+      width: min(500px, calc(100vw - 28px));
+      background: rgba(255, 255, 255, 0.97);
       backdrop-filter: blur(10px);
       border: 1px solid rgba(230, 233, 239, 0.9);
       border-radius: 20px;
       box-shadow: var(--shadow);
       padding: 16px;
+      max-height: calc(100vh - 28px);
+      overflow-y: auto;
     }
 
     #topbar h1 {
@@ -81,7 +86,8 @@
       margin-top: 14px;
     }
 
-    .topbar-btn {
+    .topbar-btn,
+    .btn {
       border: none;
       border-radius: 12px;
       padding: 11px 14px;
@@ -91,22 +97,53 @@
       transition: 0.2s ease;
     }
 
-    .primary-btn {
+    .btn {
+      width: 100%;
+    }
+
+    .primary-btn,
+    .btn-primary {
       background: var(--primary);
       color: white;
     }
 
-    .primary-btn:hover {
+    .primary-btn:hover,
+    .btn-primary:hover {
       background: var(--primary-hover);
     }
 
-    .secondary-btn {
-      background: #eef2f7;
+    .secondary-btn,
+    .btn-soft {
+      background: var(--soft);
       color: #1d2939;
     }
 
-    .secondary-btn:hover {
-      background: #e5ebf3;
+    .secondary-btn:hover,
+    .btn-soft:hover {
+      background: var(--soft-hover);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: var(--success-hover);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger-hover);
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: white;
     }
 
     .active-mode {
@@ -126,13 +163,142 @@
       width: fit-content;
     }
 
+    .search-box {
+      margin-top: 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+
+    .search-title {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .input,
+    .select {
+      width: 100%;
+      border: 1px solid #d7dde7;
+      border-radius: 12px;
+      padding: 12px 13px;
+      font-size: 14px;
+      background: white;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .input:focus,
+    .select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.12);
+    }
+
+    .helper {
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+      margin-top: -2px;
+    }
+
+    .search-results {
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .search-result {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fbfcfe;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .search-result:hover {
+      background: #f3f7ff;
+      border-color: #cfdaf5;
+    }
+
+    .search-result-title {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+
+    .search-result-meta {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .search-empty {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      background: #fafcff;
+      border: 1px dashed #cfd7e4;
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .autocomplete-wrap {
+      position: relative;
+    }
+
+    .autocomplete-list {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 6px);
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      z-index: 1600;
+      overflow: hidden;
+      display: none;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .autocomplete-item {
+      padding: 11px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f2f6;
+    }
+
+    .autocomplete-item:last-child {
+      border-bottom: none;
+    }
+
+    .autocomplete-item:hover {
+      background: #f4f8ff;
+    }
+
     #sidebar {
       position: absolute;
       top: 0;
       right: 0;
       width: 35vw;
-      min-width: 360px;
-      max-width: 560px;
+      min-width: 380px;
+      max-width: 650px;
       height: 100vh;
       background: var(--panel);
       border-left: 1px solid var(--border);
@@ -177,7 +343,7 @@
 
     #close-sidebar {
       border: none;
-      background: #eef2f7;
+      background: var(--soft);
       color: #111827;
       width: 40px;
       height: 40px;
@@ -188,7 +354,7 @@
     }
 
     #close-sidebar:hover {
-      background: #e4e9f1;
+      background: var(--soft-hover);
     }
 
     #sidebar-content {
@@ -241,73 +407,15 @@
       word-break: break-word;
     }
 
-    .form-grid {
+    .button-row {
       display: grid;
       gap: 10px;
+      grid-template-columns: 1fr 1fr;
+      margin-top: 12px;
     }
 
-    .input,
-    .select {
-      width: 100%;
-      border: 1px solid #d7dde7;
-      border-radius: 12px;
-      padding: 12px 13px;
-      font-size: 14px;
-      background: white;
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .input:focus,
-    .select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.12);
-    }
-
-    .helper {
-      font-size: 12px;
-      line-height: 1.45;
-      color: var(--muted);
-      margin-top: -2px;
-    }
-
-    .btn {
-      border: none;
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.2s ease;
-      width: 100%;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: var(--primary-hover);
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: white;
-    }
-
-    .btn-danger:hover {
-      background: var(--danger-hover);
-    }
-
-    .btn-soft {
-      background: #eef2f7;
-      color: #1d2939;
-    }
-
-    .btn-soft:hover {
-      background: #e4e9f1;
+    .button-row.single {
+      grid-template-columns: 1fr;
     }
 
     .event-list {
@@ -409,6 +517,12 @@
       background: #fafcff;
     }
 
+    .editing-box {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #d8deea;
+    }
+
     @media (max-width: 980px) {
       #sidebar {
         width: 100vw;
@@ -420,6 +534,11 @@
         width: calc(100vw - 28px);
         max-width: none;
       }
+
+      .two-col,
+      .button-row {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -427,7 +546,7 @@
   <div id="topbar">
     <h1>EventTimes</h1>
     <p>
-      Panel admina. Dodawaj miejsca, buduj historię eventów i podepnij do każdego wydarzenia grafikę przez link URL.
+      Panel admina. Dodawaj miejsca, edytuj eventy i wyszukuj po miejscu, mieście, rodzaju oraz dacie.
     </p>
 
     <div id="topbar-buttons">
@@ -436,6 +555,47 @@
     </div>
 
     <div id="status-badge">Tryb dodawania pinezki jest aktywny</div>
+
+    <div class="search-box">
+      <div class="search-title">Wyszukiwarka eventów</div>
+
+      <div class="form-grid">
+        <div class="autocomplete-wrap">
+          <input id="searchEventName" class="input" placeholder="Nazwa eventu" autocomplete="off" />
+          <div id="searchEventSuggestions" class="autocomplete-list"></div>
+        </div>
+
+        <input id="searchPlaceName" class="input" placeholder="Nazwa miejsca / pineski" />
+        <input id="searchCity" class="input" placeholder="Miasto" />
+
+        <select id="searchEventType" class="select">
+          <option value="">Wszystkie rodzaje eventów</option>
+          <option value="Gala MMA">Gala MMA</option>
+          <option value="Koncert">Koncert</option>
+          <option value="Stand-up">Stand-up</option>
+        </select>
+
+        <input id="searchExactDate" class="input" type="date" />
+
+        <div class="two-col">
+          <input id="searchDateFrom" class="input" type="date" />
+          <input id="searchDateTo" class="input" type="date" />
+        </div>
+
+        <select id="searchSort" class="select">
+          <option value="date_asc">Sortuj: data rosnąco</option>
+          <option value="date_desc">Sortuj: data malejąco</option>
+          <option value="name_asc">Sortuj: nazwa A-Z</option>
+        </select>
+
+        <div class="button-row">
+          <button id="run-search-btn" class="btn btn-primary">Szukaj</button>
+          <button id="clear-search-btn" class="btn btn-soft">Wyczyść</button>
+        </div>
+      </div>
+
+      <div id="searchResults" class="search-results"></div>
+    </div>
   </div>
 
   <div id="map"></div>
@@ -478,6 +638,7 @@
     const markers = {};
     let addPinMode = false;
     let selectedPlaceId = null;
+    let allPlacesCache = [];
 
     const sidebar = document.getElementById("sidebar");
     const sidebarTitle = document.getElementById("sidebar-title");
@@ -487,6 +648,16 @@
     const closeSidebarBtn = document.getElementById("close-sidebar-btn");
     const closeSidebarX = document.getElementById("close-sidebar");
     const statusBadge = document.getElementById("status-badge");
+    const searchResults = document.getElementById("searchResults");
+    const searchEventNameInput = document.getElementById("searchEventName");
+    const searchPlaceNameInput = document.getElementById("searchPlaceName");
+    const searchCityInput = document.getElementById("searchCity");
+    const searchEventTypeInput = document.getElementById("searchEventType");
+    const searchExactDateInput = document.getElementById("searchExactDate");
+    const searchDateFromInput = document.getElementById("searchDateFrom");
+    const searchDateToInput = document.getElementById("searchDateTo");
+    const searchSortInput = document.getElementById("searchSort");
+    const searchSuggestionsBox = document.getElementById("searchEventSuggestions");
 
     function escapeHtml(text) {
       const div = document.createElement("div");
@@ -494,16 +665,22 @@
       return div.innerHTML;
     }
 
+    function normalizeString(value) {
+      return (value || "")
+        .toString()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+    }
+
     function formatDate(dateString) {
       if (!dateString) return "Brak daty";
-
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return dateString;
-
       const day = String(date.getDate()).padStart(2, "0");
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const year = date.getFullYear();
-
       return `${day}.${month}.${year}`;
     }
 
@@ -572,7 +749,14 @@
         lat: lat,
         lng: lng,
         events: Array.isArray(data.events)
-          ? data.events
+          ? data.events.map(function(item) {
+              return {
+                name: item.name || "",
+                type: item.type || "",
+                date: item.date || "",
+                imageUrl: item.imageUrl || item.image || ""
+              };
+            })
           : Array.isArray(data.list)
             ? data.list.map(function(item) {
                 if (typeof item === "string") {
@@ -592,6 +776,12 @@
               })
             : []
       };
+    }
+
+    function rebuildPlacesCache() {
+      allPlacesCache = Object.values(markers).map(function(marker) {
+        return marker.placeData;
+      });
     }
 
     function findNearbyPlace(latlng) {
@@ -628,6 +818,51 @@
               </div>
               <button class="btn btn-primary" onclick="addPlace(${lat}, ${lng})">Zapisz pineszkę</button>
               <button class="btn btn-soft" onclick="cancelAddPlace()">Anuluj</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function buildPlaceEditPanel(placeData) {
+      return `
+        <div class="editing-box">
+          <div class="form-grid">
+            <input id="editPlaceNameInput" class="input" value="${escapeHtml(placeData.placeName)}" placeholder="Nazwa miejsca" />
+            <input id="editPlaceCityInput" class="input" value="${escapeHtml(placeData.city)}" placeholder="Miasto" />
+            <input id="editPlaceStreetInput" class="input" value="${escapeHtml(placeData.street)}" placeholder="Ulica" />
+
+            <div class="button-row">
+              <button class="btn btn-success" onclick="savePlaceEdit('${placeData.id}')">Zapisz miejsce</button>
+              <button class="btn btn-soft" onclick="renderPlaceSidebarById('${placeData.id}')">Anuluj</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function buildEventEditPanel(placeId, eventIndex, eventItem) {
+      return `
+        <div class="editing-box">
+          <div class="form-grid">
+            <input id="editEventName-${eventIndex}" class="input" value="${escapeHtml(eventItem.name)}" placeholder="Nazwa eventu" />
+
+            <select id="editEventType-${eventIndex}" class="select">
+              ${buildEventTypeOptions(eventItem.type || "")}
+            </select>
+
+            <input id="editEventDate-${eventIndex}" class="input" type="date" value="${escapeHtml(eventItem.date || "")}" />
+
+            <input
+              id="editEventImage-${eventIndex}"
+              class="input"
+              value="${escapeHtml(eventItem.imageUrl || "")}"
+              placeholder="Link do grafiki eventu (URL)"
+            />
+
+            <div class="button-row">
+              <button class="btn btn-success" onclick="saveEventEdit('${placeId}', ${eventIndex})">Zapisz event</button>
+              <button class="btn btn-soft" onclick="renderPlaceSidebarById('${placeId}')">Anuluj</button>
             </div>
           </div>
         </div>
@@ -676,9 +911,12 @@
                   <div class="event-meta-item"><strong>Data:</strong> ${eventDate}</div>
                 </div>
 
-                <button class="btn btn-danger" onclick="deleteEvent('${placeId}', ${index})">
-                  Usuń event
-                </button>
+                <div class="button-row">
+                  <button class="btn btn-warning" onclick="startEditEvent('${placeId}', ${index})">Edytuj event</button>
+                  <button class="btn btn-danger" onclick="deleteEvent('${placeId}', ${index})">Usuń event</button>
+                </div>
+
+                <div id="eventEditBox-${index}"></div>
               </div>
             </div>
           `;
@@ -710,6 +948,12 @@
               <div class="meta-label">Współrzędne</div>
               <div class="meta-value">${placeData.lat.toFixed(5)}, ${placeData.lng.toFixed(5)}</div>
             </div>
+
+            <div class="button-row single">
+              <button class="btn btn-warning" onclick="startEditPlace('${placeId}')">Edytuj miejsce</button>
+            </div>
+
+            <div id="placeEditBox"></div>
           </div>
         </div>
 
@@ -723,7 +967,7 @@
           <div class="card">
             <div class="form-grid">
               <input id="eventNameInput" class="input" placeholder="Nazwa eventu" />
-              
+
               <select id="eventTypeInput" class="select">
                 ${buildEventTypeOptions()}
               </select>
@@ -774,6 +1018,34 @@
       }, 0);
     }
 
+    function renderPlaceSidebarById(placeId) {
+      if (!markers[placeId]) return;
+      renderPlaceSidebar(markers[placeId].placeData);
+    }
+
+    function startEditPlace(placeId) {
+      const place = markers[placeId] ? markers[placeId].placeData : null;
+      if (!place) return;
+
+      const box = document.getElementById("placeEditBox");
+      if (!box) return;
+
+      box.innerHTML = buildPlaceEditPanel(place);
+    }
+
+    function startEditEvent(placeId, eventIndex) {
+      const place = markers[placeId] ? markers[placeId].placeData : null;
+      if (!place || !place.events[eventIndex]) return;
+
+      renderPlaceSidebar(place);
+
+      setTimeout(function() {
+        const box = document.getElementById(`eventEditBox-${eventIndex}`);
+        if (!box) return;
+        box.innerHTML = buildEventEditPanel(placeId, eventIndex, place.events[eventIndex]);
+      }, 0);
+    }
+
     function bindPreviewHandlers() {
       const input = document.getElementById("eventImageInput");
       const preview = document.getElementById("eventImagePreview");
@@ -819,6 +1091,7 @@
       if (markers[placeData.id]) {
         markers[placeData.id].placeData = placeData;
         markers[placeData.id].setLatLng(coords);
+        rebuildPlacesCache();
         return;
       }
 
@@ -830,6 +1103,7 @@
       });
 
       markers[placeData.id] = marker;
+      rebuildPlacesCache();
     }
 
     async function loadPlaces() {
@@ -841,6 +1115,9 @@
           if (!placeData) return;
           renderMarker(placeData);
         });
+
+        rebuildPlacesCache();
+        refreshEventNameSuggestions();
       } catch (error) {
         console.error("Błąd loadPlaces:", error);
         alert("Nie udało się wczytać miejsc.");
@@ -887,6 +1164,7 @@
 
         renderMarker(placeData);
         setAddPinMode(false);
+        refreshEventNameSuggestions();
         renderPlaceSidebar(placeData);
       } catch (error) {
         console.error("Błąd addPlace:", error);
@@ -947,10 +1225,120 @@
         });
 
         markers[placeId].placeData = placeData;
+        rebuildPlacesCache();
+        refreshEventNameSuggestions();
         renderPlaceSidebar(placeData);
       } catch (error) {
         console.error("Błąd addEvent:", error);
         alert("Nie udało się dodać eventu.");
+      }
+    }
+
+    async function savePlaceEdit(placeId) {
+      try {
+        const ref = db.collection("places").doc(placeId);
+        const snap = await ref.get();
+
+        if (!snap.exists) {
+          alert("To miejsce nie istnieje.");
+          return;
+        }
+
+        const placeData = normalizePlace(snap);
+        if (!placeData) {
+          alert("Nie udało się odczytać miejsca.");
+          return;
+        }
+
+        const placeName = document.getElementById("editPlaceNameInput").value.trim();
+        const city = document.getElementById("editPlaceCityInput").value.trim();
+        const street = document.getElementById("editPlaceStreetInput").value.trim();
+
+        if (!placeName) {
+          alert("Nazwa miejsca nie może być pusta.");
+          return;
+        }
+
+        await ref.update({
+          placeName: placeName,
+          city: city,
+          street: street
+        });
+
+        placeData.placeName = placeName;
+        placeData.city = city;
+        placeData.street = street;
+
+        markers[placeId].placeData = placeData;
+        rebuildPlacesCache();
+        renderPlaceSidebar(placeData);
+        runSearch();
+      } catch (error) {
+        console.error("Błąd savePlaceEdit:", error);
+        alert("Nie udało się zapisać miejsca.");
+      }
+    }
+
+    async function saveEventEdit(placeId, eventIndex) {
+      try {
+        const ref = db.collection("places").doc(placeId);
+        const snap = await ref.get();
+
+        if (!snap.exists) {
+          alert("To miejsce nie istnieje.");
+          return;
+        }
+
+        const placeData = normalizePlace(snap);
+        if (!placeData) {
+          alert("Nie udało się odczytać miejsca.");
+          return;
+        }
+
+        if (!placeData.events[eventIndex]) {
+          alert("Nie znaleziono eventu.");
+          return;
+        }
+
+        const name = document.getElementById(`editEventName-${eventIndex}`).value.trim();
+        const type = document.getElementById(`editEventType-${eventIndex}`).value.trim();
+        const date = document.getElementById(`editEventDate-${eventIndex}`).value;
+        const imageUrl = document.getElementById(`editEventImage-${eventIndex}`).value.trim();
+
+        if (!name) {
+          alert("Nazwa eventu nie może być pusta.");
+          return;
+        }
+
+        if (!type) {
+          alert("Wybierz rodzaj eventu.");
+          return;
+        }
+
+        if (!date) {
+          alert("Wybierz datę eventu.");
+          return;
+        }
+
+        placeData.events[eventIndex] = {
+          name: name,
+          type: type,
+          date: date,
+          imageUrl: imageUrl
+        };
+
+        await ref.update({
+          events: placeData.events
+        });
+
+        markers[placeId].placeData = placeData;
+        rebuildPlacesCache();
+        refreshEventNameSuggestions();
+        renderPlaceSidebar(placeData);
+        runSearch();
+      } catch (error) {
+        console.error("Błąd saveEventEdit:", error);
+        alert("Nie udało się zapisać eventu.");
       }
     }
 
@@ -985,7 +1373,10 @@
         });
 
         markers[placeId].placeData = placeData;
+        rebuildPlacesCache();
+        refreshEventNameSuggestions();
         renderPlaceSidebar(placeData);
+        runSearch();
       } catch (error) {
         console.error("Błąd deleteEvent:", error);
         alert("Nie udało się usunąć eventu.");
@@ -1004,7 +1395,10 @@
           delete markers[placeId];
         }
 
+        rebuildPlacesCache();
+        refreshEventNameSuggestions();
         closeSidebar();
+        runSearch();
       } catch (error) {
         console.error("Błąd deleteMarker:", error);
         alert("Nie udało się usunąć pineski.");
@@ -1014,6 +1408,207 @@
     function cancelAddPlace() {
       setAddPinMode(false);
       closeSidebar();
+    }
+
+    function getAllEventNames() {
+      const names = new Set();
+
+      allPlacesCache.forEach(function(place) {
+        (place.events || []).forEach(function(eventItem) {
+          if (eventItem.name && eventItem.name.trim()) {
+            names.add(eventItem.name.trim());
+          }
+        });
+      });
+
+      return Array.from(names).sort(function(a, b) {
+        return a.localeCompare(b, "pl");
+      });
+    }
+
+    function refreshEventNameSuggestions() {
+      const query = searchEventNameInput.value.trim();
+      const allNames = getAllEventNames();
+
+      if (!query) {
+        searchSuggestionsBox.style.display = "none";
+        searchSuggestionsBox.innerHTML = "";
+        return;
+      }
+
+      const normalizedQuery = normalizeString(query);
+
+      const matches = allNames.filter(function(name) {
+        const n = normalizeString(name);
+        return n.startsWith(normalizedQuery) || n.includes(normalizedQuery);
+      }).slice(0, 8);
+
+      if (matches.length === 0) {
+        searchSuggestionsBox.style.display = "none";
+        searchSuggestionsBox.innerHTML = "";
+        return;
+      }
+
+      searchSuggestionsBox.innerHTML = matches.map(function(name) {
+        return `<div class="autocomplete-item" onclick="applyEventSuggestion('${escapeHtml(name).replace(/'/g, "\\'")}')">${escapeHtml(name)}</div>`;
+      }).join("");
+
+      searchSuggestionsBox.style.display = "block";
+    }
+
+    function applyEventSuggestion(value) {
+      searchEventNameInput.value = value;
+      searchSuggestionsBox.style.display = "none";
+      runSearch();
+    }
+
+    function isDateInRange(eventDate, exactDate, dateFrom, dateTo) {
+      if (!eventDate) return false;
+
+      if (exactDate) {
+        return eventDate === exactDate;
+      }
+
+      if (dateFrom && eventDate < dateFrom) return false;
+      if (dateTo && eventDate > dateTo) return false;
+
+      return true;
+    }
+
+    function runSearch() {
+      const eventNameQuery = normalizeString(searchEventNameInput.value);
+      const placeNameQuery = normalizeString(searchPlaceNameInput.value);
+      const cityQuery = normalizeString(searchCityInput.value);
+      const eventTypeQuery = normalizeString(searchEventTypeInput.value);
+      const exactDate = searchExactDateInput.value;
+      const dateFrom = searchDateFromInput.value;
+      const dateTo = searchDateToInput.value;
+      const sortMode = searchSortInput.value;
+
+      let results = [];
+
+      allPlacesCache.forEach(function(place) {
+        const placeNameNorm = normalizeString(place.placeName);
+        const cityNorm = normalizeString(place.city);
+
+        (place.events || []).forEach(function(eventItem, index) {
+          const eventNameNorm = normalizeString(eventItem.name);
+          const eventTypeNorm = normalizeString(eventItem.type);
+
+          if (eventNameQuery && !eventNameNorm.includes(eventNameQuery)) return;
+          if (placeNameQuery && !placeNameNorm.includes(placeNameQuery)) return;
+          if (cityQuery && !cityNorm.includes(cityQuery)) return;
+          if (eventTypeQuery && eventTypeNorm !== eventTypeQuery) return;
+
+          if (exactDate || dateFrom || dateTo) {
+            if (!isDateInRange(eventItem.date || "", exactDate, dateFrom, dateTo)) return;
+          }
+
+          results.push({
+            placeId: place.id,
+            eventIndex: index,
+            placeName: place.placeName || "Bez nazwy miejsca",
+            city: place.city || "Brak miasta",
+            street: place.street || "Brak ulicy",
+            lat: place.lat,
+            lng: place.lng,
+            eventName: eventItem.name || "Bez nazwy eventu",
+            eventType: eventItem.type || "Brak rodzaju",
+            eventDate: eventItem.date || "",
+            eventImageUrl: eventItem.imageUrl || ""
+          });
+        });
+      });
+
+      results.sort(function(a, b) {
+        if (sortMode === "date_desc") {
+          return (b.eventDate || "").localeCompare(a.eventDate || "");
+        }
+
+        if (sortMode === "name_asc") {
+          return a.eventName.localeCompare(b.eventName, "pl");
+        }
+
+        return (a.eventDate || "").localeCompare(b.eventDate || "");
+      });
+
+      renderSearchResults(results);
+    }
+
+    function renderSearchResults(results) {
+      if (
+        !searchEventNameInput.value.trim() &&
+        !searchPlaceNameInput.value.trim() &&
+        !searchCityInput.value.trim() &&
+        !searchEventTypeInput.value.trim() &&
+        !searchExactDateInput.value &&
+        !searchDateFromInput.value &&
+        !searchDateToInput.value
+      ) {
+        searchResults.innerHTML = "";
+        return;
+      }
+
+      if (results.length === 0) {
+        searchResults.innerHTML = `
+          <div class="search-empty">
+            Brak wyników dla podanych filtrów.
+          </div>
+        `;
+        return;
+      }
+
+      searchResults.innerHTML = results.map(function(item) {
+        return `
+          <div class="search-result" onclick="openSearchResult('${item.placeId}', ${item.eventIndex})">
+            <div class="search-result-title">${escapeHtml(item.eventName)}</div>
+            <div class="search-result-meta">
+              <strong>Miejsce:</strong> ${escapeHtml(item.placeName)}<br>
+              <strong>Miasto:</strong> ${escapeHtml(item.city)}<br>
+              <strong>Rodzaj:</strong> ${escapeHtml(item.eventType)}<br>
+              <strong>Data:</strong> ${escapeHtml(formatDate(item.eventDate))}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function openSearchResult(placeId, eventIndex) {
+      const marker = markers[placeId];
+      if (!marker) return;
+
+      map.flyTo([marker.placeData.lat, marker.placeData.lng], 14, {
+        animate: true,
+        duration: 0.8
+      });
+
+      renderPlaceSidebar(marker.placeData);
+
+      setTimeout(function() {
+        const eventCards = document.querySelectorAll(".event-card");
+        const targetCard = eventCards[eventIndex];
+        if (targetCard) {
+          targetCard.scrollIntoView({ behavior: "smooth", block: "start" });
+          targetCard.style.outline = "3px solid rgba(31,111,235,0.35)";
+          setTimeout(function() {
+            targetCard.style.outline = "";
+          }, 1800);
+        }
+      }, 250);
+    }
+
+    function clearSearch() {
+      searchEventNameInput.value = "";
+      searchPlaceNameInput.value = "";
+      searchCityInput.value = "";
+      searchEventTypeInput.value = "";
+      searchExactDateInput.value = "";
+      searchDateFromInput.value = "";
+      searchDateToInput.value = "";
+      searchSortInput.value = "date_asc";
+      searchResults.innerHTML = "";
+      searchSuggestionsBox.style.display = "none";
+      searchSuggestionsBox.innerHTML = "";
     }
 
     toggleAddPinBtn.addEventListener("click", function() {
@@ -1048,12 +1643,47 @@
       );
     });
 
+    document.getElementById("run-search-btn").addEventListener("click", runSearch);
+    document.getElementById("clear-search-btn").addEventListener("click", clearSearch);
+
+    [
+      searchPlaceNameInput,
+      searchCityInput,
+      searchEventTypeInput,
+      searchExactDateInput,
+      searchDateFromInput,
+      searchDateToInput,
+      searchSortInput
+    ].forEach(function(el) {
+      el.addEventListener("input", runSearch);
+      el.addEventListener("change", runSearch);
+    });
+
+    searchEventNameInput.addEventListener("input", function() {
+      refreshEventNameSuggestions();
+      runSearch();
+    });
+
+    document.addEventListener("click", function(e) {
+      if (!searchSuggestionsBox.contains(e.target) && e.target !== searchEventNameInput) {
+        searchSuggestionsBox.style.display = "none";
+      }
+    });
+
     window.addPlace = addPlace;
     window.addEvent = addEvent;
     window.deleteEvent = deleteEvent;
     window.deleteMarker = deleteMarker;
     window.cancelAddPlace = cancelAddPlace;
     window.updateImagePreview = updateImagePreview;
+    window.startEditPlace = startEditPlace;
+    window.savePlaceEdit = savePlaceEdit;
+    window.startEditEvent = startEditEvent;
+    window.saveEventEdit = saveEventEdit;
+    window.renderPlaceSidebarById = renderPlaceSidebarById;
+    window.runSearch = runSearch;
+    window.applyEventSuggestion = applyEventSuggestion;
+    window.openSearchResult = openSearchResult;
 
     loadPlaces();
   </script>
