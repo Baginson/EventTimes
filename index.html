@@ -1166,7 +1166,8 @@
           name: eventItem.name || "",
           type: eventItem.type || "",
           date: eventItem.date || "",
-          imageUrl: eventItem.imageUrl || eventItem.image || ""
+          imageUrl: eventItem.imageUrl || eventItem.image || "",
+          attendanceCount: typeof eventItem.attendanceCount === "number" ? eventItem.attendanceCount : 0
         };
       });
     }
@@ -1541,6 +1542,7 @@
           const eventName = escapeHtml(eventItem.name || "Bez nazwy");
           const eventType = escapeHtml(eventItem.type || "Brak");
           const eventDate = escapeHtml(formatDate(eventItem.date || ""));
+          const attendanceCount = typeof eventItem.attendanceCount === "number" ? eventItem.attendanceCount : 0;
 
           let adminEventButtons = "";
           if (isAdmin) {
@@ -1568,6 +1570,7 @@
                 <div class="event-meta-list">
                   <div class="event-meta-item"><strong>Rodzaj:</strong> ${eventType}</div>
                   <div class="event-meta-item"><strong>Data:</strong> ${eventDate}</div>
+                  <div class="event-meta-item"><strong>Było użytkowników:</strong> ${attendanceCount}</div>
                 </div>
 
                 ${buildAttendanceButton(placeData, eventItem)}
@@ -1578,6 +1581,16 @@
         });
 
         eventsHtml += `</div>`;
+      }
+
+      let coordsRow = "";
+      if (isAdmin) {
+        coordsRow = `
+          <div class="meta-row">
+            <div class="meta-label">Współrzędne</div>
+            <div class="meta-value">${placeData.lat.toFixed(5)}, ${placeData.lng.toFixed(5)}</div>
+          </div>
+        `;
       }
 
       let adminPlaceControls = "";
@@ -1652,11 +1665,7 @@
               <div class="meta-value">${escapeHtml(street)}</div>
             </div>
 
-            <div class="meta-row">
-              <div class="meta-label">Współrzędne</div>
-              <div class="meta-value">${placeData.lat.toFixed(5)}, ${placeData.lng.toFixed(5)}</div>
-            </div>
-
+            ${coordsRow}
             ${adminPlaceControls}
           </div>
         </div>
@@ -1834,37 +1843,71 @@
       if (!eventItem) return;
 
       const attendanceId = `${placeId}_${eventId}`;
-      const ref = db.collection("users").doc(currentUser.uid).collection("attendances").doc(attendanceId);
+      const attendanceRef = db.collection("users").doc(currentUser.uid).collection("attendances").doc(attendanceId);
+      const placeRef = db.collection("places").doc(placeId);
 
       try {
+        const placeSnap = await placeRef.get();
+        if (!placeSnap.exists) {
+          alert("To miejsce już nie istnieje.");
+          return;
+        }
+
+        const freshPlaceData = normalizePlace(placeSnap);
+        if (!freshPlaceData) return;
+
+        const eventIndex = freshPlaceData.events.findIndex(e => e.id === eventId);
+        if (eventIndex === -1) return;
+
         if (currentUserAttendanceMap[attendanceId]) {
-          await ref.delete();
+          await attendanceRef.delete();
           delete currentUserAttendanceMap[attendanceId];
+
+          const currentCount = typeof freshPlaceData.events[eventIndex].attendanceCount === "number"
+            ? freshPlaceData.events[eventIndex].attendanceCount
+            : 0;
+
+          freshPlaceData.events[eventIndex].attendanceCount = Math.max(0, currentCount - 1);
         } else {
           const payload = {
             placeId: placeId,
             eventId: eventId,
-            placeName: place.placeName || "",
-            city: place.city || "",
-            street: place.street || "",
-            eventName: eventItem.name || "",
-            type: eventItem.type || "",
-            date: eventItem.date || "",
-            imageUrl: eventItem.imageUrl || "",
+            placeName: freshPlaceData.placeName || "",
+            city: freshPlaceData.city || "",
+            street: freshPlaceData.street || "",
+            eventName: freshPlaceData.events[eventIndex].name || "",
+            type: freshPlaceData.events[eventIndex].type || "",
+            date: freshPlaceData.events[eventIndex].date || "",
+            imageUrl: freshPlaceData.events[eventIndex].imageUrl || "",
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           };
 
-          await ref.set(payload);
+          await attendanceRef.set(payload);
           currentUserAttendanceMap[attendanceId] = payload;
+
+          const currentCount = typeof freshPlaceData.events[eventIndex].attendanceCount === "number"
+            ? freshPlaceData.events[eventIndex].attendanceCount
+            : 0;
+
+          freshPlaceData.events[eventIndex].attendanceCount = currentCount + 1;
         }
 
+        await placeRef.update({
+          events: freshPlaceData.events
+        });
+
+        markers[placeId].placeData = freshPlaceData;
+        rebuildPlacesCache();
+
         if (selectedPlaceId === placeId) {
-          renderPlaceSidebar(place);
+          renderPlaceSidebar(freshPlaceData);
         }
 
         if (profileModalOverlay.classList.contains("open")) {
           renderProfileModal();
         }
+
+        runEventSearch();
       } catch (error) {
         console.error("Błąd toggleAttendance:", error);
         alert("Nie udało się zapisać Twojego wyboru.");
@@ -2008,7 +2051,8 @@
           name: eventName,
           type: eventType,
           date: eventDate,
-          imageUrl: eventImageUrl
+          imageUrl: eventImageUrl,
+          attendanceCount: 0
         });
 
         await ref.update({ events: placeData.events });
