@@ -5,11 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EventTimes</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
   <style>
     * {
@@ -17,29 +22,35 @@
     }
 
     :root {
-      --bg: #f5f7fb;
+      --bg: #eef5ff;
+      --bg-soft: #f7fbff;
       --panel: #ffffff;
-      --border: #e6e9ef;
-      --text: #151a23;
-      --muted: #687386;
-      --primary: #1f6feb;
-      --primary-hover: #1558be;
-      --danger: #d92d20;
-      --danger-hover: #b42318;
-      --success: #15803d;
-      --success-hover: #11662f;
+      --border: #dbe7fb;
+      --text: #10213d;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --navy: #102a56;
+      --navy-2: #17366b;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --success: #16a34a;
+      --success-hover: #15803d;
       --warning: #f59e0b;
-      --soft: #eef2f7;
-      --soft-hover: #e4e9f1;
-      --shadow: 0 12px 32px rgba(18, 25, 38, 0.12);
-      --radius: 18px;
+      --warning-hover: #d97706;
+      --soft: #edf4ff;
+      --soft-hover: #e0ecff;
+      --shadow: 0 18px 48px rgba(23, 54, 107, 0.12);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
     }
 
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: Arial, sans-serif;
+      font-family: "Inter", sans-serif;
       background: var(--bg);
       color: var(--text);
       overflow: hidden;
@@ -54,114 +65,38 @@
       display: none !important;
     }
 
-    /* TOP RIGHT ADMIN BUTTONS */
-    #admin-controls {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      z-index: 1250;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .admin-top-btn {
-      border: none;
-      border-radius: 14px;
-      padding: 11px 14px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.2s ease;
-      box-shadow: var(--shadow);
-      background: rgba(255,255,255,0.97);
-      color: #1d2939;
-    }
-
-    .admin-top-btn:hover {
-      background: #ffffff;
-    }
-
-    #admin-status-badge {
-      background: var(--success);
-      color: white;
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 12px;
-      font-weight: 800;
-      box-shadow: var(--shadow);
-    }
-
-    /* ADMIN MODAL */
-    #admin-modal-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 3000;
-      background: rgba(12, 18, 28, 0.45);
-      backdrop-filter: blur(6px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    #admin-modal-overlay.open {
-      display: flex;
-    }
-
-    #admin-modal {
-      width: min(420px, 100%);
-      background: white;
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
-      border: 1px solid rgba(230, 233, 239, 0.9);
-      padding: 24px;
-    }
-
-    #admin-modal h2 {
-      margin: 0 0 8px 0;
-      font-size: 24px;
-    }
-
-    #admin-modal p {
-      margin: 0 0 16px 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    /* SEARCH BAR LIKE GOOGLE MAPS */
+    /* Top left search shell */
     #search-shell {
       position: absolute;
-      top: 14px;
-      left: 14px;
+      top: 16px;
+      left: 16px;
       z-index: 1200;
-      width: min(430px, calc(100vw - 28px));
+      width: min(460px, calc(100vw - 32px));
     }
 
     #search-bar {
       width: 100%;
-      background: rgba(255, 255, 255, 0.98);
-      border: 1px solid rgba(230, 233, 239, 0.9);
-      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(219, 231, 251, 0.95);
+      border-radius: 22px;
       box-shadow: var(--shadow);
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
+      gap: 12px;
+      padding: 14px 16px;
       cursor: pointer;
+      backdrop-filter: blur(12px);
     }
 
     #search-bar-icon {
       font-size: 18px;
-      line-height: 1;
-      color: var(--muted);
+      color: var(--primary);
     }
 
     #search-bar-text {
       font-size: 15px;
-      color: #3a4658;
       font-weight: 600;
+      color: #334155;
       flex: 1;
     }
 
@@ -178,8 +113,8 @@
     #search-panel {
       margin-top: 10px;
       background: rgba(255, 255, 255, 0.98);
-      border: 1px solid rgba(230, 233, 239, 0.9);
-      border-radius: 20px;
+      border: 1px solid rgba(219, 231, 251, 0.95);
+      border-radius: 24px;
       box-shadow: var(--shadow);
       overflow: hidden;
       display: none;
@@ -191,34 +126,37 @@
     }
 
     .search-panel-head {
-      padding: 14px 14px 0 14px;
+      padding: 18px 18px 8px 18px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
     }
 
     .brand-title {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 800;
+      color: var(--navy);
       margin: 0 0 4px 0;
     }
 
     .brand-subtitle {
       font-size: 13px;
       color: var(--muted);
-      line-height: 1.45;
-      margin-bottom: 12px;
+      line-height: 1.5;
+      margin-bottom: 14px;
     }
 
     .search-tabs {
       display: flex;
       gap: 8px;
-      margin-bottom: 14px;
+      flex-wrap: wrap;
     }
 
     .search-tab {
       border: none;
       background: var(--soft);
-      color: #223047;
-      padding: 10px 12px;
-      border-radius: 12px;
+      color: var(--navy);
+      padding: 10px 14px;
+      border-radius: 999px;
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
@@ -230,14 +168,14 @@
     }
 
     .search-tab.active {
-      background: var(--primary);
+      background: var(--navy);
       color: white;
     }
 
     .search-panel-body {
-      padding: 0 14px 14px 14px;
+      padding: 18px;
       overflow-y: auto;
-      max-height: calc(100vh - 220px);
+      max-height: calc(100vh - 235px);
     }
 
     .search-section {
@@ -250,10 +188,10 @@
 
     .search-title {
       margin: 0 0 10px 0;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.08em;
       color: var(--muted);
     }
 
@@ -271,37 +209,39 @@
     .input,
     .select {
       width: 100%;
-      border: 1px solid #d7dde7;
-      border-radius: 12px;
-      padding: 12px 13px;
+      border: 1px solid #d7e4fb;
+      border-radius: 14px;
+      padding: 12px 14px;
       font-size: 14px;
       background: white;
       color: var(--text);
       outline: none;
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      font-family: "Inter", sans-serif;
     }
 
     .input:focus,
     .select:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.12);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
     }
 
     .helper {
       font-size: 12px;
-      line-height: 1.45;
+      line-height: 1.5;
       color: var(--muted);
     }
 
     .btn {
       border: none;
-      border-radius: 12px;
-      padding: 11px 14px;
+      border-radius: 14px;
+      padding: 12px 14px;
       font-size: 14px;
       font-weight: 700;
       cursor: pointer;
       transition: 0.2s ease;
       width: 100%;
+      font-family: "Inter", sans-serif;
     }
 
     .btn-primary {
@@ -315,7 +255,7 @@
 
     .btn-soft {
       background: var(--soft);
-      color: #1d2939;
+      color: var(--navy);
     }
 
     .btn-soft:hover {
@@ -345,6 +285,10 @@
       color: white;
     }
 
+    .btn-warning:hover {
+      background: var(--warning-hover);
+    }
+
     .search-results {
       margin-top: 12px;
       display: grid;
@@ -353,38 +297,40 @@
 
     .search-result {
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px;
-      background: #fbfcfe;
+      border-radius: 16px;
+      padding: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
       cursor: pointer;
       transition: 0.2s ease;
     }
 
     .search-result:hover {
-      background: #f3f7ff;
-      border-color: #cfdaf5;
+      transform: translateY(-1px);
+      border-color: #bed2fb;
+      background: #f7fbff;
     }
 
     .search-result-title {
       font-weight: 700;
       font-size: 15px;
       margin-bottom: 6px;
+      color: var(--navy);
     }
 
     .search-result-meta {
       font-size: 13px;
       color: var(--muted);
-      line-height: 1.45;
+      line-height: 1.55;
     }
 
     .search-empty {
       margin-top: 12px;
       font-size: 13px;
       color: var(--muted);
-      background: #fafcff;
-      border: 1px dashed #cfd7e4;
-      border-radius: 14px;
-      padding: 12px;
+      background: #f8fbff;
+      border: 1px dashed #c6d8fb;
+      border-radius: 16px;
+      padding: 14px;
     }
 
     .autocomplete-wrap {
@@ -398,7 +344,7 @@
       top: calc(100% + 6px);
       background: white;
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 16px;
       box-shadow: var(--shadow);
       z-index: 1600;
       overflow: hidden;
@@ -408,10 +354,10 @@
     }
 
     .autocomplete-item {
-      padding: 11px 12px;
+      padding: 12px 14px;
       font-size: 14px;
       cursor: pointer;
-      border-bottom: 1px solid #f0f2f6;
+      border-bottom: 1px solid #eef4ff;
     }
 
     .autocomplete-item:last-child {
@@ -422,19 +368,70 @@
       background: #f4f8ff;
     }
 
-    /* ADD PIN BUTTON */
+    /* Top right */
+    #top-right-controls {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 1250;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      max-width: min(420px, calc(100vw - 32px));
+    }
+
+    .pill-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 11px 15px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+      box-shadow: var(--shadow);
+      background: rgba(255,255,255,0.97);
+      color: var(--navy);
+      font-family: "Inter", sans-serif;
+    }
+
+    .pill-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .pill-btn.primary {
+      background: var(--navy);
+      color: white;
+    }
+
+    .pill-btn.primary:hover {
+      background: var(--navy-2);
+    }
+
+    .pill-badge {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--primary) 100%);
+      color: white;
+      border-radius: 999px;
+      padding: 9px 13px;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+    }
+
+    /* Floating add pin */
     #add-pin-floating-btn {
       position: absolute;
       left: 18px;
       bottom: 18px;
       z-index: 1250;
-      width: 62px;
-      height: 62px;
+      width: 66px;
+      height: 66px;
       border-radius: 50%;
       border: none;
       box-shadow: var(--shadow);
       color: white;
-      font-size: 26px;
+      font-size: 28px;
       cursor: pointer;
       display: none;
       align-items: center;
@@ -455,21 +452,22 @@
       background: var(--success);
     }
 
-    /* SIDEBAR */
+    /* Sidebar */
     #sidebar {
       position: absolute;
       top: 0;
       right: 0;
-      width: 35vw;
-      min-width: 380px;
-      max-width: 650px;
+      width: 36vw;
+      min-width: 390px;
+      max-width: 720px;
       height: 100vh;
-      background: var(--panel);
+      background: rgba(255,255,255,0.98);
+      backdrop-filter: blur(12px);
       border-left: 1px solid var(--border);
-      box-shadow: -14px 0 34px rgba(18, 25, 38, 0.14);
+      box-shadow: -14px 0 34px rgba(16, 42, 86, 0.12);
       z-index: 1300;
       transform: translateX(100%);
-      transition: transform 0.25s ease;
+      transition: transform 0.28s ease;
       display: flex;
       flex-direction: column;
     }
@@ -479,12 +477,13 @@
     }
 
     #sidebar-header {
-      padding: 20px 20px 14px 20px;
+      padding: 22px 22px 14px 22px;
       border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
-      gap: 12px;
+      gap: 14px;
       align-items: flex-start;
+      background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
     }
 
     #sidebar-title-wrap {
@@ -493,8 +492,10 @@
 
     #sidebar-title {
       margin: 0;
-      font-size: 24px;
-      line-height: 1.15;
+      font-size: 28px;
+      line-height: 1.1;
+      font-weight: 800;
+      color: var(--navy);
       word-break: break-word;
     }
 
@@ -502,16 +503,16 @@
       margin-top: 8px;
       color: var(--muted);
       font-size: 14px;
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
     #close-sidebar {
       border: none;
       background: var(--soft);
-      color: #111827;
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
+      color: var(--navy);
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
       font-size: 20px;
       cursor: pointer;
       flex-shrink: 0;
@@ -522,34 +523,36 @@
     }
 
     #sidebar-content {
-      padding: 18px 20px 26px 20px;
+      padding: 20px 22px 28px 22px;
       overflow-y: auto;
       flex: 1;
+      background: var(--bg-soft);
     }
 
     .section {
-      margin-bottom: 22px;
+      margin-bottom: 24px;
     }
 
     .section-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--muted);
       margin-bottom: 12px;
     }
 
     .card {
-      background: #fbfcfe;
+      background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(16, 42, 86, 0.05);
     }
 
     .place-meta {
       display: grid;
-      gap: 10px;
+      gap: 12px;
     }
 
     .meta-row {
@@ -558,17 +561,18 @@
     }
 
     .meta-label {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--muted);
-      font-weight: 700;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.08em;
     }
 
     .meta-value {
       font-size: 15px;
-      line-height: 1.45;
+      line-height: 1.6;
       word-break: break-word;
+      color: var(--text);
     }
 
     .button-row {
@@ -584,20 +588,21 @@
 
     .event-list {
       display: grid;
-      gap: 12px;
+      gap: 14px;
     }
 
     .event-card {
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: 22px;
       background: white;
       overflow: hidden;
+      box-shadow: 0 10px 24px rgba(16, 42, 86, 0.06);
     }
 
     .event-image-wrap {
       width: 100%;
-      height: 180px;
-      background: #f3f5f9;
+      height: 220px;
+      background: #edf4ff;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
@@ -613,22 +618,23 @@
     }
 
     .event-image-placeholder {
-      padding: 14px;
+      padding: 16px;
       text-align: center;
       color: var(--muted);
       font-size: 13px;
-      line-height: 1.4;
+      line-height: 1.5;
     }
 
     .event-body {
-      padding: 14px;
+      padding: 16px;
     }
 
     .event-name {
-      margin: 0 0 10px 0;
-      font-size: 18px;
+      margin: 0 0 12px 0;
+      font-size: 20px;
       line-height: 1.25;
       word-break: break-word;
+      color: var(--navy);
     }
 
     .event-meta-list {
@@ -639,52 +645,203 @@
 
     .event-meta-item {
       font-size: 14px;
-      line-height: 1.45;
-      color: #2a3240;
+      line-height: 1.55;
+      color: #334155;
     }
 
     .event-meta-item strong {
-      color: #111827;
+      color: var(--navy);
     }
 
     .preview-card {
-      border: 1px dashed #cfd7e4;
-      border-radius: 16px;
-      background: #fafcff;
+      border: 1px dashed #c6d8fb;
+      border-radius: 18px;
+      background: #f8fbff;
       padding: 12px;
     }
 
     .preview-image {
       width: 100%;
-      height: 170px;
+      height: 190px;
       object-fit: cover;
-      border-radius: 12px;
+      border-radius: 14px;
       display: none;
       margin-top: 10px;
       border: 1px solid var(--border);
-      background: #f3f5f9;
+      background: #edf4ff;
     }
 
     .preview-message {
       font-size: 13px;
       color: var(--muted);
-      line-height: 1.45;
+      line-height: 1.5;
     }
 
     .empty-state {
       padding: 18px;
-      border: 1px dashed #cfd7e4;
-      border-radius: 16px;
+      border: 1px dashed #c6d8fb;
+      border-radius: 18px;
       color: var(--muted);
       font-size: 14px;
-      line-height: 1.5;
-      background: #fafcff;
+      line-height: 1.6;
+      background: #f8fbff;
     }
 
     .editing-box {
       margin-top: 12px;
       padding-top: 12px;
-      border-top: 1px dashed #d8deea;
+      border-top: 1px dashed #d8e6fd;
+    }
+
+    /* Auth modal */
+    #auth-modal-overlay,
+    #profile-modal-overlay,
+    #admin-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 3000;
+      background: rgba(15, 35, 67, 0.42);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    #auth-modal-overlay.open,
+    #profile-modal-overlay.open,
+    #admin-modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(500px, 100%);
+      max-height: min(86vh, 820px);
+      overflow-y: auto;
+      background: white;
+      border-radius: 28px;
+      box-shadow: 0 24px 60px rgba(16, 42, 86, 0.22);
+      border: 1px solid rgba(219, 231, 251, 0.95);
+      padding: 24px;
+    }
+
+    .modal-title {
+      margin: 0 0 8px 0;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .modal-subtitle {
+      margin: 0 0 18px 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .modal-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .modal-tab {
+      border: none;
+      background: var(--soft);
+      color: var(--navy);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .modal-tab.active {
+      background: var(--navy);
+      color: white;
+    }
+
+    .auth-section {
+      display: none;
+    }
+
+    .auth-section.active {
+      display: block;
+    }
+
+    .profile-header-card {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: linear-gradient(135deg, #ffffff 0%, #f4f8ff 100%);
+    }
+
+    .profile-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .profile-email {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .profile-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .profile-stat {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .profile-stat-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+
+    .profile-stat-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .attendance-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .attendance-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+
+    .attendance-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+
+    .attendance-meta {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--muted);
     }
 
     @media (max-width: 980px) {
@@ -695,48 +852,128 @@
       }
 
       #search-shell {
-        width: calc(100vw - 28px);
+        width: calc(100vw - 32px);
       }
 
       .two-col,
-      .button-row {
+      .button-row,
+      .profile-stats {
         grid-template-columns: 1fr;
       }
 
       #add-pin-floating-btn {
-        width: 56px;
-        height: 56px;
+        width: 58px;
+        height: 58px;
         font-size: 24px;
       }
 
-      #admin-controls {
+      #top-right-controls {
         top: auto;
         right: 14px;
         bottom: 14px;
-        flex-direction: column;
-        align-items: flex-end;
+        max-width: calc(100vw - 32px);
       }
     }
   </style>
 </head>
 <body>
-  <div id="admin-controls">
-    <div id="admin-status-badge" class="hidden">Tryb admina</div>
-    <button id="open-admin-modal-btn" class="admin-top-btn">Panel admina</button>
-    <button id="logout-admin-btn" class="admin-top-btn hidden">Wyłącz tryb admina</button>
+  <div id="top-right-controls">
+    <div id="admin-status-badge" class="pill-badge hidden">Tryb admina</div>
+
+    <button id="open-auth-modal-btn" class="pill-btn primary">Zaloguj / Załóż konto</button>
+    <button id="open-profile-modal-btn" class="pill-btn hidden">Mój profil</button>
+    <button id="logout-user-btn" class="pill-btn hidden">Wyloguj</button>
+
+    <button id="open-admin-modal-btn" class="pill-btn">Panel admina</button>
+    <button id="logout-admin-btn" class="pill-btn hidden">Wyłącz admina</button>
   </div>
 
+  <!-- Auth modal -->
+  <div id="auth-modal-overlay">
+    <div class="modal-card">
+      <h2 class="modal-title">Konto użytkownika</h2>
+      <p class="modal-subtitle">Zaloguj się albo utwórz konto, żeby zaznaczać eventy, na których byłeś.</p>
+
+      <div class="modal-tabs">
+        <button id="auth-tab-login" class="modal-tab active" onclick="setAuthMode('login')">Logowanie</button>
+        <button id="auth-tab-register" class="modal-tab" onclick="setAuthMode('register')">Rejestracja</button>
+      </div>
+
+      <div id="auth-login-section" class="auth-section active">
+        <div class="form-grid">
+          <input id="login-email" class="input" type="email" placeholder="Adres e-mail" />
+          <input id="login-password" class="input" type="password" placeholder="Hasło" />
+          <div id="login-error" class="helper hidden" style="color:#b42318;"></div>
+
+          <div class="button-row">
+            <button class="btn btn-primary" onclick="loginUser()">Zaloguj się</button>
+            <button class="btn btn-soft" onclick="closeAuthModal()">Anuluj</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="auth-register-section" class="auth-section">
+        <div class="form-grid">
+          <input id="register-name" class="input" type="text" placeholder="Nazwa użytkownika" />
+          <input id="register-email" class="input" type="email" placeholder="Adres e-mail" />
+          <input id="register-password" class="input" type="password" placeholder="Hasło" />
+          <div id="register-error" class="helper hidden" style="color:#b42318;"></div>
+
+          <div class="button-row">
+            <button class="btn btn-primary" onclick="registerUser()">Utwórz konto</button>
+            <button class="btn btn-soft" onclick="closeAuthModal()">Anuluj</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile modal -->
+  <div id="profile-modal-overlay">
+    <div class="modal-card">
+      <h2 class="modal-title">Mój profil</h2>
+      <p class="modal-subtitle">Twoja historia zaznaczonych eventów w EventTimes.</p>
+
+      <div class="profile-header-card">
+        <div>
+          <div id="profile-name" class="profile-name">Użytkownik</div>
+          <div id="profile-email" class="profile-email">email@example.com</div>
+        </div>
+
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <div id="profile-attendance-count" class="profile-stat-value">0</div>
+            <div class="profile-stat-label">Zaznaczone eventy</div>
+          </div>
+
+          <div class="profile-stat">
+            <div id="profile-places-count" class="profile-stat-value">0</div>
+            <div class="profile-stat-label">Odwiedzone miejsca</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Moje eventy</div>
+      <div id="profile-attendance-list" class="attendance-list"></div>
+
+      <div style="margin-top:16px;">
+        <button class="btn btn-soft" onclick="closeProfileModal()">Zamknij</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin modal -->
   <div id="admin-modal-overlay">
-    <div id="admin-modal">
-      <h2>Panel admina</h2>
-      <p>Wpisz hasło, aby włączyć edycję, dodawanie i usuwanie pinezek oraz eventów.</p>
+    <div class="modal-card">
+      <h2 class="modal-title">Panel admina</h2>
+      <p class="modal-subtitle">To jest nadal wersja testowa. Hasło admina działa tylko po stronie frontendu.</p>
 
       <div class="form-grid">
         <input id="admin-password-input" class="input" type="password" placeholder="Hasło admina" />
         <div id="admin-password-error" class="helper hidden" style="color:#b42318;">Nieprawidłowe hasło.</div>
 
         <div class="button-row">
-          <button class="btn btn-primary" onclick="loginAsAdmin()">Zaloguj</button>
+          <button class="btn btn-primary" onclick="loginAsAdmin()">Włącz tryb admina</button>
           <button class="btn btn-soft" onclick="closeAdminModal()">Anuluj</button>
         </div>
       </div>
@@ -754,7 +991,7 @@
       <div class="search-panel-head">
         <div class="brand-title">EventTimes</div>
         <div class="brand-subtitle">
-          Wyszukuj historię eventów oraz miejsca. Kliknij wynik, aby przejść do pineski.
+          Odkrywaj historię miejsc, eventów i buduj własną historię uczestnictwa.
         </div>
 
         <div class="search-tabs">
@@ -833,7 +1070,7 @@
     <div id="sidebar-header">
       <div id="sidebar-title-wrap">
         <h2 id="sidebar-title">EventTimes</h2>
-        <div id="sidebar-subtitle">Wybierz pineskę albo dodaj nowe miejsce.</div>
+        <div id="sidebar-subtitle">Wybierz pineskę albo wyszukaj miejsce.</div>
       </div>
       <button id="close-sidebar" type="button">&times;</button>
     </div>
@@ -853,12 +1090,12 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
     const EVENT_TYPES = ["Gala MMA", "Koncert", "Stand-up"];
     const DUPLICATE_RADIUS_METERS = 35;
 
-    // TESTOWE HASŁO FRONTENDOWE
-    // ZMIEŃ SOBIE TĘ WARTOŚĆ
+    // TESTOWE HASŁO ADMINA
     const ADMIN_PASSWORD = "eventtimes123";
 
     const map = L.map("map").setView([52.0, 19.0], 6);
@@ -874,6 +1111,8 @@
     let allPlacesCache = [];
     let currentSearchMode = "events";
     let isAdmin = false;
+    let currentUser = null;
+    let currentUserAttendanceMap = {};
 
     const searchShell = document.getElementById("search-shell");
     const sidebar = document.getElementById("sidebar");
@@ -883,12 +1122,27 @@
     const closeSidebarX = document.getElementById("close-sidebar");
     const addPinFloatingBtn = document.getElementById("add-pin-floating-btn");
 
+    const authModalOverlay = document.getElementById("auth-modal-overlay");
+    const profileModalOverlay = document.getElementById("profile-modal-overlay");
     const adminModalOverlay = document.getElementById("admin-modal-overlay");
-    const adminPasswordInput = document.getElementById("admin-password-input");
-    const adminPasswordError = document.getElementById("admin-password-error");
+
+    const openAuthModalBtn = document.getElementById("open-auth-modal-btn");
+    const openProfileModalBtn = document.getElementById("open-profile-modal-btn");
+    const logoutUserBtn = document.getElementById("logout-user-btn");
+
     const openAdminModalBtn = document.getElementById("open-admin-modal-btn");
     const logoutAdminBtn = document.getElementById("logout-admin-btn");
     const adminStatusBadge = document.getElementById("admin-status-badge");
+    const adminPasswordInput = document.getElementById("admin-password-input");
+    const adminPasswordError = document.getElementById("admin-password-error");
+
+    const authTabLogin = document.getElementById("auth-tab-login");
+    const authTabRegister = document.getElementById("auth-tab-register");
+    const authLoginSection = document.getElementById("auth-login-section");
+    const authRegisterSection = document.getElementById("auth-register-section");
+
+    const loginError = document.getElementById("login-error");
+    const registerError = document.getElementById("register-error");
 
     const tabEvents = document.getElementById("tab-events");
     const tabPlaces = document.getElementById("tab-places");
@@ -937,6 +1191,33 @@
       return `${day}.${month}.${year}`;
     }
 
+    function makeEventId() {
+      return "evt_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    }
+
+    function ensureEventIds(events) {
+      return (events || []).map(function(eventItem) {
+        return {
+          id: eventItem.id || makeEventId(),
+          name: eventItem.name || "",
+          type: eventItem.type || "",
+          date: eventItem.date || "",
+          imageUrl: eventItem.imageUrl || eventItem.image || ""
+        };
+      });
+    }
+
+    function updateUserUI() {
+      const loggedIn = !!currentUser;
+      openAuthModalBtn.classList.toggle("hidden", loggedIn);
+      openProfileModalBtn.classList.toggle("hidden", !loggedIn);
+      logoutUserBtn.classList.toggle("hidden", !loggedIn);
+
+      if (selectedPlaceId && markers[selectedPlaceId]) {
+        renderPlaceSidebar(markers[selectedPlaceId].placeData);
+      }
+    }
+
     function updateAdminUI() {
       addPinFloatingBtn.classList.toggle("admin-visible", isAdmin);
       adminStatusBadge.classList.toggle("hidden", !isAdmin);
@@ -952,25 +1233,114 @@
       }
     }
 
+    function setAuthMode(mode) {
+      authTabLogin.classList.toggle("active", mode === "login");
+      authTabRegister.classList.toggle("active", mode === "register");
+      authLoginSection.classList.toggle("active", mode === "login");
+      authRegisterSection.classList.toggle("active", mode === "register");
+    }
+
+    function openAuthModal() {
+      authModalOverlay.classList.add("open");
+      loginError.classList.add("hidden");
+      registerError.classList.add("hidden");
+    }
+
+    function closeAuthModal() {
+      authModalOverlay.classList.remove("open");
+    }
+
+    function openProfileModal() {
+      if (!currentUser) return;
+      renderProfileModal();
+      profileModalOverlay.classList.add("open");
+    }
+
+    function closeProfileModal() {
+      profileModalOverlay.classList.remove("open");
+    }
+
     function openAdminModal() {
       adminModalOverlay.classList.add("open");
-      adminPasswordError.classList.add("hidden");
       adminPasswordInput.value = "";
-      setTimeout(() => adminPasswordInput.focus(), 50);
+      adminPasswordError.classList.add("hidden");
+      setTimeout(() => adminPasswordInput.focus(), 60);
     }
 
     function closeAdminModal() {
       adminModalOverlay.classList.remove("open");
     }
 
+    async function registerUser() {
+      const name = document.getElementById("register-name").value.trim();
+      const email = document.getElementById("register-email").value.trim();
+      const password = document.getElementById("register-password").value;
+
+      registerError.classList.add("hidden");
+      registerError.textContent = "";
+
+      if (!name) {
+        registerError.textContent = "Wpisz nazwę użytkownika.";
+        registerError.classList.remove("hidden");
+        return;
+      }
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+
+        await userCredential.user.updateProfile({
+          displayName: name
+        });
+
+        await db.collection("users").doc(userCredential.user.uid).set(
+          {
+            displayName: name,
+            email: email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          },
+          { merge: true }
+        );
+
+        closeAuthModal();
+      } catch (error) {
+        console.error("Błąd registerUser:", error);
+        registerError.textContent = error.message || "Nie udało się utworzyć konta.";
+        registerError.classList.remove("hidden");
+      }
+    }
+
+    async function loginUser() {
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+
+      loginError.classList.add("hidden");
+      loginError.textContent = "";
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        closeAuthModal();
+      } catch (error) {
+        console.error("Błąd loginUser:", error);
+        loginError.textContent = error.message || "Nie udało się zalogować.";
+        loginError.classList.remove("hidden");
+      }
+    }
+
+    async function logoutUser() {
+      try {
+        await auth.signOut();
+        closeProfileModal();
+      } catch (error) {
+        console.error("Błąd logoutUser:", error);
+      }
+    }
+
     function loginAsAdmin() {
       const password = adminPasswordInput.value;
-
       if (password !== ADMIN_PASSWORD) {
         adminPasswordError.classList.remove("hidden");
         return;
       }
-
       isAdmin = true;
       updateAdminUI();
       closeAdminModal();
@@ -1054,28 +1424,18 @@
         street: data.street || "",
         lat: lat,
         lng: lng,
-        events: Array.isArray(data.events)
-          ? data.events.map(function(item) {
-              return {
-                name: item.name || "",
-                type: item.type || "",
-                date: item.date || "",
-                imageUrl: item.imageUrl || item.image || ""
-              };
-            })
-          : Array.isArray(data.list)
-            ? data.list.map(function(item) {
-                if (typeof item === "string") {
-                  return { name: item, type: "", date: "", imageUrl: "" };
-                }
-                return {
-                  name: item.name || "",
-                  type: item.type || "",
-                  date: item.date || "",
-                  imageUrl: item.imageUrl || item.image || ""
-                };
-              })
-            : []
+        events: ensureEventIds(
+          Array.isArray(data.events)
+            ? data.events
+            : Array.isArray(data.list)
+              ? data.list.map(function(item) {
+                  if (typeof item === "string") {
+                    return { name: item, type: "", date: "", imageUrl: "" };
+                  }
+                  return item;
+                })
+              : []
+        )
       };
     }
 
@@ -1103,6 +1463,33 @@
       });
 
       return closest;
+    }
+
+    function isEventAttended(placeId, eventId) {
+      return !!currentUserAttendanceMap[`${placeId}_${eventId}`];
+    }
+
+    function buildAttendanceButton(placeData, eventItem) {
+      if (!currentUser) {
+        return `
+          <div class="helper" style="margin-top:8px;">
+            Zaloguj się, aby zaznaczyć, że byłeś na tym evencie.
+          </div>
+        `;
+      }
+
+      const attended = isEventAttended(placeData.id, eventItem.id);
+
+      return `
+        <div class="button-row single">
+          <button
+            class="btn ${attended ? "btn-soft" : "btn-success"}"
+            onclick="toggleAttendance('${placeData.id}', '${eventItem.id}')"
+          >
+            ${attended ? "Usuń z mojej historii" : "Byłem na tym evencie"}
+          </button>
+        </div>
+      `;
     }
 
     function buildAddPlacePanel(lat, lng) {
@@ -1136,6 +1523,7 @@
             <input id="editPlaceNameInput" class="input" value="${escapeHtml(placeData.placeName)}" placeholder="Nazwa miejsca" />
             <input id="editPlaceCityInput" class="input" value="${escapeHtml(placeData.city)}" placeholder="Miasto" />
             <input id="editPlaceStreetInput" class="input" value="${escapeHtml(placeData.street)}" placeholder="Ulica" />
+
             <div class="button-row">
               <button class="btn btn-success" onclick="savePlaceEdit('${placeData.id}')">Zapisz miejsce</button>
               <button class="btn btn-soft" onclick="renderPlaceSidebarById('${placeData.id}')">Anuluj</button>
@@ -1157,6 +1545,7 @@
             </select>
             <input id="editEventDate-${eventIndex}" class="input" type="date" value="${escapeHtml(eventItem.date || "")}" />
             <input id="editEventImage-${eventIndex}" class="input" value="${escapeHtml(eventItem.imageUrl || "")}" placeholder="Link do grafiki eventu (URL)" />
+
             <div class="button-row">
               <button class="btn btn-success" onclick="saveEventEdit('${placeId}', ${eventIndex})">Zapisz event</button>
               <button class="btn btn-soft" onclick="renderPlaceSidebarById('${placeId}')">Anuluj</button>
@@ -1217,6 +1606,8 @@
                   <div class="event-meta-item"><strong>Rodzaj:</strong> ${eventType}</div>
                   <div class="event-meta-item"><strong>Data:</strong> ${eventDate}</div>
                 </div>
+
+                ${buildAttendanceButton(placeData, eventItem)}
                 ${adminEventButtons}
               </div>
             </div>
@@ -1232,7 +1623,6 @@
           <div class="button-row single">
             <button class="btn btn-warning" onclick="startEditPlace('${placeId}')">Edytuj miejsce</button>
           </div>
-
           <div id="placeEditBox"></div>
         `;
       }
@@ -1282,7 +1672,7 @@
 
       return `
         <div class="section">
-          <div class="section-title">Dane miejsca</div>
+          <div class="section-title">Miejsce</div>
           <div class="card place-meta">
             <div class="meta-row">
               <div class="meta-label">Nazwa miejsca</div>
@@ -1309,7 +1699,7 @@
         </div>
 
         <div class="section">
-          <div class="section-title">Lista eventów</div>
+          <div class="section-title">Historia eventów</div>
           ${eventsHtml}
         </div>
 
@@ -1322,8 +1712,8 @@
       openSidebar(
         placeData.placeName || "Miejsce",
         isAdmin
-          ? "Tutaj zarządzasz eventami przypisanymi do tej pineski."
-          : "Tutaj przeglądasz eventy przypisane do tej pineski.",
+          ? "Zarządzaj eventami przypisanymi do tej pineski."
+          : "Przeglądaj eventy przypisane do tej pineski.",
         buildPlaceDetailsPanel(placeData)
       );
 
@@ -1335,6 +1725,48 @@
     function renderPlaceSidebarById(placeId) {
       if (!markers[placeId]) return;
       renderPlaceSidebar(markers[placeId].placeData);
+    }
+
+    function renderProfileModal() {
+      if (!currentUser) return;
+
+      const profileName = document.getElementById("profile-name");
+      const profileEmail = document.getElementById("profile-email");
+      const profileAttendanceCount = document.getElementById("profile-attendance-count");
+      const profilePlacesCount = document.getElementById("profile-places-count");
+      const profileAttendanceList = document.getElementById("profile-attendance-list");
+
+      const attendances = Object.values(currentUserAttendanceMap);
+
+      const uniquePlaces = new Set(attendances.map(item => item.placeId));
+
+      profileName.textContent = currentUser.displayName || "Użytkownik";
+      profileEmail.textContent = currentUser.email || "";
+      profileAttendanceCount.textContent = String(attendances.length);
+      profilePlacesCount.textContent = String(uniquePlaces.size);
+
+      if (!attendances.length) {
+        profileAttendanceList.innerHTML = `
+          <div class="empty-state">
+            Nie zaznaczyłeś jeszcze żadnego eventu. Zaloguj się i kliknij „Byłem na tym evencie”.
+          </div>
+        `;
+        return;
+      }
+
+      const sorted = [...attendances].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+      profileAttendanceList.innerHTML = sorted.map(item => `
+        <div class="attendance-card" onclick="openProfileAttendance('${item.placeId}')" style="cursor:pointer;">
+          <div class="attendance-title">${escapeHtml(item.eventName || "Bez nazwy")}</div>
+          <div class="attendance-meta">
+            <strong>Miejsce:</strong> ${escapeHtml(item.placeName || "Brak")}<br>
+            <strong>Miasto:</strong> ${escapeHtml(item.city || "Brak")}<br>
+            <strong>Rodzaj:</strong> ${escapeHtml(item.type || "Brak")}<br>
+            <strong>Data:</strong> ${escapeHtml(formatDate(item.date || ""))}
+          </div>
+        </div>
+      `).join("");
     }
 
     function startEditPlace(placeId) {
@@ -1399,6 +1831,82 @@
       error.classList.add("hidden");
       preview.style.display = "none";
       preview.src = value;
+    }
+
+    async function loadUserAttendance() {
+      if (!currentUser) {
+        currentUserAttendanceMap = {};
+        updateUserUI();
+        return;
+      }
+
+      try {
+        const snapshot = await db
+          .collection("users")
+          .doc(currentUser.uid)
+          .collection("attendances")
+          .get();
+
+        const mapData = {};
+        snapshot.forEach(doc => {
+          mapData[doc.id] = doc.data();
+        });
+
+        currentUserAttendanceMap = mapData;
+        updateUserUI();
+      } catch (error) {
+        console.error("Błąd loadUserAttendance:", error);
+      }
+    }
+
+    async function toggleAttendance(placeId, eventId) {
+      if (!currentUser) {
+        openAuthModal();
+        return;
+      }
+
+      const place = markers[placeId] ? markers[placeId].placeData : null;
+      if (!place) return;
+
+      const eventItem = (place.events || []).find(e => e.id === eventId);
+      if (!eventItem) return;
+
+      const attendanceId = `${placeId}_${eventId}`;
+      const ref = db.collection("users").doc(currentUser.uid).collection("attendances").doc(attendanceId);
+
+      try {
+        if (currentUserAttendanceMap[attendanceId]) {
+          await ref.delete();
+          delete currentUserAttendanceMap[attendanceId];
+        } else {
+          const payload = {
+            placeId: placeId,
+            eventId: eventId,
+            placeName: place.placeName || "",
+            city: place.city || "",
+            street: place.street || "",
+            eventName: eventItem.name || "",
+            type: eventItem.type || "",
+            date: eventItem.date || "",
+            imageUrl: eventItem.imageUrl || "",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          };
+
+          await ref.set(payload);
+          currentUserAttendanceMap[attendanceId] = payload;
+        }
+
+        if (selectedPlaceId === placeId) {
+          renderPlaceSidebar(place);
+        }
+
+        if (profileModalOverlay.classList.contains("open")) {
+          renderProfileModal();
+        }
+      } catch (error) {
+        console.error("Błąd toggleAttendance:", error);
+        alert("Nie udało się zapisać Twojego wyboru.");
+      }
     }
 
     function renderMarker(placeData) {
@@ -1534,6 +2042,7 @@
         }
 
         placeData.events.push({
+          id: makeEventId(),
           name: eventName,
           type: eventType,
           date: eventDate,
@@ -1635,7 +2144,13 @@
           return;
         }
 
-        placeData.events[eventIndex] = { name, type, date, imageUrl };
+        placeData.events[eventIndex] = {
+          ...placeData.events[eventIndex],
+          name,
+          type,
+          date,
+          imageUrl
+        };
 
         await ref.update({ events: placeData.events });
 
@@ -1671,6 +2186,7 @@
           return;
         }
 
+        const removed = placeData.events[eventIndex];
         placeData.events.splice(eventIndex, 1);
 
         await ref.update({ events: placeData.events });
@@ -1680,6 +2196,13 @@
         refreshEventNameSuggestions();
         renderPlaceSidebar(placeData);
         runEventSearch();
+
+        if (currentUser && removed && removed.id) {
+          const attendanceId = `${placeId}_${removed.id}`;
+          const userAttendanceRef = db.collection("users").doc(currentUser.uid).collection("attendances").doc(attendanceId);
+          await userAttendanceRef.delete().catch(() => {});
+          delete currentUserAttendanceMap[attendanceId];
+        }
       } catch (error) {
         console.error("Błąd deleteEvent:", error);
         alert("Nie udało się usunąć eventu.");
@@ -1805,6 +2328,7 @@
           results.push({
             placeId: place.id,
             eventIndex: index,
+            eventId: eventItem.id,
             placeName: place.placeName || "Bez nazwy miejsca",
             city: place.city || "Brak miasta",
             street: place.street || "Brak ulicy",
@@ -1929,7 +2453,7 @@
         const targetCard = eventCards[eventIndex];
         if (targetCard) {
           targetCard.scrollIntoView({ behavior: "smooth", block: "start" });
-          targetCard.style.outline = "3px solid rgba(31,111,235,0.35)";
+          targetCard.style.outline = "3px solid rgba(37,99,235,0.28)";
           setTimeout(function() {
             targetCard.style.outline = "";
           }, 1800);
@@ -1947,6 +2471,11 @@
       });
 
       renderPlaceSidebar(marker.placeData);
+    }
+
+    function openProfileAttendance(placeId) {
+      closeProfileModal();
+      openPlaceSearchResult(placeId);
     }
 
     function clearEventSearch() {
@@ -1970,20 +2499,36 @@
       placeSearchResults.innerHTML = "";
     }
 
+    openAuthModalBtn.addEventListener("click", openAuthModal);
+    openProfileModalBtn.addEventListener("click", openProfileModal);
+    logoutUserBtn.addEventListener("click", logoutUser);
+
     openAdminModalBtn.addEventListener("click", openAdminModal);
     logoutAdminBtn.addEventListener("click", logoutAdmin);
     closeSidebarX.addEventListener("click", closeSidebar);
 
+    authModalOverlay.addEventListener("click", function(e) {
+      if (e.target === authModalOverlay) closeAuthModal();
+    });
+
+    profileModalOverlay.addEventListener("click", function(e) {
+      if (e.target === profileModalOverlay) closeProfileModal();
+    });
+
     adminModalOverlay.addEventListener("click", function(e) {
-      if (e.target === adminModalOverlay) {
-        closeAdminModal();
-      }
+      if (e.target === adminModalOverlay) closeAdminModal();
     });
 
     adminPasswordInput.addEventListener("keydown", function(e) {
-      if (e.key === "Enter") {
-        loginAsAdmin();
-      }
+      if (e.key === "Enter") loginAsAdmin();
+    });
+
+    document.getElementById("login-password").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") loginUser();
+    });
+
+    document.getElementById("register-password").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") registerUser();
     });
 
     map.on("click", function(e) {
@@ -1997,7 +2542,7 @@
 
       openSidebar(
         "Nowe miejsce",
-        "Uzupełnij dane pineski i zapisz miejsce na mapie.",
+        "Uzupełnij dane pineski i zapisz miejsce.",
         buildAddPlacePanel(e.latlng.lat, e.latlng.lng)
       );
     });
@@ -2040,6 +2585,12 @@
       }
     });
 
+    auth.onAuthStateChanged(async function(user) {
+      currentUser = user || null;
+      await loadUserAttendance();
+      updateUserUI();
+    });
+
     window.toggleSearchPanel = toggleSearchPanel;
     window.setSearchMode = setSearchMode;
     window.toggleAddPinModeFromButton = toggleAddPinModeFromButton;
@@ -2057,12 +2608,23 @@
     window.applyEventSuggestion = applyEventSuggestion;
     window.openEventSearchResult = openEventSearchResult;
     window.openPlaceSearchResult = openPlaceSearchResult;
+    window.openAuthModal = openAuthModal;
+    window.closeAuthModal = closeAuthModal;
+    window.setAuthMode = setAuthMode;
+    window.loginUser = loginUser;
+    window.registerUser = registerUser;
+    window.logoutUser = logoutUser;
+    window.openProfileModal = openProfileModal;
+    window.closeProfileModal = closeProfileModal;
     window.openAdminModal = openAdminModal;
     window.closeAdminModal = closeAdminModal;
     window.loginAsAdmin = loginAsAdmin;
     window.logoutAdmin = logoutAdmin;
+    window.toggleAttendance = toggleAttendance;
+    window.openProfileAttendance = openProfileAttendance;
 
     updateAdminUI();
+    updateUserUI();
     loadPlaces();
   </script>
 </body>
