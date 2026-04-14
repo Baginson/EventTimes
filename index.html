@@ -42,8 +42,6 @@
       --soft-hover: #e0ecff;
       --shadow: 0 18px 48px rgba(23, 54, 107, 0.12);
       --radius-xl: 24px;
-      --radius-lg: 18px;
-      --radius-md: 14px;
     }
 
     html, body {
@@ -65,7 +63,6 @@
       display: none !important;
     }
 
-    /* Top left search shell */
     #search-shell {
       position: absolute;
       top: 16px;
@@ -161,6 +158,7 @@
       font-weight: 700;
       cursor: pointer;
       transition: 0.2s ease;
+      font-family: "Inter", sans-serif;
     }
 
     .search-tab:hover {
@@ -368,7 +366,6 @@
       background: #f4f8ff;
     }
 
-    /* Top right */
     #top-right-controls {
       position: absolute;
       top: 16px;
@@ -379,7 +376,7 @@
       align-items: center;
       flex-wrap: wrap;
       justify-content: flex-end;
-      max-width: min(420px, calc(100vw - 32px));
+      max-width: min(460px, calc(100vw - 32px));
     }
 
     .pill-btn {
@@ -419,7 +416,6 @@
       box-shadow: var(--shadow);
     }
 
-    /* Floating add pin */
     #add-pin-floating-btn {
       position: absolute;
       left: 18px;
@@ -438,6 +434,7 @@
       justify-content: center;
       transition: transform 0.18s ease, background 0.18s ease;
       background: var(--danger);
+      font-family: "Inter", sans-serif;
     }
 
     #add-pin-floating-btn.admin-visible {
@@ -452,7 +449,6 @@
       background: var(--success);
     }
 
-    /* Sidebar */
     #sidebar {
       position: absolute;
       top: 0;
@@ -516,6 +512,7 @@
       font-size: 20px;
       cursor: pointer;
       flex-shrink: 0;
+      font-family: "Inter", sans-serif;
     }
 
     #close-sidebar:hover {
@@ -693,10 +690,8 @@
       border-top: 1px dashed #d8e6fd;
     }
 
-    /* Auth modal */
     #auth-modal-overlay,
-    #profile-modal-overlay,
-    #admin-modal-overlay {
+    #profile-modal-overlay {
       position: fixed;
       inset: 0;
       z-index: 3000;
@@ -709,8 +704,7 @@
     }
 
     #auth-modal-overlay.open,
-    #profile-modal-overlay.open,
-    #admin-modal-overlay.open {
+    #profile-modal-overlay.open {
       display: flex;
     }
 
@@ -754,6 +748,7 @@
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
+      font-family: "Inter", sans-serif;
     }
 
     .modal-tab.active {
@@ -878,17 +873,13 @@
 </head>
 <body>
   <div id="top-right-controls">
-    <div id="admin-status-badge" class="pill-badge hidden">Tryb admina</div>
+    <div id="admin-status-badge" class="pill-badge hidden">Admin</div>
 
     <button id="open-auth-modal-btn" class="pill-btn primary">Zaloguj / Załóż konto</button>
     <button id="open-profile-modal-btn" class="pill-btn hidden">Mój profil</button>
     <button id="logout-user-btn" class="pill-btn hidden">Wyloguj</button>
-
-    <button id="open-admin-modal-btn" class="pill-btn">Panel admina</button>
-    <button id="logout-admin-btn" class="pill-btn hidden">Wyłącz admina</button>
   </div>
 
-  <!-- Auth modal -->
   <div id="auth-modal-overlay">
     <div class="modal-card">
       <h2 class="modal-title">Konto użytkownika</h2>
@@ -928,7 +919,6 @@
     </div>
   </div>
 
-  <!-- Profile modal -->
   <div id="profile-modal-overlay">
     <div class="modal-card">
       <h2 class="modal-title">Mój profil</h2>
@@ -958,24 +948,6 @@
 
       <div style="margin-top:16px;">
         <button class="btn btn-soft" onclick="closeProfileModal()">Zamknij</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Admin modal -->
-  <div id="admin-modal-overlay">
-    <div class="modal-card">
-      <h2 class="modal-title">Panel admina</h2>
-      <p class="modal-subtitle">To jest nadal wersja testowa. Hasło admina działa tylko po stronie frontendu.</p>
-
-      <div class="form-grid">
-        <input id="admin-password-input" class="input" type="password" placeholder="Hasło admina" />
-        <div id="admin-password-error" class="helper hidden" style="color:#b42318;">Nieprawidłowe hasło.</div>
-
-        <div class="button-row">
-          <button class="btn btn-primary" onclick="loginAsAdmin()">Włącz tryb admina</button>
-          <button class="btn btn-soft" onclick="closeAdminModal()">Anuluj</button>
-        </div>
       </div>
     </div>
   </div>
@@ -1094,9 +1066,7 @@
 
     const EVENT_TYPES = ["Gala MMA", "Koncert", "Stand-up"];
     const DUPLICATE_RADIUS_METERS = 35;
-
-    // TESTOWE HASŁO ADMINA
-    const ADMIN_PASSWORD = "eventtimes123";
+    const ADMIN_EMAIL = "xiron.yt@gmail.com";
 
     const map = L.map("map").setView([52.0, 19.0], 6);
 
@@ -1124,17 +1094,11 @@
 
     const authModalOverlay = document.getElementById("auth-modal-overlay");
     const profileModalOverlay = document.getElementById("profile-modal-overlay");
-    const adminModalOverlay = document.getElementById("admin-modal-overlay");
 
     const openAuthModalBtn = document.getElementById("open-auth-modal-btn");
     const openProfileModalBtn = document.getElementById("open-profile-modal-btn");
     const logoutUserBtn = document.getElementById("logout-user-btn");
-
-    const openAdminModalBtn = document.getElementById("open-admin-modal-btn");
-    const logoutAdminBtn = document.getElementById("logout-admin-btn");
     const adminStatusBadge = document.getElementById("admin-status-badge");
-    const adminPasswordInput = document.getElementById("admin-password-input");
-    const adminPasswordError = document.getElementById("admin-password-error");
 
     const authTabLogin = document.getElementById("auth-tab-login");
     const authTabRegister = document.getElementById("auth-tab-register");
@@ -1207,6 +1171,33 @@
       });
     }
 
+    function getFirebaseAuthErrorMessage(error) {
+      const code = error && error.code ? error.code : "";
+
+      switch (code) {
+        case "auth/invalid-email":
+          return "Nieprawidłowy adres e-mail.";
+        case "auth/user-disabled":
+          return "To konto zostało wyłączone.";
+        case "auth/user-not-found":
+        case "auth/wrong-password":
+        case "auth/invalid-login-credentials":
+          return "Nieprawidłowy e-mail lub hasło.";
+        case "auth/email-already-in-use":
+          return "Konto z tym adresem e-mail już istnieje.";
+        case "auth/weak-password":
+          return "Hasło jest zbyt słabe.";
+        case "auth/too-many-requests":
+          return "Zbyt wiele prób logowania. Spróbuj ponownie później.";
+        case "auth/network-request-failed":
+          return "Problem z połączeniem z internetem.";
+        case "auth/missing-password":
+          return "Wpisz hasło.";
+        default:
+          return "Wystąpił błąd. Spróbuj ponownie.";
+      }
+    }
+
     function updateUserUI() {
       const loggedIn = !!currentUser;
       openAuthModalBtn.classList.toggle("hidden", loggedIn);
@@ -1221,8 +1212,6 @@
     function updateAdminUI() {
       addPinFloatingBtn.classList.toggle("admin-visible", isAdmin);
       adminStatusBadge.classList.toggle("hidden", !isAdmin);
-      logoutAdminBtn.classList.toggle("hidden", !isAdmin);
-      openAdminModalBtn.classList.toggle("hidden", isAdmin);
 
       if (!isAdmin) {
         setAddPinMode(false);
@@ -1244,6 +1233,8 @@
       authModalOverlay.classList.add("open");
       loginError.classList.add("hidden");
       registerError.classList.add("hidden");
+      loginError.textContent = "";
+      registerError.textContent = "";
     }
 
     function closeAuthModal() {
@@ -1258,17 +1249,6 @@
 
     function closeProfileModal() {
       profileModalOverlay.classList.remove("open");
-    }
-
-    function openAdminModal() {
-      adminModalOverlay.classList.add("open");
-      adminPasswordInput.value = "";
-      adminPasswordError.classList.add("hidden");
-      setTimeout(() => adminPasswordInput.focus(), 60);
-    }
-
-    function closeAdminModal() {
-      adminModalOverlay.classList.remove("open");
     }
 
     async function registerUser() {
@@ -1304,7 +1284,7 @@
         closeAuthModal();
       } catch (error) {
         console.error("Błąd registerUser:", error);
-        registerError.textContent = error.message || "Nie udało się utworzyć konta.";
+        registerError.textContent = getFirebaseAuthErrorMessage(error);
         registerError.classList.remove("hidden");
       }
     }
@@ -1321,7 +1301,7 @@
         closeAuthModal();
       } catch (error) {
         console.error("Błąd loginUser:", error);
-        loginError.textContent = error.message || "Nie udało się zalogować.";
+        loginError.textContent = getFirebaseAuthErrorMessage(error);
         loginError.classList.remove("hidden");
       }
     }
@@ -1333,23 +1313,6 @@
       } catch (error) {
         console.error("Błąd logoutUser:", error);
       }
-    }
-
-    function loginAsAdmin() {
-      const password = adminPasswordInput.value;
-      if (password !== ADMIN_PASSWORD) {
-        adminPasswordError.classList.remove("hidden");
-        return;
-      }
-      isAdmin = true;
-      updateAdminUI();
-      closeAdminModal();
-    }
-
-    function logoutAdmin() {
-      isAdmin = false;
-      updateAdminUI();
-      closeSidebar();
     }
 
     function toggleSearchPanel(forceOpen = null) {
@@ -1737,7 +1700,6 @@
       const profileAttendanceList = document.getElementById("profile-attendance-list");
 
       const attendances = Object.values(currentUserAttendanceMap);
-
       const uniquePlaces = new Set(attendances.map(item => item.placeId));
 
       profileName.textContent = currentUser.displayName || "Użytkownik";
@@ -1748,7 +1710,7 @@
       if (!attendances.length) {
         profileAttendanceList.innerHTML = `
           <div class="empty-state">
-            Nie zaznaczyłeś jeszcze żadnego eventu. Zaloguj się i kliknij „Byłem na tym evencie”.
+            Nie zaznaczyłeś jeszcze żadnego eventu.
           </div>
         `;
         return;
@@ -2502,9 +2464,6 @@
     openAuthModalBtn.addEventListener("click", openAuthModal);
     openProfileModalBtn.addEventListener("click", openProfileModal);
     logoutUserBtn.addEventListener("click", logoutUser);
-
-    openAdminModalBtn.addEventListener("click", openAdminModal);
-    logoutAdminBtn.addEventListener("click", logoutAdmin);
     closeSidebarX.addEventListener("click", closeSidebar);
 
     authModalOverlay.addEventListener("click", function(e) {
@@ -2513,14 +2472,6 @@
 
     profileModalOverlay.addEventListener("click", function(e) {
       if (e.target === profileModalOverlay) closeProfileModal();
-    });
-
-    adminModalOverlay.addEventListener("click", function(e) {
-      if (e.target === adminModalOverlay) closeAdminModal();
-    });
-
-    adminPasswordInput.addEventListener("keydown", function(e) {
-      if (e.key === "Enter") loginAsAdmin();
     });
 
     document.getElementById("login-password").addEventListener("keydown", function(e) {
@@ -2587,8 +2538,11 @@
 
     auth.onAuthStateChanged(async function(user) {
       currentUser = user || null;
+      isAdmin = !!(currentUser && currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+
       await loadUserAttendance();
       updateUserUI();
+      updateAdminUI();
     });
 
     window.toggleSearchPanel = toggleSearchPanel;
@@ -2616,15 +2570,11 @@
     window.logoutUser = logoutUser;
     window.openProfileModal = openProfileModal;
     window.closeProfileModal = closeProfileModal;
-    window.openAdminModal = openAdminModal;
-    window.closeAdminModal = closeAdminModal;
-    window.loginAsAdmin = loginAsAdmin;
-    window.logoutAdmin = logoutAdmin;
     window.toggleAttendance = toggleAttendance;
     window.openProfileAttendance = openProfileAttendance;
 
-    updateAdminUI();
     updateUserUI();
+    updateAdminUI();
     loadPlaces();
   </script>
 </body>
