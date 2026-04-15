@@ -595,18 +595,22 @@
     }
 
     
+
 #top-right-controls {
   position: absolute;
   top: 20px;
   right: 24px;
+  left: auto;
+  bottom: auto;
   z-index: 1250;
   display: flex;
   gap: 10px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
   max-width: calc(100vw - 48px);
 }
+
 
 .topbar-surface {
   position: absolute;
@@ -857,7 +861,29 @@
       background: rgba(255,255,255,0.10);
     }
 
-    .custom-marker-wrap {
+    
+.leaflet-marker-pane,
+.leaflet-shadow-pane {
+  z-index: 650 !important;
+}
+
+.custom-marker-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.custom-marker-icon,
+.custom-marker-wrap,
+.custom-marker-wrap svg {
+  overflow: visible !important;
+}
+
+.leaflet-marker-icon {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.custom-marker-wrap {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -992,8 +1018,46 @@
 
 
     
+
 @media (max-width: 980px) {
   #sidebar { width: 100vw; min-width: 0; max-width: none; }
+  #search-shell {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  #search-bar {
+    width: 100%;
+    max-width: none;
+  }
+  #open-filters-btn {
+    margin-left: auto;
+  }
+  #search-panel,
+  .autocomplete-list {
+    width: 100%;
+    max-width: none;
+  }
+  #top-right-controls {
+    position: absolute;
+    top: 60px;
+    right: 12px;
+    left: 12px;
+    bottom: auto;
+    max-width: none;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .topbar-surface {
+    height: 112px;
+  }
+  body::before, body::after { display: none; }
+  .two-col, .button-row, .profile-stats { grid-template-columns: 1fr; }
+  #add-pin-floating-btn { width: 58px; height: 58px; font-size: 24px; }
+}
+
   #search-shell {
     top: 12px;
     left: 12px;
@@ -1421,15 +1485,30 @@
       let lat = data.lat;
       let lng = data.lng;
 
-      if ((lat === undefined || lng === undefined) && typeof data.coords === "string") {
+      if (typeof lat === "string") lat = parseFloat(lat.replace(",", "."));
+      if (typeof lng === "string") lng = parseFloat(lng.replace(",", "."));
+
+      if ((lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) && typeof data.coords === "string") {
         const parts = data.coords.split(",");
         if (parts.length === 2) {
-          lat = parseFloat(parts[0]);
-          lng = parseFloat(parts[1]);
+          lat = parseFloat(String(parts[0]).trim().replace(",", "."));
+          lng = parseFloat(String(parts[1]).trim().replace(",", "."));
         }
       }
 
-      if (typeof lat !== "number" || typeof lng !== "number" || isNaN(lat) || isNaN(lng)) {
+      if ((lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) && data.location && typeof data.location === "object") {
+        const locLat = data.location.lat ?? data.location.latitude;
+        const locLng = data.location.lng ?? data.location.longitude;
+        if (locLat !== undefined && locLng !== undefined) {
+          lat = typeof locLat === "string" ? parseFloat(locLat.replace(",", ".")) : Number(locLat);
+          lng = typeof locLng === "string" ? parseFloat(locLng.replace(",", ".")) : Number(locLng);
+        }
+      }
+
+      lat = Number(lat);
+      lng = Number(lng);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
         return null;
       }
 
