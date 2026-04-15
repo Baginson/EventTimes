@@ -599,8 +599,8 @@
           <div id="login-error" class="helper hidden" style="color:#b42318;"></div>
 
           <div class="button-row">
-            <button class="btn btn-primary" onclick="loginUser()">Zaloguj się</button>
-            <button class="btn btn-soft" onclick="closeAuthModal()">Anuluj</button>
+            <button id="login-submit-btn" type="button" class="btn btn-primary" onclick="loginUser()">Zaloguj się</button>
+            <button type="button" class="btn btn-soft" onclick="closeAuthModal()">Anuluj</button>
           </div>
         </div>
       </div>
@@ -617,8 +617,8 @@
           <div id="register-error" class="helper hidden" style="color:#b42318;"></div>
 
           <div class="button-row">
-            <button class="btn btn-primary" onclick="registerUser()">Utwórz konto</button>
-            <button class="btn btn-soft" onclick="closeAuthModal()">Anuluj</button>
+            <button id="register-submit-btn" type="button" class="btn btn-primary" onclick="registerUser()">Utwórz konto</button>
+            <button type="button" class="btn btn-soft" onclick="closeAuthModal()">Anuluj</button>
           </div>
         </div>
       </div>
@@ -831,6 +831,9 @@
 
     const loginError = document.getElementById("login-error");
     const registerError = document.getElementById("register-error");
+
+    const loginSubmitBtn = document.getElementById("login-submit-btn");
+    const registerSubmitBtn = document.getElementById("register-submit-btn");
 
     const searchEventNameInput = document.getElementById("search-main-input");
     const searchEventPlaceNameInput = document.getElementById("searchEventPlaceName");
@@ -1223,17 +1226,30 @@
     }
 
     async function loginUser() {
-      const email = document.getElementById("login-email").value.trim();
-      const password = document.getElementById("login-password").value;
-      const remember = document.getElementById("login-remember").checked;
-
-      loginError.classList.add("hidden");
-      loginError.textContent = "";
-
-      authFlowInProgress = true;
-      setLoginPreferences(remember);
-
       try {
+        const email = document.getElementById("login-email").value.trim();
+        const password = document.getElementById("login-password").value;
+        const rememberEl = document.getElementById("login-remember");
+        const remember = rememberEl ? rememberEl.checked : false;
+
+        loginError.classList.add("hidden");
+        loginError.textContent = "";
+
+        if (!email) {
+          loginError.textContent = "Wpisz adres e-mail.";
+          loginError.classList.remove("hidden");
+          return;
+        }
+
+        if (!password) {
+          loginError.textContent = "Wpisz hasło.";
+          loginError.classList.remove("hidden");
+          return;
+        }
+
+        authFlowInProgress = true;
+        setLoginPreferences(remember);
+
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         await auth.signInWithEmailAndPassword(email, password);
         closeAuthModal();
@@ -2329,6 +2345,23 @@
       searchPlaceCityOnlyInput.value = "";
       searchPlaceStreetOnlyInput.value = "";
       placeSearchResults.innerHTML = "";
+    }
+
+
+    if (loginSubmitBtn) {
+      loginSubmitBtn.addEventListener("click", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        loginUser();
+      });
+    }
+
+    if (registerSubmitBtn) {
+      registerSubmitBtn.addEventListener("click", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        registerUser();
+      });
     }
 
     openAuthModalBtn.addEventListener("click", openAuthModal);
