@@ -1086,6 +1086,7 @@
     let isAdmin = false;
     let currentUser = null;
     let currentUserAttendanceMap = {};
+    let authFlowInProgress = false;
 
     const searchShell = document.getElementById("search-shell");
     const sidebar = document.getElementById("sidebar");
@@ -1402,6 +1403,7 @@
         return;
       }
 
+      authFlowInProgress = true;
       setupLoginPreference();
 
       try {
@@ -1422,6 +1424,7 @@
 
         closeAuthModal();
       } catch (error) {
+        authFlowInProgress = false;
         clearLoginPreferences();
         console.error("Błąd registerUser:", error);
         registerError.textContent = getFirebaseAuthErrorMessage(error);
@@ -1436,12 +1439,14 @@
       loginError.classList.add("hidden");
       loginError.textContent = "";
 
+      authFlowInProgress = true;
       setupLoginPreference();
 
       try {
         await auth.signInWithEmailAndPassword(email, password);
         closeAuthModal();
       } catch (error) {
+        authFlowInProgress = false;
         clearLoginPreferences();
         console.error("Błąd loginUser:", error);
         loginError.textContent = getFirebaseAuthErrorMessage(error);
@@ -2699,9 +2704,13 @@
           }
         }
       } else {
+        if (authFlowInProgress) {
+          return;
+        }
         clearLoginPreferences();
       }
 
+      authFlowInProgress = false;
       currentUser = user || null;
       isAdmin = !!(currentUser && currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
 
