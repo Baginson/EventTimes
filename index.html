@@ -17,9 +17,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     :root {
       --bg: #eef5ff;
@@ -54,14 +52,8 @@
       overflow: hidden;
     }
 
-    #map {
-      height: 100vh;
-      width: 100%;
-    }
-
-    .hidden {
-      display: none !important;
-    }
+    #map { height: 100vh; width: 100%; }
+    .hidden { display: none !important; }
 
     #search-shell {
       position: absolute;
@@ -85,32 +77,15 @@
       backdrop-filter: blur(12px);
     }
 
-    #search-bar-icon {
-      font-size: 18px;
-      color: var(--primary);
-    }
-
-    #search-bar-text {
-      font-size: 15px;
-      font-weight: 600;
-      color: #334155;
-      flex: 1;
-    }
-
-    #search-bar-caret {
-      font-size: 14px;
-      color: var(--muted);
-      transition: transform 0.2s ease;
-    }
-
-    #search-shell.open #search-bar-caret {
-      transform: rotate(180deg);
-    }
+    #search-bar-icon { font-size: 18px; color: var(--primary); }
+    #search-bar-text { font-size: 15px; font-weight: 600; color: #334155; flex: 1; }
+    #search-bar-caret { font-size: 14px; color: var(--muted); transition: transform 0.2s ease; }
+    #search-shell.open #search-bar-caret { transform: rotate(180deg); }
 
     #search-panel {
       margin-top: 10px;
-      background: rgba(255, 255, 255, 0.98);
-      border: 1px solid rgba(219, 231, 251, 0.95);
+      background: rgba(255,255,255,0.98);
+      border: 1px solid rgba(219,231,251,0.95);
       border-radius: 24px;
       box-shadow: var(--shadow);
       overflow: hidden;
@@ -118,9 +93,7 @@
       max-height: calc(100vh - 110px);
     }
 
-    #search-shell.open #search-panel {
-      display: block;
-    }
+    #search-shell.open #search-panel { display: block; }
 
     .search-panel-head {
       padding: 18px 18px 8px 18px;
@@ -128,178 +101,70 @@
       background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
     }
 
-    .brand-title {
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--navy);
-      margin: 0 0 4px 0;
-    }
-
-    .brand-subtitle {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.5;
-      margin-bottom: 14px;
-    }
-
-    .search-tabs {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+    .brand-title { font-size: 22px; font-weight: 800; color: var(--navy); margin: 0 0 4px 0; }
+    .brand-subtitle { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+    .search-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
 
     .search-tab {
-      border: none;
-      background: var(--soft);
-      color: var(--navy);
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.2s ease;
-      font-family: "Inter", sans-serif;
+      border: none; background: var(--soft); color: var(--navy);
+      padding: 10px 14px; border-radius: 999px; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: 0.2s ease; font-family: "Inter", sans-serif;
     }
 
-    .search-tab:hover {
-      background: var(--soft-hover);
-    }
-
-    .search-tab.active {
-      background: var(--navy);
-      color: white;
-    }
+    .search-tab:hover { background: var(--soft-hover); }
+    .search-tab.active { background: var(--navy); color: white; }
 
     .search-panel-body {
-      padding: 18px;
-      overflow-y: auto;
-      max-height: calc(100vh - 235px);
+      padding: 18px; overflow-y: auto; max-height: calc(100vh - 235px);
     }
 
-    .search-section {
-      display: none;
-    }
-
-    .search-section.active {
-      display: block;
-    }
+    .search-section { display: none; }
+    .search-section.active { display: block; }
 
     .search-title {
-      margin: 0 0 10px 0;
-      font-size: 12px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
+      margin: 0 0 10px 0; font-size: 12px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
     }
 
-    .form-grid {
-      display: grid;
-      gap: 10px;
-    }
+    .form-grid { display: grid; gap: 10px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-    .two-col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .input,
-    .select {
-      width: 100%;
-      border: 1px solid #d7e4fb;
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 14px;
-      background: white;
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    .input, .select {
+      width: 100%; border: 1px solid #d7e4fb; border-radius: 14px;
+      padding: 12px 14px; font-size: 14px; background: white; color: var(--text);
+      outline: none; transition: border-color 0.15s ease, box-shadow 0.15s ease;
       font-family: "Inter", sans-serif;
     }
 
-    .input:focus,
-    .select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    .input:focus, .select:focus {
+      border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
     }
 
-    .helper {
-      font-size: 12px;
-      line-height: 1.5;
-      color: var(--muted);
-    }
+    .helper { font-size: 12px; line-height: 1.5; color: var(--muted); }
 
     .btn {
-      border: none;
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.2s ease;
-      width: 100%;
+      border: none; border-radius: 14px; padding: 12px 14px; font-size: 14px;
+      font-weight: 700; cursor: pointer; transition: 0.2s ease; width: 100%;
       font-family: "Inter", sans-serif;
     }
 
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-soft { background: var(--soft); color: var(--navy); }
+    .btn-soft:hover { background: var(--soft-hover); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: var(--success-hover); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-warning { background: var(--warning); color: white; }
+    .btn-warning:hover { background: var(--warning-hover); }
 
-    .btn-primary:hover {
-      background: var(--primary-hover);
-    }
-
-    .btn-soft {
-      background: var(--soft);
-      color: var(--navy);
-    }
-
-    .btn-soft:hover {
-      background: var(--soft-hover);
-    }
-
-    .btn-success {
-      background: var(--success);
-      color: white;
-    }
-
-    .btn-success:hover {
-      background: var(--success-hover);
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: white;
-    }
-
-    .btn-danger:hover {
-      background: var(--danger-hover);
-    }
-
-    .btn-warning {
-      background: var(--warning);
-      color: white;
-    }
-
-    .btn-warning:hover {
-      background: var(--warning-hover);
-    }
-
-    .search-results {
-      margin-top: 12px;
-      display: grid;
-      gap: 10px;
-    }
+    .search-results { margin-top: 12px; display: grid; gap: 10px; }
 
     .search-result {
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px;
+      border: 1px solid var(--border); border-radius: 16px; padding: 14px;
       background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-      cursor: pointer;
-      transition: 0.2s ease;
+      cursor: pointer; transition: 0.2s ease;
     }
 
     .search-result:hover {
@@ -309,572 +174,251 @@
     }
 
     .search-result-title {
-      font-weight: 700;
-      font-size: 15px;
-      margin-bottom: 6px;
-      color: var(--navy);
+      font-weight: 700; font-size: 15px; margin-bottom: 6px; color: var(--navy);
     }
 
-    .search-result-meta {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.55;
-    }
+    .search-result-meta { font-size: 13px; color: var(--muted); line-height: 1.55; }
 
     .search-empty {
-      margin-top: 12px;
-      font-size: 13px;
-      color: var(--muted);
-      background: #f8fbff;
-      border: 1px dashed #c6d8fb;
-      border-radius: 16px;
-      padding: 14px;
+      margin-top: 12px; font-size: 13px; color: var(--muted); background: #f8fbff;
+      border: 1px dashed #c6d8fb; border-radius: 16px; padding: 14px;
     }
 
-    .autocomplete-wrap {
-      position: relative;
-    }
+    .autocomplete-wrap { position: relative; }
 
     .autocomplete-list {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: calc(100% + 6px);
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-      z-index: 1600;
-      overflow: hidden;
-      display: none;
-      max-height: 220px;
-      overflow-y: auto;
+      position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: white;
+      border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow);
+      z-index: 1600; overflow: hidden; display: none; max-height: 220px; overflow-y: auto;
     }
 
     .autocomplete-item {
-      padding: 12px 14px;
-      font-size: 14px;
-      cursor: pointer;
-      border-bottom: 1px solid #eef4ff;
+      padding: 12px 14px; font-size: 14px; cursor: pointer; border-bottom: 1px solid #eef4ff;
     }
 
-    .autocomplete-item:last-child {
-      border-bottom: none;
-    }
-
-    .autocomplete-item:hover {
-      background: #f4f8ff;
-    }
+    .autocomplete-item:last-child { border-bottom: none; }
+    .autocomplete-item:hover { background: #f4f8ff; }
 
     #top-right-controls {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      z-index: 1250;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: flex-end;
+      position: absolute; top: 16px; right: 16px; z-index: 1250; display: flex; gap: 10px;
+      align-items: center; flex-wrap: wrap; justify-content: flex-end;
       max-width: min(460px, calc(100vw - 32px));
     }
 
     .pill-btn {
-      border: none;
-      border-radius: 999px;
-      padding: 11px 15px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.2s ease;
-      box-shadow: var(--shadow);
-      background: rgba(255,255,255,0.97);
-      color: var(--navy);
-      font-family: "Inter", sans-serif;
+      border: none; border-radius: 999px; padding: 11px 15px; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: 0.2s ease; box-shadow: var(--shadow);
+      background: rgba(255,255,255,0.97); color: var(--navy); font-family: "Inter", sans-serif;
     }
 
-    .pill-btn:hover {
-      transform: translateY(-1px);
-    }
-
-    .pill-btn.primary {
-      background: var(--navy);
-      color: white;
-    }
-
-    .pill-btn.primary:hover {
-      background: var(--navy-2);
-    }
+    .pill-btn:hover { transform: translateY(-1px); }
+    .pill-btn.primary { background: var(--navy); color: white; }
+    .pill-btn.primary:hover { background: var(--navy-2); }
 
     .pill-badge {
       background: linear-gradient(135deg, var(--navy) 0%, var(--primary) 100%);
-      color: white;
-      border-radius: 999px;
-      padding: 9px 13px;
-      font-size: 12px;
-      font-weight: 800;
-      box-shadow: var(--shadow);
+      color: white; border-radius: 999px; padding: 9px 13px; font-size: 12px;
+      font-weight: 800; box-shadow: var(--shadow);
     }
 
     #add-pin-floating-btn {
-      position: absolute;
-      left: 18px;
-      bottom: 18px;
-      z-index: 1250;
-      width: 66px;
-      height: 66px;
-      border-radius: 50%;
-      border: none;
-      box-shadow: var(--shadow);
-      color: white;
-      font-size: 28px;
-      cursor: pointer;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.18s ease, background 0.18s ease;
-      background: var(--danger);
+      position: absolute; left: 18px; bottom: 18px; z-index: 1250; width: 66px; height: 66px;
+      border-radius: 50%; border: none; box-shadow: var(--shadow); color: white; font-size: 28px;
+      cursor: pointer; display: none; align-items: center; justify-content: center;
+      transition: transform 0.18s ease, background 0.18s ease; background: var(--danger);
       font-family: "Inter", sans-serif;
     }
 
-    #add-pin-floating-btn.admin-visible {
-      display: flex;
-    }
-
-    #add-pin-floating-btn:hover {
-      transform: scale(1.06);
-    }
-
-    #add-pin-floating-btn.active {
-      background: var(--success);
-    }
+    #add-pin-floating-btn.admin-visible { display: flex; }
+    #add-pin-floating-btn:hover { transform: scale(1.06); }
+    #add-pin-floating-btn.active { background: var(--success); }
 
     #sidebar {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 36vw;
-      min-width: 390px;
-      max-width: 720px;
-      height: 100vh;
-      background: rgba(255,255,255,0.98);
-      backdrop-filter: blur(12px);
-      border-left: 1px solid var(--border);
-      box-shadow: -14px 0 34px rgba(16, 42, 86, 0.12);
-      z-index: 1300;
-      transform: translateX(100%);
-      transition: transform 0.28s ease;
-      display: flex;
-      flex-direction: column;
+      position: absolute; top: 0; right: 0; width: 36vw; min-width: 390px; max-width: 720px;
+      height: 100vh; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px);
+      border-left: 1px solid var(--border); box-shadow: -14px 0 34px rgba(16,42,86,0.12);
+      z-index: 1300; transform: translateX(100%); transition: transform 0.28s ease;
+      display: flex; flex-direction: column;
     }
 
-    #sidebar.open {
-      transform: translateX(0);
-    }
+    #sidebar.open { transform: translateX(0); }
 
     #sidebar-header {
-      padding: 22px 22px 14px 22px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      gap: 14px;
-      align-items: flex-start;
+      padding: 22px 22px 14px 22px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; gap: 14px; align-items: flex-start;
       background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
     }
 
-    #sidebar-title-wrap {
-      min-width: 0;
-    }
-
+    #sidebar-title-wrap { min-width: 0; }
     #sidebar-title {
-      margin: 0;
-      font-size: 28px;
-      line-height: 1.1;
-      font-weight: 800;
-      color: var(--navy);
+      margin: 0; font-size: 28px; line-height: 1.1; font-weight: 800; color: var(--navy);
       word-break: break-word;
     }
 
-    #sidebar-subtitle {
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.6;
-    }
+    #sidebar-subtitle { margin-top: 8px; color: var(--muted); font-size: 14px; line-height: 1.6; }
 
     #close-sidebar {
-      border: none;
-      background: var(--soft);
-      color: var(--navy);
-      width: 42px;
-      height: 42px;
-      border-radius: 14px;
-      font-size: 20px;
-      cursor: pointer;
-      flex-shrink: 0;
+      border: none; background: var(--soft); color: var(--navy); width: 42px; height: 42px;
+      border-radius: 14px; font-size: 20px; cursor: pointer; flex-shrink: 0;
       font-family: "Inter", sans-serif;
     }
 
-    #close-sidebar:hover {
-      background: var(--soft-hover);
-    }
+    #close-sidebar:hover { background: var(--soft-hover); }
 
     #sidebar-content {
-      padding: 20px 22px 28px 22px;
-      overflow-y: auto;
-      flex: 1;
-      background: var(--bg-soft);
+      padding: 20px 22px 28px 22px; overflow-y: auto; flex: 1; background: var(--bg-soft);
     }
 
-    .section {
-      margin-bottom: 24px;
-    }
+    .section { margin-bottom: 24px; }
 
     .section-title {
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 12px;
+      font-size: 12px; font-weight: 800; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
     }
 
     .card {
       background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-xl);
-      padding: 16px;
-      box-shadow: 0 8px 20px rgba(16, 42, 86, 0.05);
+      border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 16px;
+      box-shadow: 0 8px 20px rgba(16,42,86,0.05);
     }
 
-    .place-meta {
-      display: grid;
-      gap: 12px;
-    }
-
-    .meta-row {
-      display: grid;
-      gap: 4px;
-    }
+    .place-meta { display: grid; gap: 12px; }
+    .meta-row { display: grid; gap: 4px; }
 
     .meta-label {
-      font-size: 11px;
-      color: var(--muted);
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+      font-size: 11px; color: var(--muted); font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.08em;
     }
 
     .meta-value {
-      font-size: 15px;
-      line-height: 1.6;
-      word-break: break-word;
-      color: var(--text);
+      font-size: 15px; line-height: 1.6; word-break: break-word; color: var(--text);
     }
 
-    .button-row {
-      display: grid;
-      gap: 10px;
-      grid-template-columns: 1fr 1fr;
-      margin-top: 12px;
-    }
+    .button-row { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; margin-top: 12px; }
+    .button-row.single { grid-template-columns: 1fr; }
 
-    .button-row.single {
-      grid-template-columns: 1fr;
-    }
-
-    .event-list {
-      display: grid;
-      gap: 14px;
-    }
+    .event-list { display: grid; gap: 14px; }
 
     .event-card {
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      background: white;
-      overflow: hidden;
-      box-shadow: 0 10px 24px rgba(16, 42, 86, 0.06);
+      border: 1px solid var(--border); border-radius: 22px; background: white; overflow: hidden;
+      box-shadow: 0 10px 24px rgba(16,42,86,0.06);
     }
 
     .event-image-wrap {
-      width: 100%;
-      height: 220px;
-      background: #edf4ff;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
+      width: 100%; height: 220px; background: #edf4ff; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
     }
 
-    .event-image-wrap img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
+    .event-image-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
     .event-image-placeholder {
-      padding: 16px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
+      padding: 16px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.5;
     }
 
-    .event-body {
-      padding: 16px;
-    }
+    .event-body { padding: 16px; }
 
     .event-name {
-      margin: 0 0 12px 0;
-      font-size: 20px;
-      line-height: 1.25;
-      word-break: break-word;
+      margin: 0 0 12px 0; font-size: 20px; line-height: 1.25; word-break: break-word;
       color: var(--navy);
     }
 
-    .event-meta-list {
-      display: grid;
-      gap: 8px;
-      margin-bottom: 14px;
-    }
-
-    .event-meta-item {
-      font-size: 14px;
-      line-height: 1.55;
-      color: #334155;
-    }
-
-    .event-meta-item strong {
-      color: var(--navy);
-    }
+    .event-meta-list { display: grid; gap: 8px; margin-bottom: 14px; }
+    .event-meta-item { font-size: 14px; line-height: 1.55; color: #334155; }
+    .event-meta-item strong { color: var(--navy); }
 
     .preview-card {
-      border: 1px dashed #c6d8fb;
-      border-radius: 18px;
-      background: #f8fbff;
-      padding: 12px;
+      border: 1px dashed #c6d8fb; border-radius: 18px; background: #f8fbff; padding: 12px;
     }
 
     .preview-image {
-      width: 100%;
-      height: 190px;
-      object-fit: cover;
-      border-radius: 14px;
-      display: none;
-      margin-top: 10px;
-      border: 1px solid var(--border);
-      background: #edf4ff;
+      width: 100%; height: 190px; object-fit: cover; border-radius: 14px; display: none;
+      margin-top: 10px; border: 1px solid var(--border); background: #edf4ff;
     }
 
-    .preview-message {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.5;
-    }
+    .preview-message { font-size: 13px; color: var(--muted); line-height: 1.5; }
 
     .empty-state {
-      padding: 18px;
-      border: 1px dashed #c6d8fb;
-      border-radius: 18px;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.6;
-      background: #f8fbff;
+      padding: 18px; border: 1px dashed #c6d8fb; border-radius: 18px; color: var(--muted);
+      font-size: 14px; line-height: 1.6; background: #f8fbff;
     }
 
-    .editing-box {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px dashed #d8e6fd;
-    }
+    .editing-box { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #d8e6fd; }
 
-    #auth-modal-overlay,
-    #profile-modal-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 3000;
-      background: rgba(15, 35, 67, 0.42);
-      backdrop-filter: blur(8px);
-      display: none;
-      align-items: center;
-      justify-content: center;
+    #auth-modal-overlay, #profile-modal-overlay {
+      position: fixed; inset: 0; z-index: 3000; background: rgba(15,35,67,0.42);
+      backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center;
       padding: 20px;
     }
 
-    #auth-modal-overlay.open,
-    #profile-modal-overlay.open {
-      display: flex;
-    }
+    #auth-modal-overlay.open, #profile-modal-overlay.open { display: flex; }
 
     .modal-card {
-      width: min(500px, 100%);
-      max-height: min(86vh, 820px);
-      overflow-y: auto;
-      background: white;
-      border-radius: 28px;
-      box-shadow: 0 24px 60px rgba(16, 42, 86, 0.22);
-      border: 1px solid rgba(219, 231, 251, 0.95);
-      padding: 24px;
+      width: min(500px, 100%); max-height: min(86vh, 820px); overflow-y: auto; background: white;
+      border-radius: 28px; box-shadow: 0 24px 60px rgba(16,42,86,0.22);
+      border: 1px solid rgba(219,231,251,0.95); padding: 24px;
     }
 
-    .modal-title {
-      margin: 0 0 8px 0;
-      font-size: 28px;
-      font-weight: 800;
-      color: var(--navy);
-    }
-
-    .modal-subtitle {
-      margin: 0 0 18px 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    .modal-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
+    .modal-title { margin: 0 0 8px 0; font-size: 28px; font-weight: 800; color: var(--navy); }
+    .modal-subtitle { margin: 0 0 18px 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .modal-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
 
     .modal-tab {
-      border: none;
-      background: var(--soft);
-      color: var(--navy);
-      border-radius: 999px;
-      padding: 10px 14px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
+      border: none; background: var(--soft); color: var(--navy); border-radius: 999px;
+      padding: 10px 14px; font-size: 13px; font-weight: 700; cursor: pointer;
       font-family: "Inter", sans-serif;
     }
 
-    .modal-tab.active {
-      background: var(--navy);
-      color: white;
+    .modal-tab.active { background: var(--navy); color: white; }
+    .auth-section { display: none; }
+    .auth-section.active { display: block; }
+
+    .remember-row {
+      display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted);
+      padding: 2px 2px 0 2px;
     }
 
-    .auth-section {
-      display: none;
-    }
-
-    .auth-section.active {
-      display: block;
-    }
+    .remember-row input { width: 16px; height: 16px; }
 
     .profile-header-card {
-      display: grid;
-      gap: 12px;
-      margin-bottom: 16px;
-      padding: 16px;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      background: linear-gradient(135deg, #ffffff 0%, #f4f8ff 100%);
+      display: grid; gap: 12px; margin-bottom: 16px; padding: 16px; border: 1px solid var(--border);
+      border-radius: 20px; background: linear-gradient(135deg, #ffffff 0%, #f4f8ff 100%);
     }
 
-    .profile-name {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--navy);
-    }
-
-    .profile-email {
-      font-size: 14px;
-      color: var(--muted);
-    }
-
-    .profile-stats {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
+    .profile-name { font-size: 20px; font-weight: 800; color: var(--navy); }
+    .profile-email { font-size: 14px; color: var(--muted); }
+    .profile-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 
     .profile-stat {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px;
+      background: white; border: 1px solid var(--border); border-radius: 16px; padding: 14px;
     }
 
-    .profile-stat-value {
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--navy);
-      margin-bottom: 4px;
-    }
-
+    .profile-stat-value { font-size: 24px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
     .profile-stat-label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
+      font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
       font-weight: 700;
     }
 
-    .attendance-list {
-      display: grid;
-      gap: 12px;
-      margin-top: 14px;
-    }
+    .attendance-list { display: grid; gap: 12px; margin-top: 14px; }
 
     .attendance-card {
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 14px;
-      background: #fbfdff;
+      border: 1px solid var(--border); border-radius: 18px; padding: 14px; background: #fbfdff;
     }
 
-    .attendance-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 6px;
-    }
-
-    .attendance-meta {
-      font-size: 13px;
-      line-height: 1.55;
-      color: var(--muted);
-    }
+    .attendance-title { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+    .attendance-meta { font-size: 13px; line-height: 1.55; color: var(--muted); }
 
     @media (max-width: 980px) {
-      #sidebar {
-        width: 100vw;
-        min-width: 0;
-        max-width: none;
-      }
-
-      #search-shell {
-        width: calc(100vw - 32px);
-      }
-
-      .two-col,
-      .button-row,
-      .profile-stats {
-        grid-template-columns: 1fr;
-      }
-
-      #add-pin-floating-btn {
-        width: 58px;
-        height: 58px;
-        font-size: 24px;
-      }
-
-      #top-right-controls {
-        top: auto;
-        right: 14px;
-        bottom: 14px;
-        max-width: calc(100vw - 32px);
-      }
+      #sidebar { width: 100vw; min-width: 0; max-width: none; }
+      #search-shell { width: calc(100vw - 32px); }
+      .two-col, .button-row, .profile-stats { grid-template-columns: 1fr; }
+      #add-pin-floating-btn { width: 58px; height: 58px; font-size: 24px; }
+      #top-right-controls { top: auto; right: 14px; bottom: 14px; max-width: calc(100vw - 32px); }
     }
   </style>
 </head>
 <body>
   <div id="top-right-controls">
     <div id="admin-status-badge" class="pill-badge hidden">Admin</div>
-
     <button id="open-auth-modal-btn" class="pill-btn primary">Zaloguj / Załóż konto</button>
     <button id="open-profile-modal-btn" class="pill-btn hidden">Mój profil</button>
     <button id="logout-user-btn" class="pill-btn hidden">Wyloguj</button>
@@ -894,11 +438,10 @@
         <div class="form-grid">
           <input id="login-email" class="input" type="email" placeholder="Adres e-mail" />
           <input id="login-password" class="input" type="password" placeholder="Hasło" />
-          <label style="display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); cursor:pointer;">
-            <input id="login-remember" type="checkbox" style="width:16px; height:16px; cursor:pointer;" />
+          <label class="remember-row">
+            <input id="login-remember" type="checkbox" />
             <span>Zapamiętaj mnie</span>
           </label>
-          <div class="helper">Jeśli nie zaznaczysz tej opcji, wylogowanie nastąpi po 24 godzinach.</div>
           <div id="login-error" class="helper hidden" style="color:#b42318;"></div>
 
           <div class="button-row">
@@ -913,11 +456,10 @@
           <input id="register-name" class="input" type="text" placeholder="Nazwa użytkownika" />
           <input id="register-email" class="input" type="email" placeholder="Adres e-mail" />
           <input id="register-password" class="input" type="password" placeholder="Hasło" />
-          <label style="display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); cursor:pointer;">
-            <input id="register-remember" type="checkbox" style="width:16px; height:16px; cursor:pointer;" />
+          <label class="remember-row">
+            <input id="register-remember" type="checkbox" />
             <span>Zapamiętaj mnie</span>
           </label>
-          <div class="helper">Jeśli nie zaznaczysz tej opcji, wylogowanie nastąpi po 24 godzinach.</div>
           <div id="register-error" class="helper hidden" style="color:#b42318;"></div>
 
           <div class="button-row">
@@ -945,7 +487,6 @@
             <div id="profile-attendance-count" class="profile-stat-value">0</div>
             <div class="profile-stat-label">Zaznaczone eventy</div>
           </div>
-
           <div class="profile-stat">
             <div id="profile-places-count" class="profile-stat-value">0</div>
             <div class="profile-stat-label">Odwiedzone miejsca</div>
@@ -972,9 +513,7 @@
     <div id="search-panel">
       <div class="search-panel-head">
         <div class="brand-title">EventTimes</div>
-        <div class="brand-subtitle">
-          Odkrywaj historię miejsc, eventów i buduj własną historię uczestnictwa.
-        </div>
+        <div class="brand-subtitle">Odkrywaj historię miejsc, eventów i buduj własną historię uczestnictwa.</div>
 
         <div class="search-tabs">
           <button id="tab-events" class="search-tab active" onclick="setSearchMode('events')">Wyszukiwarka eventów</button>
@@ -1056,7 +595,6 @@
       </div>
       <button id="close-sidebar" type="button">&times;</button>
     </div>
-
     <div id="sidebar-content"></div>
   </aside>
 
@@ -1077,9 +615,9 @@
     const EVENT_TYPES = ["Gala MMA", "Koncert", "Stand-up"];
     const DUPLICATE_RADIUS_METERS = 35;
     const ADMIN_EMAIL = "xiron.yt@gmail.com";
-    const LOGIN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+    const LOGIN_EXPIRY_MS = 24 * 60 * 60 * 1000;
     const LOGIN_TIME_KEY = "eventtimes_login_time";
-    const REMEMBER_LOGIN_KEY = "eventtimes_remember_login";
+    const LOGIN_REMEMBER_KEY = "eventtimes_remember_me";
 
     const map = L.map("map").setView([52.0, 19.0], 6);
 
@@ -1092,9 +630,8 @@
     let addPinMode = false;
     let selectedPlaceId = null;
     let allPlacesCache = [];
-    let currentSearchMode = "events";
-    let isAdmin = false;
     let currentUser = null;
+    let isAdmin = false;
     let currentUserAttendanceMap = {};
     let authFlowInProgress = false;
 
@@ -1122,14 +659,6 @@
     const loginError = document.getElementById("login-error");
     const registerError = document.getElementById("register-error");
 
-    const tabEvents = document.getElementById("tab-events");
-    const tabPlaces = document.getElementById("tab-places");
-    const searchEventsSection = document.getElementById("search-events-section");
-    const searchPlacesSection = document.getElementById("search-places-section");
-
-    const eventSearchResults = document.getElementById("eventSearchResults");
-    const placeSearchResults = document.getElementById("placeSearchResults");
-
     const searchEventNameInput = document.getElementById("searchEventName");
     const searchEventPlaceNameInput = document.getElementById("searchEventPlaceName");
     const searchEventCityInput = document.getElementById("searchEventCity");
@@ -1139,10 +668,43 @@
     const searchDateToInput = document.getElementById("searchDateTo");
     const searchSortInput = document.getElementById("searchSort");
     const searchSuggestionsBox = document.getElementById("searchEventSuggestions");
+    const eventSearchResults = document.getElementById("eventSearchResults");
 
     const searchPlaceNameOnlyInput = document.getElementById("searchPlaceNameOnly");
     const searchPlaceCityOnlyInput = document.getElementById("searchPlaceCityOnly");
     const searchPlaceStreetOnlyInput = document.getElementById("searchPlaceStreetOnly");
+    const placeSearchResults = document.getElementById("placeSearchResults");
+
+    function getRememberPreference() {
+      return localStorage.getItem(LOGIN_REMEMBER_KEY) === "true";
+    }
+
+    function setLoginPreferences(remember) {
+      localStorage.setItem(LOGIN_REMEMBER_KEY, remember ? "true" : "false");
+      localStorage.setItem(LOGIN_TIME_KEY, String(Date.now()));
+    }
+
+    function refreshLoginTime() {
+      localStorage.setItem(LOGIN_TIME_KEY, String(Date.now()));
+    }
+
+    function clearLoginPreferences() {
+      localStorage.removeItem(LOGIN_REMEMBER_KEY);
+      localStorage.removeItem(LOGIN_TIME_KEY);
+    }
+
+    function isLoginExpired() {
+      const remember = getRememberPreference();
+      if (remember) return false;
+
+      const saved = localStorage.getItem(LOGIN_TIME_KEY);
+      if (!saved) return true;
+
+      const loginTime = Number(saved);
+      if (!Number.isFinite(loginTime)) return true;
+
+      return Date.now() - loginTime > LOGIN_EXPIRY_MS;
+    }
 
     function escapeHtml(text) {
       const div = document.createElement("div");
@@ -1207,9 +769,7 @@
         ? data.events
         : Array.isArray(data.list)
           ? data.list.map(function(item) {
-              if (typeof item === "string") {
-                return { name: item, type: "", date: "", imageUrl: "" };
-              }
+              if (typeof item === "string") return { name: item, type: "", date: "", imageUrl: "" };
               return item;
             })
           : [];
@@ -1221,11 +781,7 @@
         originalEvents.some(function(eventItem, index) {
           const normalized = normalizedEvents[index];
           if (!eventItem || typeof eventItem !== "object") return true;
-          return (
-            !eventItem.id ||
-            typeof eventItem.attendanceCount !== "number" ||
-            eventItem.image !== undefined
-          );
+          return !eventItem.id || typeof eventItem.attendanceCount !== "number" || eventItem.image !== undefined;
         });
 
       return {
@@ -1233,16 +789,15 @@
         placeName: data.placeName || "",
         city: data.city || "",
         street: data.street || "",
-        lat: lat,
-        lng: lng,
+        lat,
+        lng,
         events: normalizedEvents,
-        needsMigration: needsMigration
+        needsMigration
       };
     }
 
     function getFirebaseAuthErrorMessage(error) {
       const code = error && error.code ? error.code : "";
-
       switch (code) {
         case "auth/invalid-email":
           return "Nieprawidłowy adres e-mail.";
@@ -1268,9 +823,7 @@
     }
 
     function rebuildPlacesCache() {
-      allPlacesCache = Object.values(markers).map(function(marker) {
-        return marker.placeData;
-      });
+      allPlacesCache = Object.values(markers).map(function(marker) { return marker.placeData; });
     }
 
     function updateUserUI() {
@@ -1288,9 +841,7 @@
       addPinFloatingBtn.classList.toggle("admin-visible", isAdmin);
       adminStatusBadge.classList.toggle("hidden", !isAdmin);
 
-      if (!isAdmin) {
-        setAddPinMode(false);
-      }
+      if (!isAdmin) setAddPinMode(false);
 
       if (selectedPlaceId && markers[selectedPlaceId]) {
         renderPlaceSidebar(markers[selectedPlaceId].placeData);
@@ -1326,80 +877,11 @@
       profileModalOverlay.classList.remove("open");
     }
 
-    async function initAuthPersistence() {
-      try {
-        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-      } catch (error) {
-        console.error("Błąd initAuthPersistence:", error);
-      }
-    }
-
-    function saveLoginTime() {
-      try {
-        localStorage.setItem(LOGIN_TIME_KEY, String(Date.now()));
-      } catch (error) {
-        console.error("Błąd saveLoginTime:", error);
-      }
-    }
-
-    function getLoginTime() {
-      try {
-        const raw = localStorage.getItem(LOGIN_TIME_KEY);
-        const value = raw ? Number(raw) : 0;
-        return Number.isFinite(value) ? value : 0;
-      } catch (error) {
-        console.error("Błąd getLoginTime:", error);
-        return 0;
-      }
-    }
-
-    function clearLoginTime() {
-      try {
-        localStorage.removeItem(LOGIN_TIME_KEY);
-      } catch (error) {
-        console.error("Błąd clearLoginTime:", error);
-      }
-    }
-
-
-    function setRememberLogin(value) {
-      try {
-        localStorage.setItem(REMEMBER_LOGIN_KEY, value ? "1" : "0");
-      } catch (error) {
-        console.error("Błąd setRememberLogin:", error);
-      }
-    }
-
-    function getRememberLogin() {
-      try {
-        return localStorage.getItem(REMEMBER_LOGIN_KEY) === "1";
-      } catch (error) {
-        console.error("Błąd getRememberLogin:", error);
-        return false;
-      }
-    }
-
-    function clearLoginPreferences() {
-      try {
-        localStorage.removeItem(REMEMBER_LOGIN_KEY);
-        localStorage.removeItem(LOGIN_TIME_KEY);
-      } catch (error) {
-        console.error("Błąd clearLoginPreferences:", error);
-      }
-    }
-    function applyRememberPreference(value) {
-      setRememberLogin(!!value);
-      if (value) {
-        localStorage.removeItem(LOGIN_TIME_KEY);
-      } else {
-        localStorage.setItem(LOGIN_TIME_KEY, String(Date.now()));
-      }
-    }
-
     async function registerUser() {
       const name = document.getElementById("register-name").value.trim();
       const email = document.getElementById("register-email").value.trim();
       const password = document.getElementById("register-password").value;
+      const remember = document.getElementById("register-remember").checked;
 
       registerError.classList.add("hidden");
       registerError.textContent = "";
@@ -1411,60 +893,59 @@
       }
 
       authFlowInProgress = true;
-      applyRememberPreference(document.getElementById("register-remember").checked);
+      setLoginPreferences(remember);
 
       try {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
 
-        await userCredential.user.updateProfile({
-          displayName: name
-        });
+        await userCredential.user.updateProfile({ displayName: name });
 
-        await db.collection("users").doc(userCredential.user.uid).set(
-          {
-            displayName: name,
-            email: email,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          },
-          { merge: true }
-        );
+        await db.collection("users").doc(userCredential.user.uid).set({
+          displayName: name,
+          email: email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
 
         closeAuthModal();
       } catch (error) {
-        authFlowInProgress = false;
-        clearLoginPreferences();
         console.error("Błąd registerUser:", error);
+        clearLoginPreferences();
         registerError.textContent = getFirebaseAuthErrorMessage(error);
         registerError.classList.remove("hidden");
+      } finally {
+        authFlowInProgress = false;
       }
     }
 
     async function loginUser() {
       const email = document.getElementById("login-email").value.trim();
       const password = document.getElementById("login-password").value;
+      const remember = document.getElementById("login-remember").checked;
 
       loginError.classList.add("hidden");
       loginError.textContent = "";
 
       authFlowInProgress = true;
-      applyRememberPreference(document.getElementById("register-remember").checked);
+      setLoginPreferences(remember);
 
       try {
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         await auth.signInWithEmailAndPassword(email, password);
         closeAuthModal();
       } catch (error) {
-        authFlowInProgress = false;
-        clearLoginPreferences();
         console.error("Błąd loginUser:", error);
+        clearLoginPreferences();
         loginError.textContent = getFirebaseAuthErrorMessage(error);
         loginError.classList.remove("hidden");
+      } finally {
+        authFlowInProgress = false;
       }
     }
 
     async function logoutUser() {
       try {
-        await auth.signOut();
         clearLoginPreferences();
+        await auth.signOut();
         closeProfileModal();
       } catch (error) {
         console.error("Błąd logoutUser:", error);
@@ -1477,11 +958,10 @@
     }
 
     function setSearchMode(mode) {
-      currentSearchMode = mode;
-      tabEvents.classList.toggle("active", mode === "events");
-      tabPlaces.classList.toggle("active", mode === "places");
-      searchEventsSection.classList.toggle("active", mode === "events");
-      searchPlacesSection.classList.toggle("active", mode === "places");
+      document.getElementById("tab-events").classList.toggle("active", mode === "events");
+      document.getElementById("tab-places").classList.toggle("active", mode === "places");
+      document.getElementById("search-events-section").classList.toggle("active", mode === "events");
+      document.getElementById("search-places-section").classList.toggle("active", mode === "places");
     }
 
     function setAddPinMode(isActive) {
@@ -1493,9 +973,7 @@
     function toggleAddPinModeFromButton() {
       if (!isAdmin) return;
       setAddPinMode(!addPinMode);
-      if (addPinMode) {
-        closeSidebar();
-      }
+      if (addPinMode) closeSidebar();
     }
 
     function openSidebar(title, subtitle, html) {
@@ -1525,21 +1003,14 @@
 
     function buildAttendanceButton(placeData, eventItem) {
       if (!currentUser) {
-        return `
-          <div class="helper" style="margin-top:8px;">
-            Zaloguj się, aby zaznaczyć, że byłeś na tym evencie.
-          </div>
-        `;
+        return '<div class="helper" style="margin-top:8px;">Zaloguj się, aby zaznaczyć, że byłeś na tym evencie.</div>';
       }
 
       const attended = isEventAttended(placeData.id, eventItem.id);
 
       return `
         <div class="button-row single">
-          <button
-            class="btn ${attended ? "btn-soft" : "btn-success"}"
-            onclick="toggleAttendance('${placeData.id}', '${eventItem.id}')"
-          >
+          <button class="btn ${attended ? "btn-soft" : "btn-success"}" onclick="toggleAttendance('${placeData.id}', '${eventItem.id}')">
             ${attended ? "Usuń z mojej historii" : "Byłem na tym evencie"}
           </button>
         </div>
@@ -1557,9 +1028,7 @@
               <input id="placeNameInput" class="input" placeholder="Nazwa miejsca" />
               <input id="cityInput" class="input" placeholder="Miasto" />
               <input id="streetInput" class="input" placeholder="Ulica" />
-              <div class="helper">
-                Kliknąłeś mapę w trybie dodawania. Uzupełnij miejsce i zapisz pineskę.
-              </div>
+              <div class="helper">Kliknąłeś mapę w trybie dodawania. Uzupełnij miejsce i zapisz pineskę.</div>
               <button class="btn btn-primary" onclick="addPlace(${lat}, ${lng})">Zapisz pineszkę</button>
               <button class="btn btn-soft" onclick="cancelAddPlace()">Anuluj</button>
             </div>
@@ -1570,14 +1039,12 @@
 
     function buildPlaceEditPanel(placeData) {
       if (!isAdmin) return "";
-
       return `
         <div class="editing-box">
           <div class="form-grid">
             <input id="editPlaceNameInput" class="input" value="${escapeHtml(placeData.placeName)}" placeholder="Nazwa miejsca" />
             <input id="editPlaceCityInput" class="input" value="${escapeHtml(placeData.city)}" placeholder="Miasto" />
             <input id="editPlaceStreetInput" class="input" value="${escapeHtml(placeData.street)}" placeholder="Ulica" />
-
             <div class="button-row">
               <button class="btn btn-success" onclick="savePlaceEdit('${placeData.id}')">Zapisz miejsce</button>
               <button class="btn btn-soft" onclick="renderPlaceSidebarById('${placeData.id}')">Anuluj</button>
@@ -1589,17 +1056,13 @@
 
     function buildEventEditPanel(placeId, eventIndex, eventItem) {
       if (!isAdmin) return "";
-
       return `
         <div class="editing-box">
           <div class="form-grid">
             <input id="editEventName-${eventIndex}" class="input" value="${escapeHtml(eventItem.name)}" placeholder="Nazwa eventu" />
-            <select id="editEventType-${eventIndex}" class="select">
-              ${buildEventTypeOptions(eventItem.type || "")}
-            </select>
+            <select id="editEventType-${eventIndex}" class="select">${buildEventTypeOptions(eventItem.type || "")}</select>
             <input id="editEventDate-${eventIndex}" class="input" type="date" value="${escapeHtml(eventItem.date || "")}" />
             <input id="editEventImage-${eventIndex}" class="input" value="${escapeHtml(eventItem.imageUrl || "")}" placeholder="Link do grafiki eventu (URL)" />
-
             <div class="button-row">
               <button class="btn btn-success" onclick="saveEventEdit('${placeId}', ${eventIndex})">Zapisz event</button>
               <button class="btn btn-soft" onclick="renderPlaceSidebarById('${placeId}')">Anuluj</button>
@@ -1617,16 +1080,10 @@
       const placeId = placeData.id;
 
       let eventsHtml = "";
-
-      if (events.length === 0) {
-        eventsHtml = `
-          <div class="empty-state">
-            To miejsce nie ma jeszcze żadnych eventów.
-          </div>
-        `;
+      if (!events.length) {
+        eventsHtml = '<div class="empty-state">To miejsce nie ma jeszcze żadnych eventów.</div>';
       } else {
-        eventsHtml = `<div class="event-list">`;
-
+        eventsHtml = '<div class="event-list">';
         events.forEach(function(eventItem, index) {
           const imageUrl = eventItem.imageUrl ? escapeHtml(eventItem.imageUrl) : "";
           const eventName = escapeHtml(eventItem.name || "Bez nazwy");
@@ -1648,11 +1105,9 @@
           eventsHtml += `
             <div class="event-card">
               <div class="event-image-wrap">
-                ${
-                  imageUrl
-                    ? `<img src="${imageUrl}" alt="${eventName}" onerror="this.parentElement.innerHTML='<div class=&quot;event-image-placeholder&quot;>Nie udało się wczytać grafiki.</div>';">`
-                    : `<div class="event-image-placeholder">Brak grafiki dla tego eventu.</div>`
-                }
+                ${imageUrl
+                  ? `<img src="${imageUrl}" alt="${eventName}" onerror="this.parentElement.innerHTML='<div class=&quot;event-image-placeholder&quot;>Nie udało się wczytać grafiki.</div>';">`
+                  : `<div class="event-image-placeholder">Brak grafiki dla tego eventu.</div>`}
               </div>
 
               <div class="event-body">
@@ -1669,72 +1124,49 @@
             </div>
           `;
         });
-
-        eventsHtml += `</div>`;
+        eventsHtml += '</div>';
       }
 
-      let coordsRow = "";
-      if (isAdmin) {
-        coordsRow = `
-          <div class="meta-row">
-            <div class="meta-label">Współrzędne</div>
-            <div class="meta-value">${placeData.lat.toFixed(5)}, ${placeData.lng.toFixed(5)}</div>
-          </div>
-        `;
-      }
+      const coordsRow = isAdmin ? `
+        <div class="meta-row">
+          <div class="meta-label">Współrzędne</div>
+          <div class="meta-value">${placeData.lat.toFixed(5)}, ${placeData.lng.toFixed(5)}</div>
+        </div>
+      ` : "";
 
-      let adminPlaceControls = "";
-      if (isAdmin) {
-        adminPlaceControls = `
-          <div class="button-row single">
-            <button class="btn btn-warning" onclick="startEditPlace('${placeId}')">Edytuj miejsce</button>
-          </div>
-          <div id="placeEditBox"></div>
-        `;
-      }
+      const adminPlaceControls = isAdmin ? `
+        <div class="button-row single">
+          <button class="btn btn-warning" onclick="startEditPlace('${placeId}')">Edytuj miejsce</button>
+        </div>
+        <div id="placeEditBox"></div>
+      ` : "";
 
-      let adminAddEventSection = "";
-      if (isAdmin) {
-        adminAddEventSection = `
-          <div class="section">
-            <div class="section-title">Dodaj nowy event</div>
-            <div class="card">
-              <div class="form-grid">
-                <input id="eventNameInput" class="input" placeholder="Nazwa eventu" />
-                <select id="eventTypeInput" class="select">
-                  ${buildEventTypeOptions()}
-                </select>
-                <input id="eventDateInput" class="input" type="date" />
-                <input
-                  id="eventImageInput"
-                  class="input"
-                  placeholder="Link do grafiki eventu (URL)"
-                  oninput="updateImagePreview()"
-                />
+      const adminAddEventSection = isAdmin ? `
+        <div class="section">
+          <div class="section-title">Dodaj nowy event</div>
+          <div class="card">
+            <div class="form-grid">
+              <input id="eventNameInput" class="input" placeholder="Nazwa eventu" />
+              <select id="eventTypeInput" class="select">${buildEventTypeOptions()}</select>
+              <input id="eventDateInput" class="input" type="date" />
+              <input id="eventImageInput" class="input" placeholder="Link do grafiki eventu (URL)" oninput="updateImagePreview()" />
 
-                <div class="preview-card">
-                  <div class="preview-message">
-                    Wklej link do plakatu, logo albo grafiki promocyjnej. Jeśli link działa, podgląd pokaże się niżej.
-                  </div>
-                  <img id="eventImagePreview" class="preview-image" alt="Podgląd grafiki eventu" />
-                  <div id="eventImageError" class="helper hidden" style="color:#b42318; margin-top:10px;">
-                    Nie udało się wczytać grafiki z tego linku.
-                  </div>
-                </div>
-
-                <button class="btn btn-primary" onclick="addEvent('${placeId}')">Dodaj event</button>
+              <div class="preview-card">
+                <div class="preview-message">Wklej link do plakatu, logo albo grafiki promocyjnej. Jeśli link działa, podgląd pokaże się niżej.</div>
+                <img id="eventImagePreview" class="preview-image" alt="Podgląd grafiki eventu" />
+                <div id="eventImageError" class="helper hidden" style="color:#b42318; margin-top:10px;">Nie udało się wczytać grafiki z tego linku.</div>
               </div>
+
+              <button class="btn btn-primary" onclick="addEvent('${placeId}')">Dodaj event</button>
             </div>
           </div>
+        </div>
 
-          <div class="section">
-            <div class="section-title">Usuwanie</div>
-            <button class="btn btn-danger" onclick="deleteMarker('${placeId}')">
-              Usuń całą pineskę
-            </button>
-          </div>
-        `;
-      }
+        <div class="section">
+          <div class="section-title">Usuwanie</div>
+          <button class="btn btn-danger" onclick="deleteMarker('${placeId}')">Usuń całą pineskę</button>
+        </div>
+      ` : "";
 
       return `
         <div class="section">
@@ -1773,15 +1205,11 @@
       selectedPlaceId = placeData.id;
       openSidebar(
         placeData.placeName || "Miejsce",
-        isAdmin
-          ? "Zarządzaj eventami przypisanymi do tej pineski."
-          : "Przeglądaj eventy przypisane do tej pineski.",
+        isAdmin ? "Zarządzaj eventami przypisanymi do tej pineski." : "Przeglądaj eventy przypisane do tej pineski.",
         buildPlaceDetailsPanel(placeData)
       );
 
-      setTimeout(function() {
-        bindPreviewHandlers();
-      }, 0);
+      setTimeout(function() { bindPreviewHandlers(); }, 0);
     }
 
     function renderPlaceSidebarById(placeId) {
@@ -1807,16 +1235,11 @@
       profilePlacesCount.textContent = String(uniquePlaces.size);
 
       if (!attendances.length) {
-        profileAttendanceList.innerHTML = `
-          <div class="empty-state">
-            Nie zaznaczyłeś jeszcze żadnego eventu.
-          </div>
-        `;
+        profileAttendanceList.innerHTML = '<div class="empty-state">Nie zaznaczyłeś jeszcze żadnego eventu.</div>';
         return;
       }
 
       const sorted = [...attendances].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-
       profileAttendanceList.innerHTML = sorted.map(item => `
         <div class="attendance-card" onclick="openProfileAttendance('${item.placeId}')" style="cursor:pointer;">
           <div class="attendance-title">${escapeHtml(item.eventName || "Bez nazwy")}</div>
@@ -1834,10 +1257,8 @@
       if (!isAdmin) return;
       const place = markers[placeId] ? markers[placeId].placeData : null;
       if (!place) return;
-
       const box = document.getElementById("placeEditBox");
       if (!box) return;
-
       box.innerHTML = buildPlaceEditPanel(place);
     }
 
@@ -1847,7 +1268,6 @@
       if (!place || !place.events[eventIndex]) return;
 
       renderPlaceSidebar(place);
-
       setTimeout(function() {
         const box = document.getElementById(`eventEditBox-${eventIndex}`);
         if (!box) return;
@@ -1859,7 +1279,6 @@
       const input = document.getElementById("eventImageInput");
       const preview = document.getElementById("eventImagePreview");
       const error = document.getElementById("eventImageError");
-
       if (!input || !preview || !error) return;
 
       preview.onerror = function() {
@@ -1877,11 +1296,9 @@
       const input = document.getElementById("eventImageInput");
       const preview = document.getElementById("eventImagePreview");
       const error = document.getElementById("eventImageError");
-
       if (!input || !preview || !error) return;
 
       const value = input.value.trim();
-
       if (!value) {
         preview.style.display = "none";
         preview.removeAttribute("src");
@@ -1902,17 +1319,9 @@
       }
 
       try {
-        const snapshot = await db
-          .collection("users")
-          .doc(currentUser.uid)
-          .collection("attendances")
-          .get();
-
+        const snapshot = await db.collection("users").doc(currentUser.uid).collection("attendances").get();
         const mapData = {};
-        snapshot.forEach(doc => {
-          mapData[doc.id] = doc.data();
-        });
-
+        snapshot.forEach(doc => { mapData[doc.id] = doc.data(); });
         currentUserAttendanceMap = mapData;
         updateUserUI();
       } catch (error) {
@@ -1928,9 +1337,6 @@
 
       const place = markers[placeId] ? markers[placeId].placeData : null;
       if (!place) return;
-
-      const eventItem = (place.events || []).find(e => e.id === eventId);
-      if (!eventItem) return;
 
       const attendanceId = `${placeId}_${eventId}`;
       const attendanceRef = db.collection("users").doc(currentUser.uid).collection("attendances").doc(attendanceId);
@@ -1985,20 +1391,12 @@
           freshPlaceData.events[eventIndex].attendanceCount = currentCount + 1;
         }
 
-        await placeRef.update({
-          events: freshPlaceData.events
-        });
-
+        await placeRef.update({ events: freshPlaceData.events });
         markers[placeId].placeData = freshPlaceData;
         rebuildPlacesCache();
 
-        if (selectedPlaceId === placeId) {
-          renderPlaceSidebar(freshPlaceData);
-        }
-
-        if (profileModalOverlay.classList.contains("open")) {
-          renderProfileModal();
-        }
+        if (selectedPlaceId === placeId) renderPlaceSidebar(freshPlaceData);
+        if (profileModalOverlay.classList.contains("open")) renderProfileModal();
 
         runEventSearch();
       } catch (error) {
@@ -2019,7 +1417,6 @@
 
       const marker = L.marker(coords).addTo(map);
       marker.placeData = placeData;
-
       marker.on("click", function() {
         renderPlaceSidebar(marker.placeData);
       });
@@ -2041,24 +1438,19 @@
 
           if (placeData.needsMigration) {
             migrations.push(
-              db.collection("places").doc(placeData.id).set(
-                {
-                  placeName: placeData.placeName,
-                  city: placeData.city,
-                  street: placeData.street,
-                  lat: placeData.lat,
-                  lng: placeData.lng,
-                  events: placeData.events
-                },
-                { merge: true }
-              )
+              db.collection("places").doc(placeData.id).set({
+                placeName: placeData.placeName,
+                city: placeData.city,
+                street: placeData.street,
+                lat: placeData.lat,
+                lng: placeData.lng,
+                events: placeData.events
+              }, { merge: true })
             );
           }
         });
 
-        if (migrations.length) {
-          await Promise.all(migrations);
-        }
+        if (migrations.length) await Promise.all(migrations);
 
         rebuildPlacesCache();
         refreshEventNameSuggestions();
@@ -2068,17 +1460,30 @@
       }
     }
 
+    function findNearbyPlace(latlng) {
+      let closest = null;
+
+      Object.values(markers).forEach(function(marker) {
+        const markerLatLng = marker.getLatLng();
+        const distance = latlng.distanceTo(markerLatLng);
+
+        if (distance <= DUPLICATE_RADIUS_METERS) {
+          if (!closest || distance < closest.distance) {
+            closest = { placeId: marker.placeData.id, distance: distance };
+          }
+        }
+      });
+
+      return closest;
+    }
+
     async function addPlace(lat, lng) {
       if (!isAdmin) return;
 
       try {
-        const placeNameInput = document.getElementById("placeNameInput");
-        const cityInput = document.getElementById("cityInput");
-        const streetInput = document.getElementById("streetInput");
-
-        const placeName = placeNameInput ? placeNameInput.value.trim() : "";
-        const city = cityInput ? cityInput.value.trim() : "";
-        const street = streetInput ? streetInput.value.trim() : "";
+        const placeName = (document.getElementById("placeNameInput")?.value || "").trim();
+        const city = (document.getElementById("cityInput")?.value || "").trim();
+        const street = (document.getElementById("streetInput")?.value || "").trim();
 
         if (!placeName) {
           alert("Wpisz nazwę miejsca.");
@@ -2092,23 +1497,13 @@
         }
 
         const placePayload = {
-          placeName,
-          city,
-          street,
-          lat,
-          lng,
-          events: [],
+          placeName, city, street, lat, lng, events: [],
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
         const docRef = await db.collection("places").add(placePayload);
 
-        const placeData = {
-          id: docRef.id,
-          ...placePayload,
-          needsMigration: false
-        };
-
+        const placeData = { id: docRef.id, ...placePayload, needsMigration: false };
         renderMarker(placeData);
         setAddPinMode(false);
         refreshEventNameSuggestions();
@@ -2137,30 +1532,14 @@
           return;
         }
 
-        const eventNameInput = document.getElementById("eventNameInput");
-        const eventTypeInput = document.getElementById("eventTypeInput");
-        const eventDateInput = document.getElementById("eventDateInput");
-        const eventImageInput = document.getElementById("eventImageInput");
+        const eventName = (document.getElementById("eventNameInput")?.value || "").trim();
+        const eventType = (document.getElementById("eventTypeInput")?.value || "").trim();
+        const eventDate = document.getElementById("eventDateInput")?.value || "";
+        const eventImageUrl = (document.getElementById("eventImageInput")?.value || "").trim();
 
-        const eventName = eventNameInput ? eventNameInput.value.trim() : "";
-        const eventType = eventTypeInput ? eventTypeInput.value.trim() : "";
-        const eventDate = eventDateInput ? eventDateInput.value : "";
-        const eventImageUrl = eventImageInput ? eventImageInput.value.trim() : "";
-
-        if (!eventName) {
-          alert("Wpisz nazwę eventu.");
-          return;
-        }
-
-        if (!eventType) {
-          alert("Wybierz rodzaj eventu.");
-          return;
-        }
-
-        if (!eventDate) {
-          alert("Wybierz datę eventu.");
-          return;
-        }
+        if (!eventName) { alert("Wpisz nazwę eventu."); return; }
+        if (!eventType) { alert("Wybierz rodzaj eventu."); return; }
+        if (!eventDate) { alert("Wybierz datę eventu."); return; }
 
         placeData.events.push({
           id: makeEventId(),
@@ -2190,26 +1569,16 @@
       try {
         const ref = db.collection("places").doc(placeId);
         const snap = await ref.get();
-
-        if (!snap.exists) {
-          alert("To miejsce nie istnieje.");
-          return;
-        }
+        if (!snap.exists) { alert("To miejsce nie istnieje."); return; }
 
         const placeData = normalizePlace(snap);
-        if (!placeData) {
-          alert("Nie udało się odczytać miejsca.");
-          return;
-        }
+        if (!placeData) { alert("Nie udało się odczytać miejsca."); return; }
 
         const placeName = document.getElementById("editPlaceNameInput").value.trim();
         const city = document.getElementById("editPlaceCityInput").value.trim();
         const street = document.getElementById("editPlaceStreetInput").value.trim();
 
-        if (!placeName) {
-          alert("Nazwa miejsca nie może być pusta.");
-          return;
-        }
+        if (!placeName) { alert("Nazwa miejsca nie może być pusta."); return; }
 
         await ref.update({ placeName, city, street });
 
@@ -2234,11 +1603,7 @@
       try {
         const ref = db.collection("places").doc(placeId);
         const snap = await ref.get();
-
-        if (!snap.exists) {
-          alert("To miejsce nie istnieje.");
-          return;
-        }
+        if (!snap.exists) { alert("To miejsce nie istnieje."); return; }
 
         const placeData = normalizePlace(snap);
         if (!placeData || !placeData.events[eventIndex]) {
@@ -2251,29 +1616,11 @@
         const date = document.getElementById(`editEventDate-${eventIndex}`).value;
         const imageUrl = document.getElementById(`editEventImage-${eventIndex}`).value.trim();
 
-        if (!name) {
-          alert("Nazwa eventu nie może być pusta.");
-          return;
-        }
+        if (!name) { alert("Nazwa eventu nie może być pusta."); return; }
+        if (!type) { alert("Wybierz rodzaj eventu."); return; }
+        if (!date) { alert("Wybierz datę eventu."); return; }
 
-        if (!type) {
-          alert("Wybierz rodzaj eventu.");
-          return;
-        }
-
-        if (!date) {
-          alert("Wybierz datę eventu.");
-          return;
-        }
-
-        placeData.events[eventIndex] = {
-          ...placeData.events[eventIndex],
-          name,
-          type,
-          date,
-          imageUrl
-        };
-
+        placeData.events[eventIndex] = { ...placeData.events[eventIndex], name, type, date, imageUrl };
         await ref.update({ events: placeData.events });
 
         markers[placeId].placeData = placeData;
@@ -2291,16 +1638,11 @@
       if (!isAdmin) return;
 
       try {
-        const confirmed = confirm("Na pewno usunąć ten event?");
-        if (!confirmed) return;
+        if (!confirm("Na pewno usunąć ten event?")) return;
 
         const ref = db.collection("places").doc(placeId);
         const snap = await ref.get();
-
-        if (!snap.exists) {
-          alert("To miejsce już nie istnieje.");
-          return;
-        }
+        if (!snap.exists) { alert("To miejsce już nie istnieje."); return; }
 
         const placeData = normalizePlace(snap);
         if (!placeData || eventIndex < 0 || eventIndex >= placeData.events.length) {
@@ -2335,8 +1677,7 @@
       if (!isAdmin) return;
 
       try {
-        const confirmed = confirm("Na pewno usunąć całą pineskę i wszystkie eventy?");
-        if (!confirmed) return;
+        if (!confirm("Na pewno usunąć całą pineskę i wszystkie eventy?")) return;
 
         await db.collection("places").doc(placeId).delete();
 
@@ -2363,18 +1704,13 @@
 
     function getAllEventNames() {
       const names = new Set();
-
       allPlacesCache.forEach(function(place) {
         (place.events || []).forEach(function(eventItem) {
-          if (eventItem.name && eventItem.name.trim()) {
-            names.add(eventItem.name.trim());
-          }
+          if (eventItem.name && eventItem.name.trim()) names.add(eventItem.name.trim());
         });
       });
 
-      return Array.from(names).sort(function(a, b) {
-        return a.localeCompare(b, "pl");
-      });
+      return Array.from(names).sort(function(a, b) { return a.localeCompare(b, "pl"); });
     }
 
     function refreshEventNameSuggestions() {
@@ -2388,13 +1724,12 @@
       }
 
       const normalizedQuery = normalizeString(query);
-
       const matches = allNames.filter(function(name) {
         const n = normalizeString(name);
         return n.startsWith(normalizedQuery) || n.includes(normalizedQuery);
       }).slice(0, 8);
 
-      if (matches.length === 0) {
+      if (!matches.length) {
         searchSuggestionsBox.style.display = "none";
         searchSuggestionsBox.innerHTML = "";
         return;
@@ -2432,7 +1767,6 @@
       const sortMode = searchSortInput.value;
 
       let results = [];
-
       allPlacesCache.forEach(function(place) {
         const placeNameNorm = normalizeString(place.placeName);
         const cityNorm = normalizeString(place.city);
@@ -2454,8 +1788,6 @@
             placeName: place.placeName || "Bez nazwy miejsca",
             city: place.city || "Brak miasta",
             street: place.street || "Brak ulicy",
-            lat: place.lat,
-            lng: place.lng,
             eventName: eventItem.name || "Bez nazwy eventu",
             eventType: eventItem.type || "Brak rodzaju",
             eventDate: eventItem.date || ""
@@ -2486,8 +1818,8 @@
         return;
       }
 
-      if (results.length === 0) {
-        eventSearchResults.innerHTML = `<div class="search-empty">Brak wyników dla podanych filtrów.</div>`;
+      if (!results.length) {
+        eventSearchResults.innerHTML = '<div class="search-empty">Brak wyników dla podanych filtrów.</div>';
         return;
       }
 
@@ -2519,7 +1851,6 @@
         if (placeNameQuery && !placeNameNorm.includes(placeNameQuery)) return false;
         if (cityQuery && !cityNorm.includes(cityQuery)) return false;
         if (streetQuery && !streetNorm.includes(streetQuery)) return false;
-
         return true;
       });
 
@@ -2540,8 +1871,8 @@
         return;
       }
 
-      if (results.length === 0) {
-        placeSearchResults.innerHTML = `<div class="search-empty">Brak miejsc dla podanych filtrów.</div>`;
+      if (!results.length) {
+        placeSearchResults.innerHTML = '<div class="search-empty">Brak miejsc dla podanych filtrów.</div>';
         return;
       }
 
@@ -2563,11 +1894,7 @@
       const marker = markers[placeId];
       if (!marker) return;
 
-      map.flyTo([marker.placeData.lat, marker.placeData.lng], 14, {
-        animate: true,
-        duration: 0.8
-      });
-
+      map.flyTo([marker.placeData.lat, marker.placeData.lng], 14, { animate: true, duration: 0.8 });
       renderPlaceSidebar(marker.placeData);
 
       setTimeout(function() {
@@ -2576,9 +1903,7 @@
         if (targetCard) {
           targetCard.scrollIntoView({ behavior: "smooth", block: "start" });
           targetCard.style.outline = "3px solid rgba(37,99,235,0.28)";
-          setTimeout(function() {
-            targetCard.style.outline = "";
-          }, 1800);
+          setTimeout(function() { targetCard.style.outline = ""; }, 1800);
         }
       }, 250);
     }
@@ -2587,11 +1912,7 @@
       const marker = markers[placeId];
       if (!marker) return;
 
-      map.flyTo([marker.placeData.lat, marker.placeData.lng], 14, {
-        animate: true,
-        duration: 0.8
-      });
-
+      map.flyTo([marker.placeData.lat, marker.placeData.lng], 14, { animate: true, duration: 0.8 });
       renderPlaceSidebar(marker.placeData);
     }
 
@@ -2642,22 +1963,6 @@
       if (e.key === "Enter") registerUser();
     });
 
-    map.on("click", function(e) {
-      if (!addPinMode || !isAdmin) return;
-
-      const nearby = findNearbyPlace(e.latlng);
-      if (nearby) {
-        alert("W tym miejscu albo bardzo blisko jest już pineska.");
-        return;
-      }
-
-      openSidebar(
-        "Nowe miejsce",
-        "Uzupełnij dane pineski i zapisz miejsce.",
-        buildAddPlacePanel(e.latlng.lat, e.latlng.lng)
-      );
-    });
-
     document.getElementById("run-event-search-btn").addEventListener("click", runEventSearch);
     document.getElementById("clear-event-search-btn").addEventListener("click", clearEventSearch);
     document.getElementById("run-place-search-btn").addEventListener("click", runPlaceSearch);
@@ -2696,35 +2001,51 @@
       }
     });
 
-    auth.onAuthStateChanged(async function(user) {
-      if (user) {
-        const shouldRemember = getRememberLogin();
+    map.on("click", function(e) {
+      if (!addPinMode || !isAdmin) return;
 
-        if (!shouldRemember) {
-          const loginTime = getLoginTime();
-          const isExpired = !loginTime || (Date.now() - loginTime > LOGIN_MAX_AGE_MS);
-
-          if (isExpired) {
-            clearLoginPreferences();
-            await auth.signOut();
-            return;
-          }
-        }
-      } else {
-        if (authFlowInProgress) {
-          return;
-        }
-        clearLoginPreferences();
+      const nearby = findNearbyPlace(e.latlng);
+      if (nearby) {
+        alert("W tym miejscu albo bardzo blisko jest już pineska.");
+        return;
       }
 
-      authFlowInProgress = false;
-      currentUser = user || null;
-      isAdmin = !!(currentUser && currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+      openSidebar(
+        "Nowe miejsce",
+        "Uzupełnij dane pineski i zapisz miejsce.",
+        buildAddPlacePanel(e.latlng.lat, e.latlng.lng)
+      );
+    });
 
+    auth.onAuthStateChanged(async function(user) {
+      if (!user) {
+        if (authFlowInProgress) return;
+
+        currentUser = null;
+        isAdmin = false;
+        currentUserAttendanceMap = {};
+        updateUserUI();
+        updateAdminUI();
+        return;
+      }
+
+      if (isLoginExpired()) {
+        clearLoginPreferences();
+        await auth.signOut().catch(() => {});
+        return;
+      }
+
+      refreshLoginTime();
+      currentUser = user;
+      isAdmin = !!(currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
       await loadUserAttendance();
       updateUserUI();
       updateAdminUI();
     });
+
+    updateUserUI();
+    updateAdminUI();
+    loadPlaces();
 
     window.toggleSearchPanel = toggleSearchPanel;
     window.setSearchMode = setSearchMode;
@@ -2753,11 +2074,6 @@
     window.closeProfileModal = closeProfileModal;
     window.toggleAttendance = toggleAttendance;
     window.openProfileAttendance = openProfileAttendance;
-
-    initAuthPersistence();
-    updateUserUI();
-    updateAdminUI();
-    loadPlaces();
   </script>
 </body>
 </html>
