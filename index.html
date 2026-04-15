@@ -92,7 +92,8 @@
 #search-shell {
       position: absolute;
       top: 20px;
-      left: 340px;
+      left: 290px;
+      right: auto;
       z-index: 1200;
       width: auto;
       display: flex;
@@ -103,9 +104,9 @@
 
 
 #search-bar {
-      width: 520px;
-      max-width: 520px;
-      min-width: 320px;
+      width: 420px;
+      min-width: 420px;
+      max-width: 420px;
       background: rgba(255,255,255,0.96);
       border: 1px solid rgba(214,202,184,0.95);
       border-radius: 28px;
@@ -118,7 +119,8 @@
       transition: box-shadow 0.24s ease, transform 0.24s ease, border-color 0.24s ease;
       position: relative;
       overflow: hidden;
-      flex-shrink: 0;
+      flex: 0 0 auto;
+      margin: 0;
     }
 
     #search-bar::before {
@@ -177,8 +179,9 @@
       position: absolute;
       top: calc(100% + 12px);
       left: 0;
-      width: 520px;
-      max-width: 520px;
+      width: 420px;
+      min-width: 420px;
+      max-width: 420px;
       margin-top: 0;
       background: rgba(255, 255, 255, 0.94);
       border: 1px solid rgba(229,231,235,0.95);
@@ -466,8 +469,9 @@
 .autocomplete-list {
       position: absolute;
       left: 0;
-      width: 520px;
-      max-width: 520px;
+      width: 420px;
+      min-width: 420px;
+      max-width: 420px;
       top: calc(100% + 10px);
       background: rgba(255,255,255,0.96);
       border: 1px solid rgba(229,231,235,0.98);
@@ -609,7 +613,7 @@
       align-items: center;
       flex-wrap: nowrap;
       justify-content: flex-end;
-      max-width: calc(100vw - 48px);
+      max-width: 320px;
     }
 
 
@@ -628,6 +632,7 @@
   display: block;
   height: 44px;
   width: auto;
+  max-width: 240px;
 }
 
 .topbar-surface {
@@ -1045,6 +1050,7 @@
       }
       .topbar-wordmark img {
         height: 30px;
+        max-width: 180px;
       }
       #search-shell {
         top: 54px;
@@ -1055,8 +1061,8 @@
       }
       #search-bar {
         width: 100%;
-        max-width: none;
         min-width: 0;
+        max-width: none;
       }
       #open-filters-btn {
         margin-left: auto;
@@ -1064,6 +1070,7 @@
       #search-panel,
       .autocomplete-list {
         width: 100%;
+        min-width: 0;
         max-width: none;
       }
       #top-right-controls {
@@ -1082,40 +1089,6 @@
       .two-col, .button-row, .profile-stats { grid-template-columns: 1fr; }
       #add-pin-floating-btn { width: 58px; height: 58px; font-size: 24px; }
     }
-
-  #search-shell {
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  #search-bar {
-    width: 100%;
-    max-width: none;
-  }
-  #open-filters-btn {
-    margin-left: auto;
-  }
-  #search-panel,
-  .autocomplete-list {
-    width: 100%;
-    max-width: none;
-  }
-  #top-right-controls {
-    top: 54px;
-    right: 12px;
-    left: 12px;
-    max-width: none;
-    justify-content: flex-end;
-  }
-  .topbar-surface {
-    height: 112px;
-  }
-  body::before, body::after { display: none; }
-  .two-col, .button-row, .profile-stats { grid-template-columns: 1fr; }
-  #add-pin-floating-btn { width: 58px; height: 58px; font-size: 24px; }
-}
 
       #search-shell { width: calc(100vw - 32px); }
       body::before, body::after { display: none; }
