@@ -89,12 +89,13 @@
     .hidden { display: none !important; }
 
     
+
 #search-shell {
   position: absolute;
   top: 16px;
   left: 18px;
   right: 18px;
-  z-index: 1200;
+  z-index: 1201;
   width: auto;
   display: flex;
   align-items: center;
@@ -102,25 +103,28 @@
   isolation: isolate;
 }
 
+
 #search-bar {
+  flex: 0 1 560px;
+  width: min(560px, 100%);
+  max-width: 560px;
+  background: rgba(255,255,255,0.95);
+  border: 1px solid rgba(214,202,184,0.95);
+  border-radius: 28px;
+  box-shadow: 0 10px 24px rgba(83, 50, 18, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px 10px 14px;
+  backdrop-filter: blur(18px);
+  transition: box-shadow 0.24s ease, transform 0.24s ease, border-color 0.24s ease;
+  position: relative;
+  overflow: hidden;
+  margin-right: 2px;
+}
 
-      flex: 1;
-      width: auto;
-      background: var(--panel-strong);
-      border: 1px solid rgba(229,231,235,0.95);
-      border-radius: 28px;
-      box-shadow: var(--shadow);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px 10px 14px;
-      backdrop-filter: blur(18px);
-      transition: box-shadow 0.24s ease, transform 0.24s ease, border-color 0.24s ease;
-      position: relative;
-      overflow: hidden;
-    }
+#search-bar::before {
 
-    #search-bar::before {
       content: "";
       position: absolute;
       inset: 0;
@@ -189,26 +193,28 @@
 
     #search-shell.open #search-bar-caret { transform: rotate(180deg); }
 
-    #search-panel {
-      position: absolute;
-      top: calc(100% + 12px);
-      left: 0;
-      width: min(500px, calc(100vw - 36px));
-      margin-top: 0;
-      background: rgba(255, 255, 255, 0.90);
-      border: 1px solid rgba(229,231,235,0.95);
-      border-radius: 30px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      max-height: 0;
-      opacity: 0;
-      transform: translateY(-10px) scale(0.985);
-      pointer-events: none;
-      transition: max-height 0.34s ease, opacity 0.26s ease, transform 0.26s ease;
-      backdrop-filter: blur(18px);
-    }
+    
+#search-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 110px;
+  width: min(500px, calc(100vw - 36px));
+  margin-top: 0;
+  background: rgba(255, 255, 255, 0.90);
+  border: 1px solid rgba(229,231,235,0.95);
+  border-radius: 30px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px) scale(0.985);
+  pointer-events: none;
+  transition: max-height 0.34s ease, opacity 0.26s ease, transform 0.26s ease;
+  backdrop-filter: blur(18px);
+}
 
-    #search-shell.open #search-panel {
+#search-shell.open #search-panel {
+
       max-height: calc(100vh - 110px);
       opacity: 1;
       transform: translateY(0) scale(1);
@@ -607,6 +613,7 @@
     }
 
     
+
 #top-right-controls {
   position: static;
   z-index: auto;
@@ -618,9 +625,11 @@
   margin-left: auto;
   max-width: none;
   flex-shrink: 0;
+  min-width: fit-content;
 }
 
 .top-brand-wordmark {
+
   display: flex;
   align-items: center;
   padding: 0 4px 0 2px;
@@ -634,6 +643,7 @@
   display: block;
 }
 
+
 .topbar-surface {
   position: absolute;
   top: 16px;
@@ -646,9 +656,11 @@
   border: 1px solid rgba(214, 202, 184, 0.92);
   box-shadow: 0 18px 44px rgba(83, 50, 18, 0.12);
   backdrop-filter: blur(14px);
+  pointer-events: none;
 }
 
 .pill-btn {
+
 
       border: 1px solid rgba(214,202,184,0.92); border-radius: 999px; padding: 12px 18px; font-size: 14px; font-weight: 800;
       cursor: pointer; transition: 0.22s ease; box-shadow: var(--shadow-soft);
@@ -1019,6 +1031,7 @@
 
 
     
+
 @media (max-width: 980px) {
   #sidebar { width: 100vw; min-width: 0; max-width: none; }
   #search-shell {
@@ -1036,6 +1049,33 @@
     border-radius: 24px;
   }
   #search-bar {
+    order: 2;
+    flex: 1 1 100%;
+    max-width: none;
+    width: 100%;
+  }
+  #search-panel {
+    left: 0;
+    width: 100%;
+  }
+  #top-right-controls {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+    order: 3;
+    flex-wrap: wrap;
+  }
+  .top-brand-wordmark img {
+    height: 34px;
+  }
+  body::before, body::after { display: none; }
+  .two-col, .button-row, .profile-stats { grid-template-columns: 1fr; }
+  #add-pin-floating-btn { width: 58px; height: 58px; font-size: 24px; }
+}
+
+
+#search-bar {
+
     order: 2;
     flex: 1 1 100%;
   }
@@ -1182,11 +1222,11 @@
     <div id="search-bar">
       <div id="search-bar-icon">⌕</div>
       <input id="search-main-input" type="text" placeholder="Szukaj wydarzeń, koncertów, miejsc..." autocomplete="off" />
-      <div id="search-bar-caret">▼</div>
+      
     </div>
 
-    <div id="top-right-controls">
-      <button id="open-filters-btn" type="button" class="pill-btn primary" onclick="toggleSearchPanel(true); setSearchMode('events');">Filtry</button>
+    
+      <button id="open-filters-btn" type="button" class="pill-btn primary">Filtry</button>
       <div id="admin-status-badge" class="pill-badge hidden">Admin</div>
       <button id="open-auth-modal-btn" class="pill-btn">Zaloguj / Załóż konto</button>
       <button id="open-profile-modal-btn" class="pill-btn hidden">Mój profil</button>
@@ -3199,17 +3239,22 @@
       }
     });
 
-    document.getElementById("search-bar-caret").addEventListener("click", function(e) {
-      e.stopPropagation();
-      toggleSearchPanel();
-      if (searchShell.classList.contains("open")) {
-        setSearchMode("events");
-      }
-    });
-
+    
     document.getElementById("search-main-input").addEventListener("click", function(e) {
       e.stopPropagation();
     });
+
+
+const openFiltersBtn = document.getElementById("open-filters-btn");
+if (openFiltersBtn) {
+  openFiltersBtn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    toggleSearchPanel();
+    if (searchShell.classList.contains("open")) {
+      setSearchMode("events");
+    }
+  });
+}
 
     document.getElementById("search-main-input").addEventListener("focus", function() {
       if (searchSuggestionItems.length) showSuggestions();
