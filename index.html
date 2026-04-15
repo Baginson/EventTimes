@@ -894,6 +894,11 @@
         <div class="form-grid">
           <input id="login-email" class="input" type="email" placeholder="Adres e-mail" />
           <input id="login-password" class="input" type="password" placeholder="Hasło" />
+          <label style="display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); cursor:pointer;">
+            <input id="login-remember" type="checkbox" style="width:16px; height:16px; cursor:pointer;" />
+            <span>Zapamiętaj mnie</span>
+          </label>
+          <div class="helper">Jeśli nie zaznaczysz tej opcji, wylogowanie nastąpi po 24 godzinach.</div>
           <div id="login-error" class="helper hidden" style="color:#b42318;"></div>
 
           <div class="button-row">
@@ -908,6 +913,11 @@
           <input id="register-name" class="input" type="text" placeholder="Nazwa użytkownika" />
           <input id="register-email" class="input" type="email" placeholder="Adres e-mail" />
           <input id="register-password" class="input" type="password" placeholder="Hasło" />
+          <label style="display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); cursor:pointer;">
+            <input id="register-remember" type="checkbox" style="width:16px; height:16px; cursor:pointer;" />
+            <span>Zapamiętaj mnie</span>
+          </label>
+          <div class="helper">Jeśli nie zaznaczysz tej opcji, wylogowanie nastąpi po 24 godzinach.</div>
           <div id="register-error" class="helper hidden" style="color:#b42318;"></div>
 
           <div class="button-row">
@@ -1377,15 +1387,12 @@
         console.error("Błąd clearLoginPreferences:", error);
       }
     }
-
-    function setupLoginPreference() {
-      const shouldRemember = window.confirm("Czy zapamiętać logowanie na tym urządzeniu?");
-      setRememberLogin(shouldRemember);
-
-      if (shouldRemember) {
-        clearLoginTime();
+    function applyRememberPreference(value) {
+      setRememberLogin(!!value);
+      if (value) {
+        localStorage.removeItem(LOGIN_TIME_KEY);
       } else {
-        saveLoginTime();
+        localStorage.setItem(LOGIN_TIME_KEY, String(Date.now()));
       }
     }
 
@@ -1404,7 +1411,7 @@
       }
 
       authFlowInProgress = true;
-      setupLoginPreference();
+      applyRememberPreference(document.getElementById("register-remember").checked);
 
       try {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
@@ -1440,7 +1447,7 @@
       loginError.textContent = "";
 
       authFlowInProgress = true;
-      setupLoginPreference();
+      applyRememberPreference(document.getElementById("register-remember").checked);
 
       try {
         await auth.signInWithEmailAndPassword(email, password);
