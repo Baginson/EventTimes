@@ -1070,6 +1070,7 @@
     const LOGIN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
     const LOGIN_TIME_KEY = "eventtimes_login_time";
     const REMEMBER_LOGIN_KEY = "eventtimes_remember_login";
+    const LOGIN_TIME_KEY = "eventtimes_login_time";
 
     const map = L.map("map").setView([52.0, 19.0], 6);
 
@@ -1347,6 +1348,44 @@
         localStorage.removeItem(LOGIN_TIME_KEY);
       } catch (error) {
         console.error("Błąd clearLoginTime:", error);
+      }
+    }
+
+
+    function setRememberLogin(value) {
+      try {
+        localStorage.setItem(REMEMBER_LOGIN_KEY, value ? "1" : "0");
+      } catch (error) {
+        console.error("Błąd setRememberLogin:", error);
+      }
+    }
+
+    function getRememberLogin() {
+      try {
+        return localStorage.getItem(REMEMBER_LOGIN_KEY) === "1";
+      } catch (error) {
+        console.error("Błąd getRememberLogin:", error);
+        return false;
+      }
+    }
+
+    function clearLoginPreferences() {
+      try {
+        localStorage.removeItem(REMEMBER_LOGIN_KEY);
+        localStorage.removeItem(LOGIN_TIME_KEY);
+      } catch (error) {
+        console.error("Błąd clearLoginPreferences:", error);
+      }
+    }
+
+    function setupLoginPreference() {
+      const shouldRemember = window.confirm("Czy zapamiętać logowanie na tym urządzeniu?");
+      setRememberLogin(shouldRemember);
+
+      if (shouldRemember) {
+        clearLoginTime();
+      } else {
+        saveLoginTime();
       }
     }
 
