@@ -2621,6 +2621,16 @@
       return `<div class="result-thumb-fallback">${buildMiniCategoryGlyph(category, 48)}</div>`;
     }
 
+    function matchesQueryAtWordStart(text, query) {
+      const normalizedText = normalizeString(text);
+      const normalizedQuery = normalizeString(query);
+
+      if (!normalizedText || !normalizedQuery) return false;
+      return normalizedText.split(/\s+/).some(function(word) {
+        return word.startsWith(normalizedQuery);
+      });
+    }
+
     function getSuggestionItems(query) {
       const normalizedQuery = normalizeString(query);
       const suggestions = [];
@@ -2628,7 +2638,7 @@
         (place.events || []).forEach(function(eventItem, index) {
           const eventNameNorm = normalizeString(eventItem.name);
           if (!normalizedQuery) return;
-          if (!(eventNameNorm.startsWith(normalizedQuery) || eventNameNorm.includes(normalizedQuery))) return;
+          if (!matchesQueryAtWordStart(eventNameNorm, normalizedQuery)) return;
 
           suggestions.push({
             placeId: place.id,
@@ -2646,6 +2656,18 @@
       });
 
       suggestions.sort(function(a, b) {
+        const getBestWordRank = function(name) {
+          const words = normalizeString(name).split(/\s+/);
+          const matchIndex = words.findIndex(function(word) {
+            return word.startsWith(normalizedQuery);
+          });
+          return matchIndex === -1 ? Number.POSITIVE_INFINITY : matchIndex;
+        };
+
+        const aRank = getBestWordRank(a.eventName);
+        const bRank = getBestWordRank(b.eventName);
+        if (aRank !== bRank) return aRank - bRank;
+
         const aStarts = normalizeString(a.eventName).startsWith(normalizedQuery) ? 0 : 1;
         const bStarts = normalizeString(b.eventName).startsWith(normalizedQuery) ? 0 : 1;
         if (aStarts !== bStarts) return aStarts - bStarts;
