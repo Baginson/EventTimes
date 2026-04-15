@@ -1402,6 +1402,8 @@
         return;
       }
 
+      setupLoginPreference();
+
       try {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
 
@@ -1418,9 +1420,9 @@
           { merge: true }
         );
 
-        setupLoginPreference();
         closeAuthModal();
       } catch (error) {
+        clearLoginPreferences();
         console.error("Błąd registerUser:", error);
         registerError.textContent = getFirebaseAuthErrorMessage(error);
         registerError.classList.remove("hidden");
@@ -1434,11 +1436,13 @@
       loginError.classList.add("hidden");
       loginError.textContent = "";
 
+      setupLoginPreference();
+
       try {
         await auth.signInWithEmailAndPassword(email, password);
-        setupLoginPreference();
         closeAuthModal();
       } catch (error) {
+        clearLoginPreferences();
         console.error("Błąd loginUser:", error);
         loginError.textContent = getFirebaseAuthErrorMessage(error);
         loginError.classList.remove("hidden");
