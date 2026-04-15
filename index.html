@@ -545,6 +545,21 @@
       background: rgba(255,255,255,0.14);
     }
 
+    .custom-marker-wrap {
+      width: 56px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 10px 18px rgba(15, 23, 42, 0.22));
+      transform-origin: center bottom;
+      transition: transform 0.18s ease;
+    }
+
+    .leaflet-marker-icon:hover .custom-marker-wrap {
+      transform: translateY(-2px) scale(1.03);
+    }
+
     @media (max-width: 980px) {
       #sidebar { width: 100vw; min-width: 0; max-width: none; }
       #search-shell { width: calc(100vw - 32px); }
@@ -646,7 +661,7 @@
     <div id="search-bar">
       <div id="search-bar-icon">⌕</div>
       <input id="search-main-input" type="text" placeholder="Wyszukaj event lub miejsce" autocomplete="off" />
-      <div id="search-bar-caret" onclick="toggleSearchPanel()">▼</div>
+      <div id="search-bar-caret">▼</div>
     </div>
     <div id="searchEventSuggestions" class="autocomplete-list"></div>
 
@@ -751,11 +766,30 @@
     const auth = firebase.auth();
 
     const EVENT_TYPES = ["Gala MMA", "Koncert", "Stand-up"];
+    const PLACE_CATEGORIES = [
+      "Hala / arena",
+      "Klub",
+      "Stadion",
+      "Teatr / scena",
+      "Plener / amfiteatr",
+      "Centrum targowe",
+      "Obiekt wielofunkcyjny"
+    ];
+
+    const CATEGORY_META = {
+      "Hala / arena": { start: "#60A5FA", end: "#2563EB", icon: "arena" },
+      "Klub": { start: "#C084FC", end: "#7C3AED", icon: "club" },
+      "Stadion": { start: "#F59E0B", end: "#FF4D1F", icon: "stadium" },
+      "Teatr / scena": { start: "#FACC15", end: "#F97316", icon: "theater" },
+      "Plener / amfiteatr": { start: "#22C55E", end: "#0891B2", icon: "plener" },
+      "Centrum targowe": { start: "#64748B", end: "#334155", icon: "expo" },
+      "Obiekt wielofunkcyjny": { start: "#FACC15", end: "#F97316", icon: "multi" }
+    };
     const DUPLICATE_RADIUS_METERS = 35;
     const ADMIN_EMAIL = "xiron.yt@gmail.com";
-    const LOGIN_EXPIRY_MS = 24 * 60 * 60 * 1000;
+    const LOGIN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
     const LOGIN_TIME_KEY = "eventtimes_login_time";
-    const LOGIN_REMEMBER_KEY = "eventtimes_remember_me";
+    const REMEMBER_LOGIN_KEY = "eventtimes_remember_login";
 
     const map = L.map("map").setView([52.0, 19.0], 6);
 
@@ -908,19 +942,28 @@
         ? data.events
         : Array.isArray(data.list)
           ? data.list.map(function(item) {
-              if (typeof item === "string") return { name: item, type: "", date: "", imageUrl: "" };
+              if (typeof item === "string") {
+                return { name: item, type: "", date: "", imageUrl: "" };
+              }
               return item;
             })
           : [];
 
       const normalizedEvents = ensureEventIds(originalEvents);
 
+      const placeCategory = getPlaceCategory(data.category);
+
       const needsMigration =
+        !data.category ||
         originalEvents.length !== normalizedEvents.length ||
         originalEvents.some(function(eventItem, index) {
           const normalized = normalizedEvents[index];
           if (!eventItem || typeof eventItem !== "object") return true;
-          return !eventItem.id || typeof eventItem.attendanceCount !== "number" || eventItem.image !== undefined;
+          return (
+            !eventItem.id ||
+            typeof eventItem.attendanceCount !== "number" ||
+            eventItem.image !== undefined
+          );
         });
 
       return {
@@ -928,10 +971,133 @@
         placeName: data.placeName || "",
         city: data.city || "",
         street: data.street || "",
-        lat,
-        lng,
+        category: placeCategory,
+        lat: lat,
+        lng: lng,
         events: normalizedEvents,
-        needsMigration
+        needsMigration: needsMigration
+      };
+    }
+
+    function getPlaceCategory(category) {
+      return CATEGORY_META[category] ? category : "Obiekt wielofunkcyjny";
+    }
+
+    function buildPlaceCategoryOptions(selectedValue = "Obiekt wielofunkcyjny") {
+      const current = getPlaceCategory(selectedValue);
+      return PLACE_CATEGORIES.map(function(category) {
+        const selected = category === current ? "selected" : "";
+        return `<option value="${escapeHtml(category)}" ${selected}>${escapeHtml(category)}</option>`;
+      }).join("");
+    }
+
+    function getMarkerSymbolSvg(iconKey) {
+      switch (iconKey) {
+        case "arena":
+          return '<g fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 32c6-5 14-8 22-8s16 3 22 8"/><path d="M18 36h44"/><path d="M20 40l2 10M30 40v10M40 40v10M50 40v10M60 40l2 10"/><path d="M24 50h32"/></g>';
+        case "club":
+          return '<g fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="28" y="22" width="24" height="34" rx="3"/><circle cx="40" cy="32" r="4"/><circle cx="40" cy="46" r="5"/></g>';
+        case "stadium":
+          return '<g fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="40" cy="38" rx="19" ry="8"/><path d="M21 38v8c0 6 38 6 38 0v-8"/><path d="M40 22v16"/><path d="M40 22c5 0 10 2 13 4"/></g>';
+        case "theater":
+          return '<g fill="#fff"><path d="M24 24c7 0 11 4 15 8v18c-4-4-8-8-15-8-2 0-4 .2-6 .8V26.8c2-.5 4-.8 6-.8Z"/><path d="M56 28c-7 0-11 4-15 8v18c4-4 8-8 15-8 2 0 4 .2 6 .8V30.8c-2-.5-4-.8-6-.8Z"/><circle cx="31" cy="33" r="1.8" fill="#F59E0B"/><circle cx="46" cy="37" r="1.8" fill="#F59E0B"/><path d="M27 39c2 3 5 4 8 4s6-1 8-4" stroke="#F59E0B" stroke-width="2" fill="none" stroke-linecap="round"/></g>';
+        case "plener":
+          return '<g fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 49h34"/><path d="M25 49V35l15-10 15 10v14"/><path d="M31 39h18"/><path d="M18 47l4-8 4 8"/><path d="M58 47l-4-8-4 8"/></g>';
+        case "expo":
+          return '<g fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 48h44"/><path d="M22 48V30l18-6 18 6v18"/><path d="M40 24v24"/><path d="M30 36h20"/></g>';
+        default:
+          return '<g fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="23" y="25" width="34" height="26" rx="5"/><path d="M31 33h18M31 41h18"/></g>';
+      }
+    }
+
+    function buildMarkerSvg(category) {
+      const safeCategory = getPlaceCategory(category);
+      const meta = CATEGORY_META[safeCategory];
+      const gradId = `grad-${safeCategory.replace(/[^a-zA-Z0-9]/g, "")}`;
+      const symbol = getMarkerSymbolSvg(meta.icon);
+      return `
+        <div class="custom-marker-wrap" title="${escapeHtml(safeCategory)}">
+          <svg width="56" height="72" viewBox="0 0 80 102" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="${gradId}" x1="40" y1="8" x2="40" y2="92" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="${meta.start}"/>
+                <stop offset="100%" stop-color="${meta.end}"/>
+              </linearGradient>
+            </defs>
+            <path d="M40 6c18.8 0 34 15.2 34 34 0 25.3-25.1 45.6-31.3 50.3-1.6 1.3-3.8 1.3-5.4 0C31.1 85.6 6 65.3 6 40 6 21.2 21.2 6 40 6Z" fill="url(#${gradId})"/>
+            <path d="M40 10c16.6 0 30 13.4 30 30 0 21.7-21.5 40.1-28.7 45.6C34.1 80.1 10 61.7 10 40c0-16.6 13.4-30 30-30Z" fill="rgba(255,255,255,0.06)"/>
+            <circle cx="40" cy="40" r="24" fill="rgba(255,255,255,0.12)"/>
+            ${symbol}
+          </svg>
+        </div>
+      `;
+    }
+
+    function createCategoryMarkerIcon(category) {
+      return L.divIcon({
+        className: "custom-marker-icon",
+        html: buildMarkerSvg(category),
+        iconSize: [56, 72],
+        iconAnchor: [28, 72],
+        popupAnchor: [0, -72]
+      });
+    }
+
+    function normalizePlace(doc) {
+      const data = doc.data() || {};
+      let lat = data.lat;
+      let lng = data.lng;
+
+      if ((lat === undefined || lng === undefined) && typeof data.coords === "string") {
+        const parts = data.coords.split(",");
+        if (parts.length === 2) {
+          lat = parseFloat(parts[0]);
+          lng = parseFloat(parts[1]);
+        }
+      }
+
+      if (typeof lat !== "number" || typeof lng !== "number" || isNaN(lat) || isNaN(lng)) {
+        return null;
+      }
+
+      const originalEvents = Array.isArray(data.events)
+        ? data.events
+        : Array.isArray(data.list)
+          ? data.list.map(function(item) {
+              if (typeof item === "string") {
+                return { name: item, type: "", date: "", imageUrl: "" };
+              }
+              return item;
+            })
+          : [];
+
+      const normalizedEvents = ensureEventIds(originalEvents);
+
+      const placeCategory = getPlaceCategory(data.category);
+
+      const needsMigration =
+        !data.category ||
+        originalEvents.length !== normalizedEvents.length ||
+        originalEvents.some(function(eventItem, index) {
+          const normalized = normalizedEvents[index];
+          if (!eventItem || typeof eventItem !== "object") return true;
+          return (
+            !eventItem.id ||
+            typeof eventItem.attendanceCount !== "number" ||
+            eventItem.image !== undefined
+          );
+        });
+
+      return {
+        id: doc.id,
+        placeName: data.placeName || "",
+        city: data.city || "",
+        street: data.street || "",
+        category: placeCategory,
+        lat: lat,
+        lng: lng,
+        events: normalizedEvents,
+        needsMigration: needsMigration
       };
     }
 
@@ -1168,7 +1334,12 @@
               <input id="placeNameInput" class="input" placeholder="Nazwa miejsca" />
               <input id="cityInput" class="input" placeholder="Miasto" />
               <input id="streetInput" class="input" placeholder="Ulica" />
-              <div class="helper">Kliknąłeś mapę w trybie dodawania. Uzupełnij miejsce i zapisz pineskę.</div>
+              <select id="placeCategoryInput" class="select">
+                ${buildPlaceCategoryOptions("Obiekt wielofunkcyjny")}
+              </select>
+              <div class="helper">
+                Kliknąłeś mapę w trybie dodawania. Uzupełnij miejsce i zapisz pineskę.
+              </div>
               <button class="btn btn-primary" onclick="addPlace(${lat}, ${lng})">Zapisz pineszkę</button>
               <button class="btn btn-soft" onclick="cancelAddPlace()">Anuluj</button>
             </div>
@@ -1179,12 +1350,17 @@
 
     function buildPlaceEditPanel(placeData) {
       if (!isAdmin) return "";
+
       return `
         <div class="editing-box">
           <div class="form-grid">
             <input id="editPlaceNameInput" class="input" value="${escapeHtml(placeData.placeName)}" placeholder="Nazwa miejsca" />
             <input id="editPlaceCityInput" class="input" value="${escapeHtml(placeData.city)}" placeholder="Miasto" />
             <input id="editPlaceStreetInput" class="input" value="${escapeHtml(placeData.street)}" placeholder="Ulica" />
+            <select id="editPlaceCategoryInput" class="select">
+              ${buildPlaceCategoryOptions(placeData.category || "Obiekt wielofunkcyjny")}
+            </select>
+
             <div class="button-row">
               <button class="btn btn-success" onclick="savePlaceEdit('${placeData.id}')">Zapisz miejsce</button>
               <button class="btn btn-soft" onclick="renderPlaceSidebarById('${placeData.id}')">Anuluj</button>
@@ -1220,10 +1396,16 @@
       const placeId = placeData.id;
 
       let eventsHtml = "";
-      if (!events.length) {
-        eventsHtml = '<div class="empty-state">To miejsce nie ma jeszcze żadnych eventów.</div>';
+
+      if (events.length === 0) {
+        eventsHtml = `
+          <div class="empty-state">
+            To miejsce nie ma jeszcze żadnych eventów.
+          </div>
+        `;
       } else {
-        eventsHtml = '<div class="event-list">';
+        eventsHtml = `<div class="event-list">`;
+
         events.forEach(function(eventItem, index) {
           const imageUrl = eventItem.imageUrl ? escapeHtml(eventItem.imageUrl) : "";
           const eventName = escapeHtml(eventItem.name || "Bez nazwy");
@@ -1245,9 +1427,11 @@
           eventsHtml += `
             <div class="event-card">
               <div class="event-image-wrap">
-                ${imageUrl
-                  ? `<img src="${imageUrl}" alt="${eventName}" onerror="this.parentElement.innerHTML='<div class=&quot;event-image-placeholder&quot;>Nie udało się wczytać grafiki.</div>';">`
-                  : `<div class="event-image-placeholder">Brak grafiki dla tego eventu.</div>`}
+                ${
+                  imageUrl
+                    ? `<img src="${imageUrl}" alt="${eventName}" onerror="this.parentElement.innerHTML='<div class=&quot;event-image-placeholder&quot;>Nie udało się wczytać grafiki.</div>';">`
+                    : `<div class="event-image-placeholder">Brak grafiki dla tego eventu.</div>`
+                }
               </div>
 
               <div class="event-body">
@@ -1264,49 +1448,72 @@
             </div>
           `;
         });
-        eventsHtml += '</div>';
+
+        eventsHtml += `</div>`;
       }
 
-      const coordsRow = isAdmin ? `
-        <div class="meta-row">
-          <div class="meta-label">Współrzędne</div>
-          <div class="meta-value">${placeData.lat.toFixed(5)}, ${placeData.lng.toFixed(5)}</div>
-        </div>
-      ` : "";
+      let coordsRow = "";
+      if (isAdmin) {
+        coordsRow = `
+          <div class="meta-row">
+            <div class="meta-label">Współrzędne</div>
+            <div class="meta-value">${placeData.lat.toFixed(5)}, ${placeData.lng.toFixed(5)}</div>
+          </div>
+        `;
+      }
 
-      const adminPlaceControls = isAdmin ? `
-        <div class="button-row single">
-          <button class="btn btn-warning" onclick="startEditPlace('${placeId}')">Edytuj miejsce</button>
-        </div>
-        <div id="placeEditBox"></div>
-      ` : "";
+      let adminPlaceControls = "";
+      if (isAdmin) {
+        adminPlaceControls = `
+          <div class="button-row single">
+            <button class="btn btn-warning" onclick="startEditPlace('${placeId}')">Edytuj miejsce</button>
+          </div>
+          <div id="placeEditBox"></div>
+        `;
+      }
 
-      const adminAddEventSection = isAdmin ? `
-        <div class="section">
-          <div class="section-title">Dodaj nowy event</div>
-          <div class="card">
-            <div class="form-grid">
-              <input id="eventNameInput" class="input" placeholder="Nazwa eventu" />
-              <select id="eventTypeInput" class="select">${buildEventTypeOptions()}</select>
-              <input id="eventDateInput" class="input" type="date" />
-              <input id="eventImageInput" class="input" placeholder="Link do grafiki eventu (URL)" oninput="updateImagePreview()" />
+      let adminAddEventSection = "";
+      if (isAdmin) {
+        adminAddEventSection = `
+          <div class="section">
+            <div class="section-title">Dodaj nowy event</div>
+            <div class="card">
+              <div class="form-grid">
+                <input id="eventNameInput" class="input" placeholder="Nazwa eventu" />
+                <select id="eventTypeInput" class="select">
+                  ${buildEventTypeOptions()}
+                </select>
+                <input id="eventDateInput" class="input" type="date" />
+                <input
+                  id="eventImageInput"
+                  class="input"
+                  placeholder="Link do grafiki eventu (URL)"
+                  oninput="updateImagePreview()"
+                />
 
-              <div class="preview-card">
-                <div class="preview-message">Wklej link do plakatu, logo albo grafiki promocyjnej. Jeśli link działa, podgląd pokaże się niżej.</div>
-                <img id="eventImagePreview" class="preview-image" alt="Podgląd grafiki eventu" />
-                <div id="eventImageError" class="helper hidden" style="color:#b42318; margin-top:10px;">Nie udało się wczytać grafiki z tego linku.</div>
+                <div class="preview-card">
+                  <div class="preview-message">
+                    Wklej link do plakatu, logo albo grafiki promocyjnej. Jeśli link działa, podgląd pokaże się niżej.
+                  </div>
+                  <img id="eventImagePreview" class="preview-image" alt="Podgląd grafiki eventu" />
+                  <div id="eventImageError" class="helper hidden" style="color:#b42318; margin-top:10px;">
+                    Nie udało się wczytać grafiki z tego linku.
+                  </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="addEvent('${placeId}')">Dodaj event</button>
               </div>
-
-              <button class="btn btn-primary" onclick="addEvent('${placeId}')">Dodaj event</button>
             </div>
           </div>
-        </div>
 
-        <div class="section">
-          <div class="section-title">Usuwanie</div>
-          <button class="btn btn-danger" onclick="deleteMarker('${placeId}')">Usuń całą pineskę</button>
-        </div>
-      ` : "";
+          <div class="section">
+            <div class="section-title">Usuwanie</div>
+            <button class="btn btn-danger" onclick="deleteMarker('${placeId}')">
+              Usuń całą pineskę
+            </button>
+          </div>
+        `;
+      }
 
       return `
         <div class="section">
@@ -1325,6 +1532,11 @@
             <div class="meta-row">
               <div class="meta-label">Ulica</div>
               <div class="meta-value">${escapeHtml(street)}</div>
+            </div>
+
+            <div class="meta-row">
+              <div class="meta-label">Kategoria miejsca</div>
+              <div class="meta-value">${escapeHtml(placeData.category || "Obiekt wielofunkcyjny")}</div>
             </div>
 
             ${coordsRow}
@@ -1551,12 +1763,14 @@
       if (markers[placeData.id]) {
         markers[placeData.id].placeData = placeData;
         markers[placeData.id].setLatLng(coords);
+        markers[placeData.id].setIcon(createCategoryMarkerIcon(placeData.category));
         rebuildPlacesCache();
         return;
       }
 
-      const marker = L.marker(coords).addTo(map);
+      const marker = L.marker(coords, { icon: createCategoryMarkerIcon(placeData.category) }).addTo(map);
       marker.placeData = placeData;
+
       marker.on("click", function() {
         renderPlaceSidebar(marker.placeData);
       });
@@ -1578,19 +1792,25 @@
 
           if (placeData.needsMigration) {
             migrations.push(
-              db.collection("places").doc(placeData.id).set({
-                placeName: placeData.placeName,
-                city: placeData.city,
-                street: placeData.street,
-                lat: placeData.lat,
-                lng: placeData.lng,
-                events: placeData.events
-              }, { merge: true })
+              db.collection("places").doc(placeData.id).set(
+                {
+                  placeName: placeData.placeName,
+                  city: placeData.city,
+                  street: placeData.street,
+                  category: placeData.category,
+                  lat: placeData.lat,
+                  lng: placeData.lng,
+                  events: placeData.events
+                },
+                { merge: true }
+              )
             );
           }
         });
 
-        if (migrations.length) await Promise.all(migrations);
+        if (migrations.length) {
+          await Promise.all(migrations);
+        }
 
         rebuildPlacesCache();
         refreshEventNameSuggestions();
@@ -1621,9 +1841,15 @@
       if (!isAdmin) return;
 
       try {
-        const placeName = (document.getElementById("placeNameInput")?.value || "").trim();
-        const city = (document.getElementById("cityInput")?.value || "").trim();
-        const street = (document.getElementById("streetInput")?.value || "").trim();
+        const placeNameInput = document.getElementById("placeNameInput");
+        const cityInput = document.getElementById("cityInput");
+        const streetInput = document.getElementById("streetInput");
+        const placeCategoryInput = document.getElementById("placeCategoryInput");
+
+        const placeName = placeNameInput ? placeNameInput.value.trim() : "";
+        const city = cityInput ? cityInput.value.trim() : "";
+        const street = streetInput ? streetInput.value.trim() : "";
+        const category = getPlaceCategory(placeCategoryInput ? placeCategoryInput.value.trim() : "Obiekt wielofunkcyjny");
 
         if (!placeName) {
           alert("Wpisz nazwę miejsca.");
@@ -1637,13 +1863,24 @@
         }
 
         const placePayload = {
-          placeName, city, street, lat, lng, events: [],
+          placeName,
+          city,
+          street,
+          category,
+          lat,
+          lng,
+          events: [],
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
         const docRef = await db.collection("places").add(placePayload);
 
-        const placeData = { id: docRef.id, ...placePayload, needsMigration: false };
+        const placeData = {
+          id: docRef.id,
+          ...placePayload,
+          needsMigration: false
+        };
+
         renderMarker(placeData);
         setAddPinMode(false);
         refreshEventNameSuggestions();
@@ -1709,22 +1946,34 @@
       try {
         const ref = db.collection("places").doc(placeId);
         const snap = await ref.get();
-        if (!snap.exists) { alert("To miejsce nie istnieje."); return; }
+
+        if (!snap.exists) {
+          alert("To miejsce nie istnieje.");
+          return;
+        }
 
         const placeData = normalizePlace(snap);
-        if (!placeData) { alert("Nie udało się odczytać miejsca."); return; }
+        if (!placeData) {
+          alert("Nie udało się odczytać miejsca.");
+          return;
+        }
 
         const placeName = document.getElementById("editPlaceNameInput").value.trim();
         const city = document.getElementById("editPlaceCityInput").value.trim();
         const street = document.getElementById("editPlaceStreetInput").value.trim();
+        const category = getPlaceCategory(document.getElementById("editPlaceCategoryInput").value.trim());
 
-        if (!placeName) { alert("Nazwa miejsca nie może być pusta."); return; }
+        if (!placeName) {
+          alert("Nazwa miejsca nie może być pusta.");
+          return;
+        }
 
-        await ref.update({ placeName, city, street });
+        await ref.update({ placeName, city, street, category });
 
         placeData.placeName = placeName;
         placeData.city = city;
         placeData.street = street;
+        placeData.category = category;
 
         markers[placeId].placeData = placeData;
         rebuildPlacesCache();
@@ -2141,15 +2390,20 @@
       }
     });
 
-    document.getElementById("search-main-input").addEventListener("focus", function() {
-      toggleSearchPanel(true);
-      setSearchMode("events");
+    document.getElementById("search-bar-caret").addEventListener("click", function(e) {
+      e.stopPropagation();
+      toggleSearchPanel();
+      if (searchShell.classList.contains("open")) {
+        setSearchMode("events");
+      }
     });
 
-    document.getElementById("search-bar").addEventListener("click", function(e) {
-      if (e.target.id !== "search-bar-caret") {
-        toggleSearchPanel(true);
-      }
+    document.getElementById("search-main-input").addEventListener("click", function(e) {
+      e.stopPropagation();
+    });
+
+    document.getElementById("search-main-input").addEventListener("focus", function() {
+      searchSuggestionsBox.style.display = searchSuggestionsBox.innerHTML.trim() ? "block" : "none";
     });
 
     document.addEventListener("click", function(e) {
