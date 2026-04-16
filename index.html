@@ -1653,16 +1653,17 @@
 
     function getFirestoreWriteErrorMessage(error, entityLabel) {
       const code = error && error.code ? error.code : "";
+      const suffix = code ? ` (kod: ${code})` : "";
 
       switch (code) {
         case "permission-denied":
-          return `Firestore odrzucił zapis ${entityLabel}. Sprawdź reguły bezpieczeństwa i uprawnienia admina.`;
+          return `Firestore odrzucił zapis ${entityLabel}. Sprawdź reguły bezpieczeństwa i uprawnienia admina.${suffix}`;
         case "unavailable":
-          return `Firestore jest chwilowo niedostępny. Spróbuj ponownie za chwilę.`;
+          return `Firestore jest chwilowo niedostępny. Spróbuj ponownie za chwilę.${suffix}`;
         case "failed-precondition":
-          return `Firestore zgłosił problem z konfiguracją przy zapisie ${entityLabel}.`;
+          return `Firestore zgłosił problem z konfiguracją przy zapisie ${entityLabel}.${suffix}`;
         default:
-          return `Nie udało się zapisać ${entityLabel}.`;
+          return `Nie udało się zapisać ${entityLabel}.${suffix}`;
       }
     }
 
