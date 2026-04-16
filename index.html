@@ -1479,8 +1479,8 @@
       });
     }
 
-    function normalizePlace(doc) {
-      const data = doc.data() || {};
+    function normalizePlaceData(docId, rawData) {
+      const data = rawData || {};
       let lat = data.lat;
       let lng = data.lng;
 
@@ -1540,7 +1540,7 @@
         });
 
       return {
-        id: doc.id,
+        id: docId,
         placeName: data.placeName || "",
         city: data.city || "",
         street: data.street || "",
@@ -1550,6 +1550,20 @@
         events: normalizedEvents,
         needsMigration: needsMigration
       };
+    }
+
+    function buildPlaceFirestorePayload(input, extraFields = {}) {
+      const payload = {
+        placeName: (input.placeName || "").trim(),
+        city: (input.city || "").trim(),
+        street: (input.street || "").trim(),
+        category: getPlaceCategory(input.category),
+        lat: Number(input.lat),
+        lng: Number(input.lng),
+        events: ensureEventIds(Array.isArray(input.events) ? input.events : [])
+      };
+
+      return { ...payload, ...extraFields };
     }
 
     function getPlaceCategory(category) {
@@ -1634,61 +1648,22 @@
     }
 
     function normalizePlace(doc) {
-      const data = doc.data() || {};
-      let lat = data.lat;
-      let lng = data.lng;
+      return normalizePlaceData(doc.id, doc.data() || {});
+    }
 
-      if ((lat === undefined || lng === undefined) && typeof data.coords === "string") {
-        const parts = data.coords.split(",");
-        if (parts.length === 2) {
-          lat = parseFloat(parts[0]);
-          lng = parseFloat(parts[1]);
-        }
+    function getFirestoreWriteErrorMessage(error, entityLabel) {
+      const code = error && error.code ? error.code : "";
+
+      switch (code) {
+        case "permission-denied":
+          return `Firestore odrzucił zapis ${entityLabel}. Sprawdź reguły bezpieczeństwa i uprawnienia admina.`;
+        case "unavailable":
+          return `Firestore jest chwilowo niedostępny. Spróbuj ponownie za chwilę.`;
+        case "failed-precondition":
+          return `Firestore zgłosił problem z konfiguracją przy zapisie ${entityLabel}.`;
+        default:
+          return `Nie udało się zapisać ${entityLabel}.`;
       }
-
-      if (typeof lat !== "number" || typeof lng !== "number" || isNaN(lat) || isNaN(lng)) {
-        return null;
-      }
-
-      const originalEvents = Array.isArray(data.events)
-        ? data.events
-        : Array.isArray(data.list)
-          ? data.list.map(function(item) {
-              if (typeof item === "string") {
-                return { name: item, type: "", date: "", imageUrl: "" };
-              }
-              return item;
-            })
-          : [];
-
-      const normalizedEvents = ensureEventIds(originalEvents);
-
-      const placeCategory = getPlaceCategory(data.category);
-
-      const needsMigration =
-        !data.category ||
-        originalEvents.length !== normalizedEvents.length ||
-        originalEvents.some(function(eventItem, index) {
-          const normalized = normalizedEvents[index];
-          if (!eventItem || typeof eventItem !== "object") return true;
-          return (
-            !eventItem.id ||
-            typeof eventItem.attendanceCount !== "number" ||
-            eventItem.image !== undefined
-          );
-        });
-
-      return {
-        id: doc.id,
-        placeName: data.placeName || "",
-        city: data.city || "",
-        street: data.street || "",
-        category: placeCategory,
-        lat: lat,
-        lng: lng,
-        events: normalizedEvents,
-        needsMigration: needsMigration
-      };
     }
 
     function getFirebaseAuthErrorMessage(error) {
@@ -2473,32 +2448,36 @@
           return;
         }
 
-        const placePayload = {
+        const placePayload = buildPlaceFirestorePayload({
           placeName,
           city,
           street,
           category,
           lat,
           lng,
-          events: [],
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
+          events: []
+        }, {
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdBy: currentUser ? currentUser.uid : null
+        });
 
-        const docRef = await db.collection("places").add(placePayload);
+        const docRef = db.collection("places").doc();
+        await docRef.set(placePayload, { merge: true });
 
-        const placeData = {
-          id: docRef.id,
-          ...placePayload,
-          needsMigration: false
-        };
+        const savedSnap = await docRef.get();
+        const savedPlaceData = savedSnap.exists ? normalizePlace(savedSnap) : null;
 
-        renderMarker(placeData);
+        if (!savedPlaceData) {
+          throw new Error("saved-place-invalid");
+        }
+
+        renderMarker(savedPlaceData);
         setAddPinMode(false);
         refreshEventNameSuggestions();
-        renderPlaceSidebar(placeData);
+        renderPlaceSidebar(savedPlaceData);
       } catch (error) {
         console.error("Błąd addPlace:", error);
-        alert("Nie udało się dodać pineski.");
+        alert(getFirestoreWriteErrorMessage(error, "pineski"));
       }
     }
 
