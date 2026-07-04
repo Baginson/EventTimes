@@ -4,6 +4,7 @@ import type { Venue } from '../data/mockVenues'
 type VenuePanelProps = {
   venue: Venue
   events: EventTimesEvent[]
+  onEventSelect: (event: EventTimesEvent) => void
   onClose: () => void
 }
 
@@ -12,7 +13,12 @@ const dateFormatter = new Intl.DateTimeFormat('pl-PL', {
   timeStyle: 'short',
 })
 
-export function VenuePanel({ venue, events, onClose }: VenuePanelProps) {
+export function VenuePanel({
+  venue,
+  events,
+  onEventSelect,
+  onClose,
+}: VenuePanelProps) {
   return (
     <aside className="venue-panel" aria-label={`Informacje o miejscu: ${venue.name}`}>
       <div className="venue-panel-handle" aria-hidden="true" />
@@ -26,7 +32,7 @@ export function VenuePanel({ venue, events, onClose }: VenuePanelProps) {
       </button>
 
       <div className="venue-panel-content">
-        <span className="venue-type">{venue.type}</span>
+        <span className="venue-type">{venue.venueType}</span>
         <h1>{venue.name}</h1>
         <p className="venue-address">{venue.address}</p>
         <p className="venue-description">{venue.description}</p>
@@ -41,17 +47,26 @@ export function VenuePanel({ venue, events, onClose }: VenuePanelProps) {
             <ul className="event-list">
               {events.map((event) => (
                 <li className="event-card" key={event.id}>
-                  <div className="event-meta">
-                    <span>{event.category}</span>
-                    <time dateTime={event.startDate}>
-                      {dateFormatter.format(new Date(event.startDate))}
-                    </time>
-                  </div>
-                  <h3>{event.name}</h3>
-                  <p>{event.description}</p>
-                  <a href={event.ticketUrl} target="_blank" rel="noreferrer">
-                    Kup bilet
-                  </a>
+                  <button
+                    className="event-card-main"
+                    type="button"
+                    onClick={() => onEventSelect(event)}
+                  >
+                    <span className="event-meta">
+                      <span>{event.eventType}</span>
+                      <time dateTime={event.startDate}>
+                        {dateFormatter.format(new Date(event.startDate))}
+                      </time>
+                    </span>
+                    <strong>{event.name}</strong>
+                    <span className="event-card-description">{event.description}</span>
+                    <span className="event-details-link">Zobacz szczegóły →</span>
+                  </button>
+                  {event.ticketUrl && (
+                    <a href={event.ticketUrl} target="_blank" rel="noreferrer">
+                      Kup bilet
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>

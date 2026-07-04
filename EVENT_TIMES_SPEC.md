@@ -54,6 +54,24 @@ Wydarzenia są podzielone według ich aktualnego stanu na:
 - trwające,
 - minione.
 
+## Event details panel
+
+Kliknięcie pinezki na mapie otwiera panel wybranego miejsca. Panel miejsca pokazuje podstawowe informacje o obiekcie oraz listę przypisanych do niego eventów.
+
+Kliknięcie eventu na tej liście otwiera panel szczegółów eventu. Ten sam panel otwiera się bezpośrednio po kliknięciu eventu w wynikach wyszukiwania.
+
+Panel szczegółów eventu pokazuje:
+
+- nazwę eventu,
+- datę,
+- typ wydarzenia,
+- miejsce,
+- opis,
+- źródło informacji,
+- link do biletu, jeśli jest dostępny.
+
+Akcje „Kup bilet”, „Chcę iść”, „Byłem” i „Zapisz” są planowane do dalszego rozwoju. W MVP mogą być widoczne jako placeholdery, bez Firebase, logowania i zapisywania danych użytkownika.
+
 ## Dostęp bez konta
 
 Przeglądanie mapy, miejsc i wydarzeń nie wymaga zakładania konta ani logowania.
@@ -69,6 +87,17 @@ Konto będzie potrzebne do korzystania z funkcji osobistych:
 ## Bilety
 
 Event Times nie sprzedaje biletów bezpośrednio. Przy wydarzeniu może pojawić się przycisk „Kup bilet”, który przekierowuje użytkownika do zewnętrznej strony, na przykład platformy biletowej lub strony organizatora.
+
+## Search architecture
+
+Wyszukiwarka ma dwa niezależne tryby: „Miejsca” i „Wydarzenia”. Tryby nie mieszają swoich typów ani wyników.
+
+- Miejsca mają osobny typ miejsca, a wyszukiwanie tekstowe obejmuje wyłącznie nazwę miejsca.
+- Wydarzenia mają osobny typ wydarzenia, a wyszukiwanie tekstowe obejmuje wyłącznie nazwę wydarzenia.
+- Filtr daty dotyczy tylko wydarzeń.
+- MVP skupia się na Lesznie, ale stan wybranego miasta i logika filtrowania mają umożliwić późniejsze dodanie kolejnych miast.
+- Kliknięcie wyniku miejsca otwiera panel tego miejsca na mapie.
+- Kliknięcie wyniku wydarzenia otwiera panel miejsca, w którym odbywa się to wydarzenie.
 
 ## Dane i materiały
 

@@ -2,12 +2,12 @@ export type EventTimesEvent = {
   id: string
   venueId: string
   name: string
-  category: string
+  eventType: string
   description: string
   startDate: string
-  endDate: string
-  ticketUrl: string
-  sourceUrl: string
+  endDate?: string
+  ticketUrl?: string
+  sourceUrl?: string
   imageUrl?: string
 }
 
@@ -17,7 +17,7 @@ export const mockEvents: EventTimesEvent[] = [
     id: 'mok-letni-koncert-kameralny-2026',
     venueId: 'mok-leszno',
     name: 'Letni koncert kameralny',
-    category: 'koncert',
+    eventType: 'Koncert',
     description: 'Wieczorny koncert lokalnych muzyków w kameralnej oprawie.',
     startDate: '2026-07-18T18:00:00+02:00',
     endDate: '2026-07-18T20:00:00+02:00',
@@ -28,7 +28,7 @@ export const mockEvents: EventTimesEvent[] = [
     id: 'mok-wieczor-komedii-2026',
     venueId: 'mok-leszno',
     name: 'Wieczór komedii',
-    category: 'stand-up',
+    eventType: 'Stand-up',
     description: 'Testowy wieczór występów komediowych z udziałem kilku artystów.',
     startDate: '2026-08-07T19:00:00+02:00',
     endDate: '2026-08-07T21:00:00+02:00',
@@ -40,7 +40,7 @@ export const mockEvents: EventTimesEvent[] = [
     id: 'mok-warsztaty-teatralne-2026',
     venueId: 'mok-leszno',
     name: 'Otwarte warsztaty teatralne',
-    category: 'warsztaty',
+    eventType: 'Teatr',
     description: 'Zajęcia teatralne dla osób chcących spróbować pracy na scenie.',
     startDate: '2026-09-12T10:00:00+02:00',
     endDate: '2026-09-12T14:00:00+02:00',
@@ -51,7 +51,7 @@ export const mockEvents: EventTimesEvent[] = [
     id: 'trapez-turniej-koszykowki-2026',
     venueId: 'hala-trapez',
     name: 'Leszczyński turniej koszykówki',
-    category: 'sport',
+    eventType: 'Sport',
     description: 'Fikcyjny turniej drużyn z Leszna i okolic rozgrywany przez cały dzień.',
     startDate: '2026-07-25T09:00:00+02:00',
     endDate: '2026-07-25T18:00:00+02:00',
@@ -63,7 +63,7 @@ export const mockEvents: EventTimesEvent[] = [
     id: 'trapez-gala-sportow-walki-2026',
     venueId: 'hala-trapez',
     name: 'Gala sportów walki',
-    category: 'sport',
+    eventType: 'Sport',
     description: 'Testowa gala prezentująca pojedynki zawodników z lokalnych klubów.',
     startDate: '2026-08-22T18:30:00+02:00',
     endDate: '2026-08-22T22:30:00+02:00',
@@ -74,7 +74,7 @@ export const mockEvents: EventTimesEvent[] = [
     id: 'trapez-rodzinny-dzien-sportu-2026',
     venueId: 'hala-trapez',
     name: 'Rodzinny dzień sportu',
-    category: 'rodzinne',
+    eventType: 'Spotkanie',
     description: 'Dzień prostych konkurencji sportowych i aktywności dla całych rodzin.',
     startDate: '2026-09-06T11:00:00+02:00',
     endDate: '2026-09-06T17:00:00+02:00',
@@ -85,7 +85,7 @@ export const mockEvents: EventTimesEvent[] = [
     id: 'stadion-mecz-zuzlowy-2026',
     venueId: 'stadion-alfreda-smoczyka',
     name: 'Wieczorny mecz żużlowy',
-    category: 'żużel',
+    eventType: 'Sport',
     description: 'Testowe spotkanie żużlowe przygotowane na potrzeby prezentacji aplikacji.',
     startDate: '2026-07-12T19:00:00+02:00',
     endDate: '2026-07-12T21:30:00+02:00',
@@ -97,7 +97,7 @@ export const mockEvents: EventTimesEvent[] = [
     id: 'stadion-piknik-motoryzacyjny-2026',
     venueId: 'stadion-alfreda-smoczyka',
     name: 'Piknik motoryzacyjny',
-    category: 'plenerowe',
+    eventType: 'Festiwal',
     description: 'Rodzinny piknik z pokazami pojazdów i atrakcjami na terenie stadionu.',
     startDate: '2026-08-16T12:00:00+02:00',
     endDate: '2026-08-16T19:00:00+02:00',
@@ -108,7 +108,7 @@ export const mockEvents: EventTimesEvent[] = [
     id: 'stadion-koncert-pod-gwiazdami-2026',
     venueId: 'stadion-alfreda-smoczyka',
     name: 'Koncert pod gwiazdami',
-    category: 'koncert',
+    eventType: 'Koncert',
     description: 'Duży fikcyjny koncert plenerowy zamykający letni sezon wydarzeń.',
     startDate: '2026-08-29T18:00:00+02:00',
     endDate: '2026-08-29T23:00:00+02:00',

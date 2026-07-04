@@ -1,4 +1,24 @@
-export function TopBar() {
+import type { EventTimesEvent } from '../data/mockEvents'
+import type { Venue } from '../data/mockVenues'
+import { SearchBar } from './SearchBar'
+
+type TopBarProps = {
+  selectedCity: string
+  venues: Venue[]
+  events: EventTimesEvent[]
+  onCityChange: (city: string) => void
+  onVenueSelect: (venue: Venue) => void
+  onEventSelect: (event: EventTimesEvent, venue: Venue) => void
+}
+
+export function TopBar({
+  selectedCity,
+  venues,
+  events,
+  onCityChange,
+  onVenueSelect,
+  onEventSelect,
+}: TopBarProps) {
   return (
     <header className="top-bar">
       <a className="brand" href="/" aria-label="Event Times — strona główna">
@@ -8,18 +28,16 @@ export function TopBar() {
         <span>Event Times</span>
       </a>
 
-      <label className="search-box">
-        <span className="visually-hidden">Szukaj miejsc i wydarzeń</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" />
-        </svg>
-        <input type="search" placeholder="Szukaj miejsc i wydarzeń" />
-      </label>
+      <SearchBar
+        selectedCity={selectedCity}
+        venues={venues}
+        events={events}
+        onCityChange={onCityChange}
+        onVenueSelect={onVenueSelect}
+        onEventSelect={onEventSelect}
+      />
 
       <nav className="top-bar-actions" aria-label="Główne akcje">
-        <button className="button button-secondary" type="button">
-          Filtry
-        </button>
         <button className="button button-primary" type="button">
           Zaloguj się
         </button>

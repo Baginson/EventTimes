@@ -3,7 +3,7 @@ export type Venue = {
   name: string
   city: string
   address: string
-  type: string
+  venueType: string
   coordinates: {
     lat: number
     lng: number
@@ -18,7 +18,7 @@ export const mockVenues: Venue[] = [
     name: 'MOK Leszno',
     city: 'Leszno',
     address: 'ul. Bolesława Chrobrego 3A, Leszno',
-    type: 'centrum kultury',
+    venueType: 'Dom kultury',
     coordinates: {
       lat: 51.8419,
       lng: 16.5745,
@@ -31,7 +31,7 @@ export const mockVenues: Venue[] = [
     name: 'Hala Trapez',
     city: 'Leszno',
     address: 'ul. Zygmunta Starego 1, Leszno',
-    type: 'hala widowiskowo-sportowa',
+    venueType: 'Hala',
     coordinates: {
       lat: 51.847,
       lng: 16.5757,
@@ -44,7 +44,7 @@ export const mockVenues: Venue[] = [
     name: 'Stadion im. Alfreda Smoczyka',
     city: 'Leszno',
     address: 'ul. Strzelecka 7, Leszno',
-    type: 'stadion',
+    venueType: 'Stadion',
     coordinates: {
       lat: 51.8418,
       lng: 16.5986,
@@ -57,7 +57,7 @@ export const mockVenues: Venue[] = [
     name: 'Rynek w Lesznie',
     city: 'Leszno',
     address: 'Rynek, Leszno',
-    type: 'przestrzeń miejska',
+    venueType: 'Plener',
     coordinates: {
       lat: 51.8414,
       lng: 16.5747,
