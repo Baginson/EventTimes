@@ -34,34 +34,41 @@ export function EventPanel({ event, venue, onBack, onClose }: EventPanelProps) {
           ← Wróć do miejsca
         </button>
 
-        <span className="venue-type">{event.eventType}</span>
-        <h1>{event.name}</h1>
+        <header className="event-panel-header">
+          <span className="event-type-badge">{event.eventType}</span>
+          <h1>{event.name}</h1>
+        </header>
 
-        <dl className="event-detail-list">
-          <div>
-            <dt>Start</dt>
-            <dd>
-              <time dateTime={event.startDate}>
-                {dateFormatter.format(new Date(event.startDate))}
-              </time>
-            </dd>
-          </div>
-          {event.endDate && (
+        <section className="event-schedule" aria-labelledby="event-schedule-title">
+          <h2 id="event-schedule-title">Termin</h2>
+          <dl className="event-detail-list">
             <div>
-              <dt>Koniec</dt>
+              <dt>Start</dt>
               <dd>
-                <time dateTime={event.endDate}>
-                  {dateFormatter.format(new Date(event.endDate))}
+                <time dateTime={event.startDate}>
+                  {dateFormatter.format(new Date(event.startDate))}
                 </time>
               </dd>
             </div>
-          )}
-        </dl>
+            {event.endDate && (
+              <div>
+                <dt>Koniec</dt>
+                <dd>
+                  <time dateTime={event.endDate}>
+                    {dateFormatter.format(new Date(event.endDate))}
+                  </time>
+                </dd>
+              </div>
+            )}
+          </dl>
+        </section>
 
         <section className="event-location" aria-labelledby="event-location-title">
           <h2 id="event-location-title">Miejsce</h2>
-          <strong>{venue.name}</strong>
-          <p>{venue.address}</p>
+          <div className="event-location-card">
+            <strong>{venue.name}</strong>
+            <p>{venue.address}</p>
+          </div>
         </section>
 
         <section className="event-description" aria-labelledby="event-description-title">
@@ -93,8 +100,8 @@ export function EventPanel({ event, venue, onBack, onClose }: EventPanelProps) {
                 Kup bilet
               </a>
             ) : (
-              <button type="button" disabled>
-                Kup bilet
+              <button className="event-action-unavailable" type="button" disabled>
+                Brak linku do biletu
               </button>
             )}
             <button type="button" disabled title="Funkcja będzie dostępna później">

@@ -52,6 +52,10 @@ export function VenuePanel({
                     type="button"
                     onClick={() => onEventSelect(event)}
                   >
+                    <span className="event-poster-placeholder" aria-hidden="true">
+                      <span>{event.eventType}</span>
+                      <strong>{event.name}</strong>
+                    </span>
                     <span className="event-meta">
                       <span>{event.eventType}</span>
                       <time dateTime={event.startDate}>
@@ -71,7 +75,11 @@ export function VenuePanel({
               ))}
             </ul>
           ) : (
-            <p className="empty-events">Brak testowych wydarzeń dla tego miejsca.</p>
+            <div className="empty-state empty-events">
+              <span className="empty-state-icon" aria-hidden="true">ET</span>
+              <strong>Brak wydarzeń</strong>
+              <p>To miejsce nie ma jeszcze dodanych eventów.</p>
+            </div>
           )}
         </section>
       </div>

@@ -1,11 +1,13 @@
 import { divIcon } from 'leaflet'
-import { MapContainer, Marker, TileLayer, Tooltip } from 'react-leaflet'
+import { MapContainer, Marker, TileLayer, Tooltip, useMapEvents } from 'react-leaflet'
 import type { Venue } from '../data/mockVenues'
 
 type EventMapProps = {
   venues: Venue[]
   selectedVenueId: string | null
+  isPinMoveActive: boolean
   onVenueSelect: (venue: Venue) => void
+  onMapClick: (coordinates: Venue['coordinates']) => void
 }
 
 const LESZNO_CENTER: [number, number] = [51.8419, 16.5748]
@@ -20,19 +22,37 @@ function createVenueIcon(isSelected: boolean) {
   })
 }
 
+function MapClickHandler({
+  onMapClick,
+}: {
+  onMapClick: (coordinates: Venue['coordinates']) => void
+}) {
+  useMapEvents({
+    click(event) {
+      // Obiekt Leaflet zostaje w providerze mapy. Na zewnątrz wychodzi tylko { lat, lng }.
+      onMapClick({ lat: event.latlng.lat, lng: event.latlng.lng })
+    },
+  })
+
+  return null
+}
+
 export function EventMap({
   venues,
   selectedVenueId,
+  isPinMoveActive,
   onVenueSelect,
+  onMapClick,
 }: EventMapProps) {
   return (
     <MapContainer
-      className="event-map"
+      className={`event-map${isPinMoveActive ? ' pin-move-active' : ''}`}
       center={LESZNO_CENTER}
       zoom={14}
       minZoom={12}
       scrollWheelZoom
     >
+      {isPinMoveActive && <MapClickHandler onMapClick={onMapClick} />}
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -50,7 +70,13 @@ export function EventMap({
             key={venue.id}
             position={position}
             icon={createVenueIcon(venue.id === selectedVenueId)}
-            eventHandlers={{ click: () => onVenueSelect(venue) }}
+            eventHandlers={{
+              click: () => {
+                if (!isPinMoveActive) {
+                  onVenueSelect(venue)
+                }
+              },
+            }}
           >
             <Tooltip direction="top">{venue.name}</Tooltip>
           </Marker>

@@ -26,11 +26,15 @@ export function SearchResults({
 
   if (!hasResults) {
     return (
-      <p className="search-empty">
-        {mode === 'venues'
-          ? 'Brak pasujących miejsc.'
-          : 'Brak pasujących wydarzeń.'}
-      </p>
+      <div className="empty-state search-empty">
+        <span className="empty-state-icon" aria-hidden="true">?</span>
+        <strong>Brak wyników</strong>
+        <p>
+          {mode === 'venues'
+            ? 'Spróbuj innej nazwy lub typu miejsca.'
+            : 'Spróbuj innej nazwy, daty lub typu wydarzenia.'}
+        </p>
+      </div>
     )
   }
 

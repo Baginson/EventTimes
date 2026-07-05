@@ -1,0 +1,183 @@
+import type { EventTimesEvent } from '../data/mockEvents'
+import type { Venue } from '../data/mockVenues'
+
+export type LocalBackupData = {
+  appName: 'Event Times'
+  dataVersion: 1
+  exportedAt: string
+  venues: Venue[]
+  events: EventTimesEvent[]
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function optionalString(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+function parseVenue(value: unknown, index: number): Venue {
+  if (!isRecord(value)) {
+    throw new Error(`Miejsce nr ${index + 1} nie jest poprawnym obiektem.`)
+  }
+
+  const coordinates = value.coordinates
+
+  if (
+    typeof value.id !== 'string' ||
+    !value.id.trim() ||
+    typeof value.name !== 'string' ||
+    !value.name.trim() ||
+    !isRecord(coordinates) ||
+    typeof coordinates.lat !== 'number' ||
+    !Number.isFinite(coordinates.lat) ||
+    typeof coordinates.lng !== 'number' ||
+    !Number.isFinite(coordinates.lng)
+  ) {
+    throw new Error(
+      `Miejsce nr ${index + 1} musi mieć id, name oraz coordinates.lat/lng.`,
+    )
+  }
+
+  if (coordinates.lat < -90 || coordinates.lat > 90) {
+    throw new Error(`Miejsce „${value.name}” ma niepoprawną wartość latitude.`)
+  }
+
+  if (coordinates.lng < -180 || coordinates.lng > 180) {
+    throw new Error(`Miejsce „${value.name}” ma niepoprawną wartość longitude.`)
+  }
+
+  return {
+    id: value.id.trim(),
+    name: value.name.trim(),
+    city: optionalString(value.city) ?? 'Leszno',
+    address: optionalString(value.address) ?? '',
+    venueType: optionalString(value.venueType) ?? 'Inne',
+    description: optionalString(value.description) ?? '',
+    coordinates: {
+      lat: coordinates.lat,
+      lng: coordinates.lng,
+    },
+  }
+}
+
+function parseEvent(value: unknown, index: number): EventTimesEvent {
+  if (!isRecord(value)) {
+    throw new Error(`Wydarzenie nr ${index + 1} nie jest poprawnym obiektem.`)
+  }
+
+  if (
+    typeof value.id !== 'string' ||
+    !value.id.trim() ||
+    typeof value.venueId !== 'string' ||
+    !value.venueId.trim() ||
+    typeof value.name !== 'string' ||
+    !value.name.trim() ||
+    typeof value.startDate !== 'string' ||
+    !value.startDate.trim()
+  ) {
+    throw new Error(
+      `Wydarzenie nr ${index + 1} musi mieć id, venueId, name i startDate.`,
+    )
+  }
+
+  if (Number.isNaN(new Date(value.startDate).getTime())) {
+    throw new Error(`Wydarzenie „${value.name}” ma niepoprawną datę startu.`)
+  }
+
+  const endDate = optionalString(value.endDate)
+
+  if (endDate && Number.isNaN(new Date(endDate).getTime())) {
+    throw new Error(`Wydarzenie „${value.name}” ma niepoprawną datę końca.`)
+  }
+
+  return {
+    id: value.id.trim(),
+    venueId: value.venueId.trim(),
+    name: value.name.trim(),
+    eventType: optionalString(value.eventType) ?? 'Inne',
+    description: optionalString(value.description) ?? '',
+    startDate: value.startDate,
+    endDate,
+    ticketUrl: optionalString(value.ticketUrl),
+    sourceUrl: optionalString(value.sourceUrl),
+    imageUrl: optionalString(value.imageUrl),
+  }
+}
+
+function ensureUniqueIds(items: Array<{ id: string }>, label: string) {
+  const ids = new Set(items.map((item) => item.id))
+
+  if (ids.size !== items.length) {
+    throw new Error(`${label} zawierają powtarzające się identyfikatory.`)
+  }
+}
+
+export function createLocalBackup(
+  venues: Venue[],
+  events: EventTimesEvent[],
+): LocalBackupData {
+  return {
+    appName: 'Event Times',
+    dataVersion: 1,
+    exportedAt: new Date().toISOString(),
+    venues,
+    events,
+  }
+}
+
+export function downloadLocalBackup(venues: Venue[], events: EventTimesEvent[]) {
+  const backup = createLocalBackup(venues, events)
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {
+    type: 'application/json',
+  })
+  const objectUrl = URL.createObjectURL(blob)
+  const downloadLink = document.createElement('a')
+  downloadLink.href = objectUrl
+  downloadLink.download = 'event-times-local-backup.json'
+  document.body.append(downloadLink)
+  downloadLink.click()
+  downloadLink.remove()
+  URL.revokeObjectURL(objectUrl)
+}
+
+export async function readLocalBackup(file: File): Promise<LocalBackupData> {
+  let parsedValue: unknown
+
+  try {
+    parsedValue = JSON.parse(await file.text())
+  } catch {
+    throw new Error('Nie udało się odczytać pliku JSON.')
+  }
+
+  if (!isRecord(parsedValue)) {
+    throw new Error('Plik backupu musi zawierać obiekt JSON.')
+  }
+
+  if (!Array.isArray(parsedValue.venues) || !Array.isArray(parsedValue.events)) {
+    throw new Error('Plik musi zawierać tablice venues i events.')
+  }
+
+  const venues = parsedValue.venues.map(parseVenue)
+  const events = parsedValue.events.map(parseEvent)
+  ensureUniqueIds(venues, 'Miejsca')
+  ensureUniqueIds(events, 'Wydarzenia')
+
+  const venueIds = new Set(venues.map((venue) => venue.id))
+  const eventWithoutVenue = events.find((event) => !venueIds.has(event.venueId))
+
+  if (eventWithoutVenue) {
+    throw new Error(
+      `Wydarzenie „${eventWithoutVenue.name}” wskazuje nieistniejące miejsce.`,
+    )
+  }
+
+  return {
+    appName: 'Event Times',
+    dataVersion: 1,
+    exportedAt: optionalString(parsedValue.exportedAt) ?? new Date().toISOString(),
+    venues,
+    events,
+  }
+}
