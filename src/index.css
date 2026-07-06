@@ -1,7 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Bungee&display=swap');
+
 :root {
   --color-primary: #064bff;
   --color-primary-hover: #003bd4;
-  --color-navy: #07142f;
+  --color-navy: #07142F;
   --color-cream: #fff1c7;
   --color-cream-soft: #fff8e6;
   --color-white: #ffffff;
@@ -13,7 +15,7 @@
   --font-ui:
     Inter, Manrope, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  --font-display: var(--font-ui);
+  --font-display: 'Bungee', sans-serif;
 
   --radius-sm: 10px;
   --radius-md: 16px;

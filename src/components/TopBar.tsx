@@ -1,12 +1,13 @@
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import eventTimesMark from '../assets/brand/event-times-mark.png'
 import { SearchBar } from './SearchBar'
 
 type TopBarProps = {
   selectedCity: string
   venues: Venue[]
   events: EventTimesEvent[]
-  isAdminOpen: boolean
+  isAdminMode: boolean
   onCityChange: (city: string) => void
   onVenueSelect: (venue: Venue) => void
   onEventSelect: (event: EventTimesEvent, venue: Venue) => void
@@ -17,7 +18,7 @@ export function TopBar({
   selectedCity,
   venues,
   events,
-  isAdminOpen,
+  isAdminMode,
   onCityChange,
   onVenueSelect,
   onEventSelect,
@@ -25,12 +26,9 @@ export function TopBar({
 }: TopBarProps) {
   return (
     <header className="top-bar">
-      <a className="brand" href="/" aria-label="Event Times — strona główna">
-        <span className="brand-mark" aria-hidden="true">
-          ET
-        </span>
-        <span>Event Times</span>
-      </a>
+      <button className="brand" type="button" aria-label="Event Times">
+        <img className="brand-logo" src={eventTimesMark} alt="Event Times" />
+      </button>
 
       <SearchBar
         selectedCity={selectedCity}
@@ -45,7 +43,7 @@ export function TopBar({
         <button
           className="button button-secondary admin-toggle"
           type="button"
-          aria-pressed={isAdminOpen}
+          aria-pressed={isAdminMode}
           onClick={onAdminToggle}
         >
           Panel admina

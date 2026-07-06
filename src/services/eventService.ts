@@ -89,6 +89,12 @@ export function deleteEvent(eventId: string): EventTimesEvent[] {
   return updatedEvents
 }
 
+export function deleteEventsByVenueId(venueId: string): EventTimesEvent[] {
+  const updatedEvents = getEvents().filter((event) => event.venueId !== venueId)
+  persistEvents(updatedEvents)
+  return updatedEvents
+}
+
 export function replaceEvents(events: EventTimesEvent[]): EventTimesEvent[] {
   const nextEvents = events.map((event) => ({ ...event }))
   persistEvents(nextEvents)

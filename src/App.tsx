@@ -8,6 +8,8 @@ import type { EventTimesEvent } from './data/mockEvents'
 import type { Venue } from './data/mockVenues'
 import {
   clearStoredEvents,
+  deleteEvent as persistEventDelete,
+  deleteEventsByVenueId,
   getEvents,
   replaceEvents,
   saveEvent,
@@ -16,6 +18,7 @@ import {
 import type { LocalBackupData } from './services/localBackupService'
 import {
   clearStoredVenues,
+  deleteVenue as persistVenueDelete,
   getVenues,
   replaceVenues,
   saveVenue,
@@ -29,6 +32,7 @@ function App() {
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<EventTimesEvent | null>(null)
   const [selectedCity, setSelectedCity] = useState('Leszno')
+  const [isAdminMode, setIsAdminMode] = useState(false)
   const [isAdminOpen, setIsAdminOpen] = useState(false)
   const [movingVenueId, setMovingVenueId] = useState<string | null>(null)
 
@@ -58,13 +62,25 @@ function App() {
   }
 
   function toggleAdminPanel() {
-    const nextAdminState = !isAdminOpen
-    setIsAdminOpen(nextAdminState)
-    setMovingVenueId(null)
-
-    if (nextAdminState) {
-      closePanel()
+    if (isAdminOpen) {
+      closeAdminDrawer()
+      return
     }
+
+    setIsAdminMode(true)
+    setIsAdminOpen(true)
+    setMovingVenueId(null)
+    closePanel()
+  }
+
+  function closeAdminDrawer() {
+    setIsAdminOpen(false)
+  }
+
+  function disableAdminMode() {
+    setIsAdminMode(false)
+    setIsAdminOpen(false)
+    setMovingVenueId(null)
   }
 
   function addVenue(venue: Venue) {
@@ -77,6 +93,29 @@ function App() {
     if (selectedVenue?.id === venue.id) {
       setSelectedVenue(venue)
     }
+  }
+
+  function deleteVenue(venueId: string) {
+    const confirmed = window.confirm(
+      'Czy na pewno chcesz usunąć to miejsce? Usunięte zostaną także wydarzenia przypisane do tego miejsca.',
+    )
+
+    if (!confirmed) {
+      return false
+    }
+
+    setEvents(deleteEventsByVenueId(venueId))
+    setVenues(persistVenueDelete(venueId))
+
+    if (selectedVenue?.id === venueId) {
+      closePanel()
+    }
+
+    if (movingVenueId === venueId) {
+      setMovingVenueId(null)
+    }
+
+    return true
   }
 
   function moveVenuePin(coordinates: Venue['coordinates']) {
@@ -112,6 +151,30 @@ function App() {
     }
   }
 
+  function deleteEvent(eventId: string) {
+    const confirmed = window.confirm(
+      'Czy na pewno chcesz usunąć to wydarzenie?',
+    )
+
+    if (!confirmed) {
+      return false
+    }
+
+    setEvents(persistEventDelete(eventId))
+
+    if (selectedEvent?.id === eventId) {
+      setSelectedEvent(null)
+    }
+
+    return true
+  }
+
+  function startMovingVenue(venueId: string) {
+    setIsAdminMode(true)
+    setIsAdminOpen(false)
+    setMovingVenueId(venueId)
+  }
+
   function importLocalData(backup: LocalBackupData) {
     const importedVenues = replaceVenues(backup.venues)
     const importedEvents = replaceEvents(backup.events)
@@ -139,7 +202,7 @@ function App() {
         selectedCity={selectedCity}
         venues={venues}
         events={events}
-        isAdminOpen={isAdminOpen}
+        isAdminMode={isAdminMode}
         onCityChange={setSelectedCity}
         onVenueSelect={selectVenue}
         onEventSelect={selectEvent}
@@ -171,14 +234,17 @@ function App() {
             movingVenueId={movingVenueId}
             onAddVenue={addVenue}
             onUpdateVenue={updateVenue}
+            onDeleteVenue={deleteVenue}
             onAddEvent={addEvent}
             onUpdateEvent={updateEvent}
+            onDeleteEvent={deleteEvent}
             onImportData={importLocalData}
             onResetData={restoreStarterData}
             onClearData={restoreStarterData}
-            onStartPinMove={setMovingVenueId}
+            onStartPinMove={startMovingVenue}
             onCancelPinMove={() => setMovingVenueId(null)}
-            onClose={toggleAdminPanel}
+            onDisableAdminMode={disableAdminMode}
+            onClose={closeAdminDrawer}
           />
         )}
 
@@ -186,14 +252,23 @@ function App() {
           <EventPanel
             event={selectedEvent}
             venue={selectedVenue}
+            venues={venues}
+            isAdminMode={isAdminMode}
             onBack={() => setSelectedEvent(null)}
+            onUpdateEvent={updateEvent}
+            onDeleteEvent={() => deleteEvent(selectedEvent.id)}
             onClose={closePanel}
           />
         ) : !isAdminOpen && selectedVenue ? (
           <VenuePanel
             venue={selectedVenue}
             events={selectedVenueEvents}
+            isAdminMode={isAdminMode}
+            isPinMoveActive={movingVenueId === selectedVenue.id}
             onEventSelect={(event) => selectEvent(event, selectedVenue)}
+            onUpdateVenue={updateVenue}
+            onDeleteVenue={() => deleteVenue(selectedVenue.id)}
+            onMoveVenue={() => startMovingVenue(selectedVenue.id)}
             onClose={closePanel}
           />
         ) : null}

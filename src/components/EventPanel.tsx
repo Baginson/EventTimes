@@ -1,10 +1,16 @@
+import { useEffect, useState } from 'react'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import { EventForm } from './EventForm'
 
 type EventPanelProps = {
   event: EventTimesEvent
   venue: Venue
+  venues: Venue[]
+  isAdminMode: boolean
   onBack: () => void
+  onUpdateEvent: (event: EventTimesEvent) => void
+  onDeleteEvent: () => void
   onClose: () => void
 }
 
@@ -13,7 +19,27 @@ const dateFormatter = new Intl.DateTimeFormat('pl-PL', {
   timeStyle: 'short',
 })
 
-export function EventPanel({ event, venue, onBack, onClose }: EventPanelProps) {
+export function EventPanel({
+  event,
+  venue,
+  venues,
+  isAdminMode,
+  onBack,
+  onUpdateEvent,
+  onDeleteEvent,
+  onClose,
+}: EventPanelProps) {
+  const [isEditingEvent, setIsEditingEvent] = useState(false)
+
+  useEffect(() => {
+    setIsEditingEvent(false)
+  }, [event.id])
+
+  function saveEvent(updatedEvent: EventTimesEvent) {
+    onUpdateEvent(updatedEvent)
+    setIsEditingEvent(false)
+  }
+
   return (
     <aside
       className="venue-panel event-panel"
@@ -30,92 +56,100 @@ export function EventPanel({ event, venue, onBack, onClose }: EventPanelProps) {
       </button>
 
       <div className="venue-panel-content">
-        <button className="event-back-button" type="button" onClick={onBack}>
-          ← Wróć do miejsca
-        </button>
+        {isEditingEvent ? (
+          <div className="context-edit-view">
+            <header className="context-edit-header">
+              <span>Tryb admina</span>
+              <h1>Edytuj wydarzenie</h1>
+            </header>
+            <EventForm
+              key={event.id}
+              venues={venues}
+              initialEvent={event}
+              onSave={saveEvent}
+              onCancel={() => setIsEditingEvent(false)}
+            />
+          </div>
+        ) : (
+          <>
+            <button className="event-back-button" type="button" onClick={onBack}>
+              ← Wróć do miejsca
+            </button>
 
-        <header className="event-panel-header">
-          <span className="event-type-badge">{event.eventType}</span>
-          <h1>{event.name}</h1>
-        </header>
+            <header className="event-panel-header">
+              <span className="event-type-badge">{event.eventType}</span>
+              <h1>{event.name}</h1>
+            </header>
 
-        <section className="event-schedule" aria-labelledby="event-schedule-title">
-          <h2 id="event-schedule-title">Termin</h2>
-          <dl className="event-detail-list">
-            <div>
-              <dt>Start</dt>
-              <dd>
-                <time dateTime={event.startDate}>
-                  {dateFormatter.format(new Date(event.startDate))}
-                </time>
-              </dd>
-            </div>
-            {event.endDate && (
-              <div>
-                <dt>Koniec</dt>
-                <dd>
-                  <time dateTime={event.endDate}>
-                    {dateFormatter.format(new Date(event.endDate))}
-                  </time>
-                </dd>
+            {isAdminMode && (
+              <section className="inline-admin-actions" aria-label="Akcje administratora wydarzenia">
+                <span>Tryb admina</span>
+                <div>
+                  <button type="button" onClick={() => setIsEditingEvent(true)}>
+                    Edytuj event
+                  </button>
+                  <button className="inline-admin-danger" type="button" onClick={onDeleteEvent}>
+                    Usuń event
+                  </button>
+                </div>
+              </section>
+            )}
+
+            <section className="event-schedule" aria-labelledby="event-schedule-title">
+              <h2 id="event-schedule-title">Termin</h2>
+              <dl className="event-detail-list">
+                <div>
+                  <dt>Start</dt>
+                  <dd><time dateTime={event.startDate}>{dateFormatter.format(new Date(event.startDate))}</time></dd>
+                </div>
+                {event.endDate && (
+                  <div>
+                    <dt>Koniec</dt>
+                    <dd><time dateTime={event.endDate}>{dateFormatter.format(new Date(event.endDate))}</time></dd>
+                  </div>
+                )}
+              </dl>
+            </section>
+
+            <section className="event-location" aria-labelledby="event-location-title">
+              <h2 id="event-location-title">Miejsce</h2>
+              <div className="event-location-card">
+                <strong>{venue.name}</strong>
+                <p>{venue.address}</p>
               </div>
-            )}
-          </dl>
-        </section>
+            </section>
 
-        <section className="event-location" aria-labelledby="event-location-title">
-          <h2 id="event-location-title">Miejsce</h2>
-          <div className="event-location-card">
-            <strong>{venue.name}</strong>
-            <p>{venue.address}</p>
-          </div>
-        </section>
+            <section className="event-description" aria-labelledby="event-description-title">
+              <h2 id="event-description-title">O wydarzeniu</h2>
+              <p>{event.description}</p>
+            </section>
 
-        <section className="event-description" aria-labelledby="event-description-title">
-          <h2 id="event-description-title">O wydarzeniu</h2>
-          <p>{event.description}</p>
-        </section>
-
-        {event.sourceUrl && (
-          <a
-            className="event-source-link"
-            href={event.sourceUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Zobacz źródło wydarzenia ↗
-          </a>
-        )}
-
-        <section className="future-actions" aria-labelledby="future-actions-title">
-          <h2 id="future-actions-title">Akcje</h2>
-          <div className="future-actions-grid">
-            {event.ticketUrl ? (
-              <a
-                className="event-action event-action-primary"
-                href={event.ticketUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Kup bilet
+            {event.sourceUrl && (
+              <a className="event-source-link" href={event.sourceUrl} target="_blank" rel="noreferrer">
+                Zobacz źródło wydarzenia ↗
               </a>
-            ) : (
-              <button className="event-action-unavailable" type="button" disabled>
-                Brak linku do biletu
-              </button>
             )}
-            <button type="button" disabled title="Funkcja będzie dostępna później">
-              Chcę iść
-            </button>
-            <button type="button" disabled title="Funkcja będzie dostępna później">
-              Byłem
-            </button>
-            <button type="button" disabled title="Funkcja będzie dostępna później">
-              Zapisz
-            </button>
-          </div>
-          <p>Funkcje użytkownika będą dostępne w późniejszym etapie.</p>
-        </section>
+
+            <section className="future-actions" aria-labelledby="future-actions-title">
+              <h2 id="future-actions-title">Akcje</h2>
+              <div className="future-actions-grid">
+                {event.ticketUrl ? (
+                  <a className="event-action event-action-primary" href={event.ticketUrl} target="_blank" rel="noreferrer">
+                    Kup bilet
+                  </a>
+                ) : (
+                  <button className="event-action-unavailable" type="button" disabled>
+                    Brak linku do biletu
+                  </button>
+                )}
+                <button type="button" disabled title="Funkcja będzie dostępna później">Chcę iść</button>
+                <button type="button" disabled title="Funkcja będzie dostępna później">Byłem</button>
+                <button type="button" disabled title="Funkcja będzie dostępna później">Zapisz</button>
+              </div>
+              <p>Funkcje użytkownika będą dostępne w późniejszym etapie.</p>
+            </section>
+          </>
+        )}
       </div>
     </aside>
   )

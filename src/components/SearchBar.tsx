@@ -41,8 +41,23 @@ export function SearchBar({
       }
     }
 
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsOpen(false)
+
+        if (event.target instanceof HTMLElement) {
+          event.target.blur()
+        }
+      }
+    }
+
     document.addEventListener('pointerdown', handleOutsideClick)
-    return () => document.removeEventListener('pointerdown', handleOutsideClick)
+    document.addEventListener('keydown', handleEscape)
+
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsideClick)
+      document.removeEventListener('keydown', handleEscape)
+    }
   }, [])
 
   function changeMode(nextMode: SearchMode) {
@@ -66,8 +81,8 @@ export function SearchBar({
       : eventType !== 'Wszystkie' || dateFilter !== 'Wszystkie'
 
   return (
-    <div className="search-area" ref={searchAreaRef}>
-      <label className="search-box">
+    <div className={`search-area${isOpen ? ' is-open' : ''}`} ref={searchAreaRef}>
+      <label className={`search-box${isOpen ? ' is-open' : ''}`}>
         <span className="visually-hidden">
           {mode === 'venues' ? 'Szukaj miejsc' : 'Szukaj wydarzeń'}
         </span>
@@ -93,18 +108,13 @@ export function SearchBar({
             }
           }}
         />
+        <span className="search-chevron" aria-hidden="true">
+          <svg viewBox="0 0 20 20">
+            <path d="m6 8 4 4 4-4" />
+          </svg>
+          {hasActiveFilters && <span className="search-filter-indicator" />}
+        </span>
       </label>
-
-      <button
-        className="button button-secondary filter-button"
-        type="button"
-        aria-expanded={isOpen}
-        aria-controls="search-dropdown"
-        onClick={() => setIsOpen((current) => !current)}
-      >
-        Filtry
-        {hasActiveFilters && <span className="filter-indicator" />}
-      </button>
 
       {isOpen && (
         <div id="search-dropdown">
