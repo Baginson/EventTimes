@@ -2,16 +2,19 @@ import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
 import eventTimesMark from '../assets/brand/event-times-mark.png'
 import { SearchBar } from './SearchBar'
+import { UserMenu } from './UserMenu'
 
 type TopBarProps = {
   selectedCity: string
   venues: Venue[]
   events: EventTimesEvent[]
   isAdminMode: boolean
+  isAdmin: boolean
   onCityChange: (city: string) => void
   onVenueSelect: (venue: Venue) => void
   onEventSelect: (event: EventTimesEvent, venue: Venue) => void
   onAdminToggle: () => void
+  onOpenProfile: () => void
 }
 
 export function TopBar({
@@ -19,10 +22,12 @@ export function TopBar({
   venues,
   events,
   isAdminMode,
+  isAdmin,
   onCityChange,
   onVenueSelect,
   onEventSelect,
   onAdminToggle,
+  onOpenProfile,
 }: TopBarProps) {
   return (
     <header className="top-bar">
@@ -40,17 +45,17 @@ export function TopBar({
       />
 
       <nav className="top-bar-actions" aria-label="Główne akcje">
-        <button
-          className="button button-secondary admin-toggle"
-          type="button"
-          aria-pressed={isAdminMode}
-          onClick={onAdminToggle}
-        >
-          Panel admina
-        </button>
-        <button className="button button-primary" type="button">
-          Zaloguj się
-        </button>
+        {isAdmin && (
+          <button
+            className="button button-secondary admin-toggle"
+            type="button"
+            aria-pressed={isAdminMode}
+            onClick={onAdminToggle}
+          >
+            Panel admina
+          </button>
+        )}
+        <UserMenu onOpenProfile={onOpenProfile} />
       </nav>
     </header>
   )

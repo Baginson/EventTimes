@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Bungee&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
 :root {
   --color-primary: #064bff;
@@ -12,9 +13,7 @@
   --color-danger: #ef4444;
   --color-yellow: #ffe15a;
 
-  --font-ui:
-    Inter, Manrope, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
   --font-display: 'Bungee', sans-serif;
 
   --radius-sm: 10px;
@@ -38,9 +37,7 @@
   --space-6: 24px;
   --space-8: 32px;
 
-  font-family:
-    Inter, Manrope, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  font-family: var(--font-ui);
   color: var(--color-navy);
   background: var(--color-cream-soft);
   font-synthesis: none;
@@ -64,6 +61,8 @@ body,
 
 body {
   overflow: hidden;
+  font-family: var(--font-ui);
+  font-weight: 400;
 }
 
 button,

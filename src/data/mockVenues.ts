@@ -9,6 +9,7 @@ export type Venue = {
     lng: number
   }
   description: string
+  googleMapsUrl?: string
 }
 
 // TODO: Współrzędne są przybliżone i należy je zweryfikować przed użyciem produkcyjnym.

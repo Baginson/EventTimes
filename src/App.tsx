@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useAuth } from './auth/authContext'
+import { AccountPanel } from './components/AccountPanel'
+import { AuthModal } from './components/AuthModal'
 import { AdminPanel } from './components/AdminPanel'
 import { EventMap } from './components/EventMap'
 import { EventPanel } from './components/EventPanel'
@@ -27,6 +30,7 @@ import {
 import './App.css'
 
 function App() {
+  const { isAdmin, user } = useAuth()
   const [venues, setVenues] = useState<Venue[]>(() => getVenues())
   const [events, setEvents] = useState<EventTimesEvent[]>(() => getEvents())
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null)
@@ -35,6 +39,21 @@ function App() {
   const [isAdminMode, setIsAdminMode] = useState(false)
   const [isAdminOpen, setIsAdminOpen] = useState(false)
   const [movingVenueId, setMovingVenueId] = useState<string | null>(null)
+  const [isAccountPanelOpen, setIsAccountPanelOpen] = useState(false)
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setIsAdminMode(false)
+      setIsAdminOpen(false)
+      setMovingVenueId(null)
+    }
+  }, [isAdmin])
+
+  useEffect(() => {
+    if (!user) {
+      setIsAccountPanelOpen(false)
+    }
+  }, [user])
 
   const visibleVenues = venues.filter((venue) => venue.city === selectedCity)
 
@@ -44,6 +63,7 @@ function App() {
 
   function selectVenue(venue: Venue) {
     setIsAdminOpen(false)
+    setIsAccountPanelOpen(false)
     setMovingVenueId(null)
     setSelectedVenue(venue)
     setSelectedEvent(null)
@@ -51,6 +71,7 @@ function App() {
 
   function selectEvent(event: EventTimesEvent, venue: Venue) {
     setIsAdminOpen(false)
+    setIsAccountPanelOpen(false)
     setMovingVenueId(null)
     setSelectedVenue(venue)
     setSelectedEvent(event)
@@ -62,6 +83,10 @@ function App() {
   }
 
   function toggleAdminPanel() {
+    if (!isAdmin) {
+      return
+    }
+
     if (isAdminOpen) {
       closeAdminDrawer()
       return
@@ -70,6 +95,7 @@ function App() {
     setIsAdminMode(true)
     setIsAdminOpen(true)
     setMovingVenueId(null)
+    setIsAccountPanelOpen(false)
     closePanel()
   }
 
@@ -170,6 +196,10 @@ function App() {
   }
 
   function startMovingVenue(venueId: string) {
+    if (!isAdmin) {
+      return
+    }
+
     setIsAdminMode(true)
     setIsAdminOpen(false)
     setMovingVenueId(venueId)
@@ -198,15 +228,22 @@ function App() {
 
   return (
     <div className="app-shell">
+      <AuthModal />
       <TopBar
         selectedCity={selectedCity}
         venues={venues}
         events={events}
         isAdminMode={isAdminMode}
+        isAdmin={isAdmin}
         onCityChange={setSelectedCity}
         onVenueSelect={selectVenue}
         onEventSelect={selectEvent}
         onAdminToggle={toggleAdminPanel}
+        onOpenProfile={() => {
+          closePanel()
+          setIsAdminOpen(false)
+          setIsAccountPanelOpen(true)
+        }}
       />
 
       <main className="map-workspace">
@@ -227,7 +264,7 @@ function App() {
           </div>
         )}
 
-        {isAdminOpen && (
+        {isAdmin && isAdminOpen && (
           <AdminPanel
             venues={venues}
             events={events}
@@ -248,22 +285,32 @@ function App() {
           />
         )}
 
-        {!isAdminOpen && selectedVenue && selectedEvent ? (
+        {isAccountPanelOpen && (
+          <AccountPanel
+            venues={venues}
+            events={events}
+            onVenueSelect={selectVenue}
+            onEventSelect={selectEvent}
+            onClose={() => setIsAccountPanelOpen(false)}
+          />
+        )}
+
+        {!isAdminOpen && !isAccountPanelOpen && selectedVenue && selectedEvent ? (
           <EventPanel
             event={selectedEvent}
             venue={selectedVenue}
             venues={venues}
-            isAdminMode={isAdminMode}
+            isAdminMode={isAdmin && isAdminMode}
             onBack={() => setSelectedEvent(null)}
             onUpdateEvent={updateEvent}
             onDeleteEvent={() => deleteEvent(selectedEvent.id)}
             onClose={closePanel}
           />
-        ) : !isAdminOpen && selectedVenue ? (
+        ) : !isAdminOpen && !isAccountPanelOpen && selectedVenue ? (
           <VenuePanel
             venue={selectedVenue}
             events={selectedVenueEvents}
-            isAdminMode={isAdminMode}
+            isAdminMode={isAdmin && isAdminMode}
             isPinMoveActive={movingVenueId === selectedVenue.id}
             onEventSelect={(event) => selectEvent(event, selectedVenue)}
             onUpdateVenue={updateVenue}

@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react'
+import { useAuth } from '../auth/authContext'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import {
+  getEventAction,
+  toggleEventAction,
+} from '../services/userActionService'
+import type { EventAction, EventActionKey } from '../services/userActionService'
+import { getEventStatus } from '../utils/eventStatus'
+import { getVenueGoogleMapsUrl } from '../utils/googleMaps'
 import { EventForm } from './EventForm'
 
 type EventPanelProps = {
@@ -29,15 +37,77 @@ export function EventPanel({
   onDeleteEvent,
   onClose,
 }: EventPanelProps) {
+  const { user } = useAuth()
   const [isEditingEvent, setIsEditingEvent] = useState(false)
+  const [eventAction, setEventAction] = useState<EventAction>({
+    eventId: event.id,
+    venueId: event.venueId,
+    interested: false,
+    going: false,
+    visited: false,
+    saved: false,
+  })
+  const [pendingAction, setPendingAction] = useState<EventActionKey | null>(null)
+  const [userActionError, setUserActionError] = useState('')
+  const eventStatus = getEventStatus(event)
 
   useEffect(() => {
     setIsEditingEvent(false)
   }, [event.id])
 
+  useEffect(() => {
+    let active = true
+    const emptyAction: EventAction = {
+      eventId: event.id,
+      venueId: event.venueId,
+      interested: false,
+      going: false,
+      visited: false,
+      saved: false,
+    }
+    setEventAction(emptyAction)
+    setUserActionError('')
+
+    if (user) {
+      void getEventAction(user.uid, event)
+        .then((action) => {
+          if (active) {
+            setEventAction(action)
+          }
+        })
+        .catch((error: unknown) => {
+          if (active) {
+            setUserActionError(error instanceof Error ? error.message : 'Nie udało się pobrać akcji wydarzenia.')
+          }
+        })
+    }
+
+    return () => {
+      active = false
+    }
+  }, [event, user])
+
   function saveEvent(updatedEvent: EventTimesEvent) {
     onUpdateEvent(updatedEvent)
     setIsEditingEvent(false)
+  }
+
+  async function handleUserAction(key: EventActionKey) {
+    setUserActionError('')
+
+    try {
+      if (!user) {
+        return
+      }
+
+      setPendingAction(key)
+      const nextAction = await toggleEventAction(user.uid, event, key, eventAction)
+      setEventAction(nextAction)
+    } catch (error) {
+      setUserActionError(error instanceof Error ? error.message : 'Nie udało się zapisać akcji.')
+    } finally {
+      setPendingAction(null)
+    }
   }
 
   return (
@@ -116,6 +186,14 @@ export function EventPanel({
               <div className="event-location-card">
                 <strong>{venue.name}</strong>
                 <p>{venue.address}</p>
+                <a
+                  className="navigation-link"
+                  href={getVenueGoogleMapsUrl(venue)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Nawiguj w Google Maps ↗
+                </a>
               </div>
             </section>
 
@@ -132,21 +210,65 @@ export function EventPanel({
 
             <section className="future-actions" aria-labelledby="future-actions-title">
               <h2 id="future-actions-title">Akcje</h2>
-              <div className="future-actions-grid">
-                {event.ticketUrl ? (
-                  <a className="event-action event-action-primary" href={event.ticketUrl} target="_blank" rel="noreferrer">
-                    Kup bilet
-                  </a>
-                ) : (
-                  <button className="event-action-unavailable" type="button" disabled>
-                    Brak linku do biletu
+              {event.ticketUrl ? (
+                <a className="event-action event-action-primary" href={event.ticketUrl} target="_blank" rel="noopener noreferrer">
+                  Kup bilet
+                </a>
+              ) : (
+                <span className="event-ticket-unavailable">Brak linku do biletu</span>
+              )}
+
+              {user && (
+                <div className="user-event-actions" aria-label="Twoje akcje dla wydarzenia">
+                  {eventStatus === 'upcoming' && (
+                    <>
+                      <button
+                        className={eventAction.interested ? 'is-active' : ''}
+                        type="button"
+                        aria-pressed={eventAction.interested}
+                        disabled={pendingAction !== null}
+                        onClick={() => void handleUserAction('interested')}
+                      >
+                        {pendingAction === 'interested' ? 'Zapisywanie…' : 'Zainteresowany'}
+                      </button>
+                      <button
+                        className={eventAction.going ? 'is-active' : ''}
+                        type="button"
+                        aria-pressed={eventAction.going}
+                        disabled={pendingAction !== null}
+                        onClick={() => void handleUserAction('going')}
+                      >
+                        {pendingAction === 'going' ? 'Zapisywanie…' : 'Chcę iść'}
+                      </button>
+                    </>
+                  )}
+
+                  {eventStatus === 'past' && (
+                    <button
+                      className={eventAction.visited ? 'is-active' : ''}
+                      type="button"
+                      aria-pressed={eventAction.visited}
+                      disabled={pendingAction !== null}
+                      onClick={() => void handleUserAction('visited')}
+                    >
+                      {pendingAction === 'visited' ? 'Zapisywanie…' : 'Byłem'}
+                    </button>
+                  )}
+
+                  <button
+                    className={`user-like-action${eventAction.saved ? ' is-active' : ''}`}
+                    type="button"
+                    aria-pressed={eventAction.saved}
+                    disabled={pendingAction !== null}
+                    onClick={() => void handleUserAction('saved')}
+                  >
+                    <span aria-hidden="true">{eventAction.saved ? '♥' : '♡'}</span>
+                    {pendingAction === 'saved' ? 'Zapisywanie…' : eventAction.saved ? 'Polubione' : 'Polub'}
                   </button>
-                )}
-                <button type="button" disabled title="Funkcja będzie dostępna później">Chcę iść</button>
-                <button type="button" disabled title="Funkcja będzie dostępna później">Byłem</button>
-                <button type="button" disabled title="Funkcja będzie dostępna później">Zapisz</button>
-              </div>
-              <p>Funkcje użytkownika będą dostępne w późniejszym etapie.</p>
+                </div>
+              )}
+
+              {user && userActionError && <p className="user-action-error" role="alert">{userActionError}</p>}
             </section>
           </>
         )}

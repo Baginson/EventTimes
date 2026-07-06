@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { VENUE_TYPES } from '../data/searchFilters'
 import type { Venue } from '../data/mockVenues'
+import { isValidGoogleMapsUrl } from '../utils/googleMaps'
 
 type VenueFormProps = {
   initialVenue?: Venue
@@ -15,6 +16,7 @@ type VenueFormState = {
   address: string
   venueType: string
   description: string
+  googleMapsUrl: string
   lat: string
   lng: string
 }
@@ -34,6 +36,7 @@ function createFormState(venue?: Venue): VenueFormState {
         address: venue.address,
         venueType: venue.venueType,
         description: venue.description,
+        googleMapsUrl: venue.googleMapsUrl ?? '',
         lat: venue.coordinates.lat.toString(),
         lng: venue.coordinates.lng.toString(),
       }
@@ -43,6 +46,7 @@ function createFormState(venue?: Venue): VenueFormState {
         address: '',
         venueType: 'Inne',
         description: '',
+        googleMapsUrl: '',
         lat: '',
         lng: '',
       }
@@ -73,6 +77,13 @@ export function VenueForm({ initialVenue, onSave, onCancel }: VenueFormProps) {
       return
     }
 
+    const googleMapsUrl = form.googleMapsUrl.trim()
+
+    if (googleMapsUrl && !isValidGoogleMapsUrl(googleMapsUrl)) {
+      setFormError('Link Google Maps musi być poprawnym adresem URL.')
+      return
+    }
+
     const venue: Venue = {
       id: initialVenue?.id ?? createVenueId(),
       name: form.name.trim(),
@@ -80,6 +91,7 @@ export function VenueForm({ initialVenue, onSave, onCancel }: VenueFormProps) {
       address: form.address.trim(),
       venueType: form.venueType,
       description: form.description.trim(),
+      googleMapsUrl: googleMapsUrl || undefined,
       coordinates: { lat, lng },
     }
 
@@ -148,6 +160,20 @@ export function VenueForm({ initialVenue, onSave, onCancel }: VenueFormProps) {
           value={form.description}
           onChange={(event) => updateField('description', event.target.value)}
         />
+      </label>
+
+      <label className="admin-form-wide">
+        <span>Link Google Maps</span>
+        <input
+          type="url"
+          placeholder="Wklej link do miejsca w Google Maps"
+          value={form.googleMapsUrl}
+          onChange={(event) => updateField('googleMapsUrl', event.target.value)}
+        />
+        <small className="admin-field-help">
+          Link do pinezki miejsca w Google Maps. Eventy przypisane do tego miejsca
+          będą używać tego samego linku.
+        </small>
       </label>
 
       <label>

@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useAuth } from '../auth/authContext'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import { getVenueAction, toggleVenueSaved } from '../services/userActionService'
+import { getVenueGoogleMapsUrl } from '../utils/googleMaps'
 import { VenueForm } from './VenueForm'
 
 type VenuePanelProps = {
@@ -31,15 +34,57 @@ export function VenuePanel({
   onMoveVenue,
   onClose,
 }: VenuePanelProps) {
+  const { user } = useAuth()
   const [isEditingVenue, setIsEditingVenue] = useState(false)
+  const [isVenueSaved, setIsVenueSaved] = useState(false)
+  const [userActionError, setUserActionError] = useState('')
 
   useEffect(() => {
     setIsEditingVenue(false)
   }, [venue.id])
 
+  useEffect(() => {
+    let active = true
+    setIsVenueSaved(false)
+    setUserActionError('')
+
+    if (user) {
+      void getVenueAction(user.uid, venue.id)
+        .then((action) => {
+          if (active) {
+            setIsVenueSaved(action.saved)
+          }
+        })
+        .catch((error: unknown) => {
+          if (active) {
+            setUserActionError(error instanceof Error ? error.message : 'Nie udało się pobrać zapisu miejsca.')
+          }
+        })
+    }
+
+    return () => {
+      active = false
+    }
+  }, [user, venue.id])
+
   function saveVenue(updatedVenue: Venue) {
     onUpdateVenue(updatedVenue)
     setIsEditingVenue(false)
+  }
+
+  async function handleVenueSave() {
+    setUserActionError('')
+
+    try {
+      if (!user) {
+        return
+      }
+
+      const action = await toggleVenueSaved(user.uid, venue.id, isVenueSaved)
+      setIsVenueSaved(action.saved)
+    } catch (error) {
+      setUserActionError(error instanceof Error ? error.message : 'Nie udało się zapisać miejsca.')
+    }
   }
 
   return (
@@ -73,6 +118,28 @@ export function VenuePanel({
             <span className="venue-type">{venue.venueType}</span>
             <h1>{venue.name}</h1>
             <p className="venue-address">{venue.address}</p>
+            <a
+              className="navigation-link"
+              href={getVenueGoogleMapsUrl(venue)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Nawiguj w Google Maps ↗
+            </a>
+            {user && (
+              <>
+                <button
+                  className={`venue-save-action${isVenueSaved ? ' is-active' : ''}`}
+                  type="button"
+                  aria-pressed={isVenueSaved}
+                  onClick={() => void handleVenueSave()}
+                >
+                  <span aria-hidden="true">{isVenueSaved ? '♥' : '♡'}</span>
+                  {isVenueSaved ? 'Polubione' : 'Polub'}
+                </button>
+                {userActionError && <p className="user-action-error" role="alert">{userActionError}</p>}
+              </>
+            )}
             <p className="venue-description">{venue.description}</p>
 
             {isAdminMode && (

@@ -1,5 +1,6 @@
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import { isValidGoogleMapsUrl } from '../utils/googleMaps'
 
 export type LocalBackupData = {
   appName: 'Event Times'
@@ -15,6 +16,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function optionalString(value: unknown) {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+function optionalGoogleMapsUrl(value: unknown, venueName: string) {
+  const url = optionalString(value)
+
+  if (url && !isValidGoogleMapsUrl(url)) {
+    throw new Error(`Miejsce „${venueName}” ma niepoprawny link Google Maps.`)
+  }
+
+  return url
 }
 
 function parseVenue(value: unknown, index: number): Venue {
@@ -55,6 +66,7 @@ function parseVenue(value: unknown, index: number): Venue {
     address: optionalString(value.address) ?? '',
     venueType: optionalString(value.venueType) ?? 'Inne',
     description: optionalString(value.description) ?? '',
+    googleMapsUrl: optionalGoogleMapsUrl(value.googleMapsUrl, value.name),
     coordinates: {
       lat: coordinates.lat,
       lng: coordinates.lng,

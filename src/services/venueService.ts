@@ -1,5 +1,6 @@
 import { mockVenues } from '../data/mockVenues'
 import type { Venue } from '../data/mockVenues'
+import { isValidGoogleMapsUrl } from '../utils/googleMaps'
 
 const VENUES_STORAGE_KEY = 'event-times.venues.v1'
 
@@ -25,6 +26,9 @@ function isVenue(value: unknown): value is Venue {
     typeof venue.address === 'string' &&
     typeof venue.venueType === 'string' &&
     typeof venue.description === 'string' &&
+    (venue.googleMapsUrl === undefined ||
+      (typeof venue.googleMapsUrl === 'string' &&
+        (!venue.googleMapsUrl.trim() || isValidGoogleMapsUrl(venue.googleMapsUrl)))) &&
     typeof coordinates?.lat === 'number' &&
     Number.isFinite(coordinates.lat) &&
     typeof coordinates.lng === 'number' &&
