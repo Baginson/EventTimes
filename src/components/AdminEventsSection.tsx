@@ -10,7 +10,7 @@ type AdminEventsSectionProps = {
   venues: Venue[]
   onAddEvent: (event: EventTimesEvent) => void | Promise<void>
   onUpdateEvent: (event: EventTimesEvent) => void | Promise<void>
-  onDeleteEvent: (eventId: string) => boolean
+  onDeleteEvent: (eventId: string) => boolean | Promise<boolean>
 }
 
 export function AdminEventsSection({
@@ -23,6 +23,7 @@ export function AdminEventsSection({
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
   const [duplicatingEventId, setDuplicatingEventId] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
+  const [pendingEventAction, setPendingEventAction] = useState<string | null>(null)
   const editingEvent = events.find((event) => event.id === editingEventId)
   const duplicatingEvent = events.find((event) => event.id === duplicatingEventId)
 
@@ -44,27 +45,33 @@ export function AdminEventsSection({
     setSuccessMessage('')
   }
 
-  function removeEvent(eventId: string) {
-    if (onDeleteEvent(eventId) && editingEventId === eventId) {
+  async function removeEvent(eventId: string) {
+    setPendingEventAction(`delete-${eventId}`)
+    const wasDeleted = await onDeleteEvent(eventId)
+    setPendingEventAction(null)
+
+    if (wasDeleted && editingEventId === eventId) {
       resetForm()
     }
   }
 
   async function saveEventFromForm(event: EventTimesEvent) {
-    if (editingEventId) {
-      await onUpdateEvent(event)
-      setSuccessMessage(`Zapisano zmiany: ${event.name}`)
-    } else {
-      await onAddEvent(event)
-      setSuccessMessage(
-        duplicatingEventId
-          ? `Utworzono kopię wydarzenia: ${event.name}`
-          : `Dodano wydarzenie: ${event.name}`,
-      )
-    }
+    setPendingEventAction(editingEventId ? `save-${editingEventId}` : 'save-new')
 
-    setEditingEventId(null)
-    setDuplicatingEventId(null)
+    try {
+      if (editingEventId) {
+        await onUpdateEvent(event)
+        setSuccessMessage('Zaktualizowano wydarzenie.')
+      } else {
+        await onAddEvent(event)
+        setSuccessMessage('Zapisano wydarzenie.')
+      }
+
+      setEditingEventId(null)
+      setDuplicatingEventId(null)
+    } finally {
+      setPendingEventAction(null)
+    }
   }
 
   return (
@@ -84,22 +91,31 @@ export function AdminEventsSection({
                 <li key={event.id}>
                   <strong>{event.name}</strong>
                   <span>
-                    {event.eventType} · {venue ? getVenueDisplayName(venue) : 'Nieznane miejsce'}
+                    {event.eventType} Ă‚Â· {venue ? getVenueDisplayName(venue) : 'Nieznane miejsce'}
                   </span>
                   <small>{formatEventDate(event.startDate)}</small>
                   <div className="admin-venue-actions">
-                    <button type="button" onClick={() => startEditing(event)}>
+                    <button
+                      type="button"
+                      onClick={() => startEditing(event)}
+                      disabled={pendingEventAction !== null}
+                    >
                       Edytuj
                     </button>
-                    <button type="button" onClick={() => startDuplicating(event)}>
+                    <button
+                      type="button"
+                      onClick={() => startDuplicating(event)}
+                      disabled={pendingEventAction !== null}
+                    >
                       Duplikuj
                     </button>
                     <button
                       className="admin-list-delete"
                       type="button"
-                      onClick={() => removeEvent(event.id)}
+                      onClick={() => void removeEvent(event.id)}
+                      disabled={pendingEventAction !== null}
                     >
-                      Usuń
+                      {pendingEventAction === `delete-${event.id}` ? 'Usuwanie...' : 'Usuń'}
                     </button>
                   </div>
                 </li>
@@ -108,8 +124,8 @@ export function AdminEventsSection({
           </ul>
         ) : (
           <div className="empty-state admin-empty-state">
-            <strong>Brak wydarzeń</strong>
-            <p>Dodaj pierwsze wydarzenie za pomocą formularza poniżej.</p>
+            <strong>Brak wydarzeÄąâ€ž</strong>
+            <p>Dodaj pierwsze wydarzenie za pomocĂ„â€¦ formularza poniÄąÄ˝ej.</p>
           </div>
         )}
       </section>
@@ -124,7 +140,7 @@ export function AdminEventsSection({
         </h2>
         {duplicatingEventId && (
           <p className="admin-form-hint">
-            Zmień datę, godzinę lub inne dane i zapisz jako nowe wydarzenie.
+            ZmieÄąâ€ž datĂ„â„˘, godzinĂ„â„˘ lub inne dane i zapisz jako nowe wydarzenie.
           </p>
         )}
         {successMessage && (

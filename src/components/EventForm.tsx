@@ -135,6 +135,7 @@ export function EventForm({
     createFormState(venues, initialEvent, lockedVenueId),
   )
   const [formError, setFormError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const lockedVenue = lockedVenueId
     ? venues.find((venue) => venue.id === lockedVenueId)
     : undefined
@@ -152,7 +153,7 @@ export function EventForm({
     submitEvent.preventDefault()
 
     if (!form.name.trim()) {
-      setFormError('Podaj nazwę wydarzenia.')
+      setFormError('Podaj nazwÄ™ wydarzenia.')
       return
     }
 
@@ -172,17 +173,17 @@ export function EventForm({
       : null
 
     if (!startDate) {
-      setFormError('Podaj poprawną datę rozpoczęcia.')
+      setFormError('Podaj poprawnÄ… datÄ™ rozpoczÄ™cia.')
       return
     }
 
     if (form.endTime && !form.endDate) {
-      setFormError('Podaj datę końca albo usuń godzinę końca.')
+      setFormError('Podaj datÄ™ koĹ„ca albo usuĹ„ godzinÄ™ koĹ„ca.')
       return
     }
 
     if (endDate && endDate < startDate) {
-      setFormError('Data końca nie może być wcześniejsza niż data startu.')
+      setFormError('Data koĹ„ca nie moĹĽe byÄ‡ wczeĹ›niejsza niĹĽ data startu.')
       return
     }
 
@@ -203,6 +204,7 @@ export function EventForm({
     }
 
     try {
+      setIsSubmitting(true)
       await onSave(event)
 
       if (!initialEvent || isDuplicate) {
@@ -210,8 +212,10 @@ export function EventForm({
       }
     } catch (error) {
       setFormError(
-        error instanceof Error ? error.message : 'Nie udało się zapisać wydarzenia.',
+        error instanceof Error ? error.message : 'Nie udaĹ‚o siÄ™ zapisaÄ‡ wydarzenia.',
       )
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -305,7 +309,7 @@ export function EventForm({
       </label>
 
       <label>
-        <span>Data końca</span>
+        <span>Data koĹ„ca</span>
         <input
           type="date"
           value={form.endDate}
@@ -314,7 +318,7 @@ export function EventForm({
       </label>
 
       <label>
-        <span>Godzina końca</span>
+        <span>Godzina koĹ„ca</span>
         <div className="admin-time-field">
           <input
             type="time"
@@ -342,7 +346,7 @@ export function EventForm({
       </label>
 
       <label className="admin-form-wide">
-        <span>Link do źródła</span>
+        <span>Link do ĹşrĂłdĹ‚a</span>
         <input
           type="url"
           placeholder="https://"
@@ -368,11 +372,24 @@ export function EventForm({
       )}
 
       <div className="admin-form-actions">
-        <button className="button button-primary" type="submit" disabled={!venues.length}>
-          {isDuplicate ? 'Zapisz jako nowe wydarzenie' : 'Zapisz'}
+        <button
+          className="button button-primary"
+          type="submit"
+          disabled={!venues.length || isSubmitting}
+        >
+          {isSubmitting
+            ? 'Zapisywanie...'
+            : isDuplicate
+              ? 'Zapisz jako nowe wydarzenie'
+              : 'Zapisz'}
         </button>
         {onCancel && (
-          <button className="button button-secondary" type="button" onClick={onCancel}>
+          <button
+            className="button button-secondary"
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
             Anuluj
           </button>
         )}

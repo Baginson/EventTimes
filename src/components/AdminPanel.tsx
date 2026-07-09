@@ -15,13 +15,14 @@ type AdminPanelProps = {
   draftVenueCoordinates: Venue['coordinates'] | null
   onAddVenue: (venue: Venue) => void | Promise<void>
   onUpdateVenue: (venue: Venue) => void | Promise<void>
-  onDeleteVenue: (venueId: string) => boolean
+  onDeleteVenue: (venueId: string) => boolean | Promise<boolean>
   onAddEvent: (event: EventTimesEvent) => void | Promise<void>
   onUpdateEvent: (event: EventTimesEvent) => void | Promise<void>
-  onDeleteEvent: (eventId: string) => boolean
+  onDeleteEvent: (eventId: string) => boolean | Promise<boolean>
   onImportData: (backup: LocalBackupData) => void
   onImportFirestoreData: (backup: LocalBackupData) => Promise<void>
   onMoveCurrentDataToFirestore: () => Promise<void>
+  onRefreshData: () => Promise<void>
   onResetData: () => void
   onClearData: () => void
   onStartVenueAdd: () => void
@@ -48,6 +49,7 @@ export function AdminPanel({
   onImportData,
   onImportFirestoreData,
   onMoveCurrentDataToFirestore,
+  onRefreshData,
   onResetData,
   onClearData,
   onStartVenueAdd,
@@ -61,6 +63,8 @@ export function AdminPanel({
   const [activeTab, setActiveTab] = useState<'venues' | 'events' | 'data'>('venues')
   const [editingVenueId, setEditingVenueId] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
+  const [pendingVenueAction, setPendingVenueAction] = useState<string | null>(null)
+  const [isRefreshingData, setIsRefreshingData] = useState(false)
   const editingVenue = venues.find((venue) => venue.id === editingVenueId)
   const isAddingVenueDraft = isAddingVenue && draftVenueCoordinates !== null
 
@@ -87,22 +91,43 @@ export function AdminPanel({
     onStartVenueAdd()
   }
 
-  function removeVenue(venueId: string) {
-    if (onDeleteVenue(venueId) && editingVenueId === venueId) {
+  async function removeVenue(venueId: string) {
+    setPendingVenueAction(`delete-${venueId}`)
+    const wasDeleted = await onDeleteVenue(venueId)
+    setPendingVenueAction(null)
+
+    if (wasDeleted && editingVenueId === venueId) {
       cancelEditing()
     }
   }
 
   async function saveVenueFromForm(venue: Venue) {
-    if (editingVenueId) {
-      await onUpdateVenue(venue)
-      setSuccessMessage(`Zapisano zmiany: ${getVenueDisplayName(venue)}`)
-    } else {
-      await onAddVenue(venue)
-      setSuccessMessage(`Dodano miejsce: ${getVenueDisplayName(venue)}`)
-    }
+    setPendingVenueAction(editingVenueId ? `save-${editingVenueId}` : 'save-new')
 
-    setEditingVenueId(null)
+    try {
+      if (editingVenueId) {
+        await onUpdateVenue(venue)
+        setSuccessMessage('Zaktualizowano miejsce.')
+      } else {
+        await onAddVenue(venue)
+        setSuccessMessage('Zapisano miejsce.')
+      }
+
+      setEditingVenueId(null)
+    } finally {
+      setPendingVenueAction(null)
+    }
+  }
+
+  async function refreshData() {
+    setIsRefreshingData(true)
+
+    try {
+      await onRefreshData()
+      setSuccessMessage('Odświeżono dane.')
+    } finally {
+      setIsRefreshingData(false)
+    }
   }
 
   function cancelVenueForm() {
@@ -120,8 +145,16 @@ export function AdminPanel({
           <h1>Panel admina</h1>
         </div>
         <div className="admin-panel-header-actions">
+          <button
+            className="admin-mode-disable"
+            type="button"
+            onClick={() => void refreshData()}
+            disabled={isRefreshingData}
+          >
+            {isRefreshingData ? 'Odświeżanie...' : 'Odśwież dane z Firestore'}
+          </button>
           <button className="admin-mode-disable" type="button" onClick={onDisableAdminMode}>
-            Wyłącz tryb admina
+            WyĂ„Ä…Ă˘â‚¬ĹˇÄ‚â€žĂ˘â‚¬Â¦cz tryb admina
           </button>
           <button
             className="admin-panel-close"
@@ -129,7 +162,7 @@ export function AdminPanel({
             onClick={onClose}
             aria-label="Zamknij panel admina"
           >
-            ×
+            Ă„â€šĂ˘â‚¬â€ť
           </button>
         </div>
       </div>
@@ -181,9 +214,9 @@ export function AdminPanel({
                 <span>
                   {isAddingVenue
                     ? draftVenueCoordinates
-                      ? 'Pinezka tymczasowa jest ustawiona. Uzupełnij formularz i zapisz miejsce.'
-                      : 'Kliknij na mapie, aby ustawić pinezkę nowego miejsca.'
-                    : 'Kliknij nowe miejsce na mapie albo anuluj operację.'}
+                      ? 'Pinezka tymczasowa jest ustawiona. UzupeĂ„Ä…Ă˘â‚¬Ĺˇnij formularz i zapisz miejsce.'
+                      : 'Kliknij na mapie, aby ustawiÄ‚â€žĂ˘â‚¬Ë‡ pinezkÄ‚â€žĂ˘â€žË nowego miejsca.'
+                    : 'Kliknij nowe miejsce na mapie albo anuluj operacjÄ‚â€žĂ˘â€žË.'}
                 </span>
                 <button type="button" onClick={onCancelMapMode}>
                   Anuluj
@@ -204,7 +237,7 @@ export function AdminPanel({
                   {venues.map((venue) => (
                     <li key={venue.id}>
                       <strong>{getVenueDisplayName(venue)}</strong>
-                      <span>{venue.venueType} · {formatVenueAddress(venue)}</span>
+                      <span>{venue.venueType} Ä‚â€šĂ‚Â· {formatVenueAddress(venue)}</span>
                       <small>{venue.coordinates.lat}, {venue.coordinates.lng}</small>
                       <div className="admin-venue-actions">
                         <button type="button" onClick={() => startEditing(venue)}>
@@ -216,14 +249,15 @@ export function AdminPanel({
                           onClick={() => startPinMove(venue.id)}
                           disabled={movingVenueId === venue.id}
                         >
-                          {movingVenueId === venue.id ? 'Przesuwanie…' : 'Przesuń pinezkę'}
+                          {movingVenueId === venue.id ? 'PrzesuwanieÄ‚ËĂ˘â€šÂ¬Ă‚Â¦' : 'PrzesuĂ„Ä…Ă˘â‚¬Ĺľ pinezkÄ‚â€žĂ˘â€žË'}
                         </button>
                         <button
                           className="admin-list-delete"
                           type="button"
-                          onClick={() => removeVenue(venue.id)}
+                          onClick={() => void removeVenue(venue.id)}
+                          disabled={pendingVenueAction !== null}
                         >
-                          Usuń
+                          {pendingVenueAction === `delete-${venue.id}` ? 'Usuwanie...' : 'Usuń'}
                         </button>
                       </div>
                     </li>
@@ -232,7 +266,7 @@ export function AdminPanel({
               ) : (
                 <div className="empty-state admin-empty-state">
                   <strong>Brak miejsc</strong>
-                  <p>Dodaj pierwsze miejsce za pomocą formularza poniżej.</p>
+                  <p>Dodaj pierwsze miejsce za pomocÄ‚â€žĂ˘â‚¬Â¦ formularza poniĂ„Ä…Ă„Ëťej.</p>
                 </div>
               )}
             </section>
@@ -278,7 +312,7 @@ export function AdminPanel({
         )}
 
         <p className="admin-storage-note">
-          Dane testowe są zapisywane lokalnie w tej przeglądarce.
+          Dane testowe sÄ‚â€žĂ˘â‚¬Â¦ zapisywane lokalnie w tej przeglÄ‚â€žĂ˘â‚¬Â¦darce.
         </p>
       </div>
     </aside>

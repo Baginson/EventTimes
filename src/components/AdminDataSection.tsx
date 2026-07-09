@@ -31,6 +31,9 @@ export function AdminDataSection({
   const firestoreFileInputRef = useRef<HTMLInputElement>(null)
   const [message, setMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [isImportingLocal, setIsImportingLocal] = useState(false)
+  const [isImportingFirestore, setIsImportingFirestore] = useState(false)
+  const [isMovingToFirestore, setIsMovingToFirestore] = useState(false)
 
   function clearMessages() {
     setMessage('')
@@ -42,9 +45,9 @@ export function AdminDataSection({
 
     try {
       downloadLocalBackup(venues, events)
-      setMessage('Backup został wygenerowany.')
+      setMessage('Backup zostaÄąâ€š wygenerowany.')
     } catch {
-      setErrorMessage('Nie udało się wygenerować pliku backupu.')
+      setErrorMessage('Nie udaÄąâ€šo siĂ„â„˘ wygenerowaĂ„â€ˇ pliku backupu.')
     }
   }
 
@@ -59,15 +62,18 @@ export function AdminDataSection({
     clearMessages()
 
     try {
+      setIsImportingLocal(true)
       const backup = await readLocalBackup(file)
       onImport(backup)
       setMessage(
-        `Zaimportowano ${backup.venues.length} miejsc i ${backup.events.length} wydarzeń.`,
+        `Zaimportowano ${backup.venues.length} miejsc i ${backup.events.length} wydarzeÄąâ€ž.`,
       )
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Nie udało się zaimportować danych.',
+        error instanceof Error ? error.message : 'Nie udaÄąâ€šo siĂ„â„˘ zaimportowaĂ„â€ˇ danych.',
       )
+    } finally {
+      setIsImportingLocal(false)
     }
   }
 
@@ -90,6 +96,7 @@ export function AdminDataSection({
     clearMessages()
 
     try {
+      setIsImportingFirestore(true)
       const backup = await readLocalBackup(file)
 
       if (
@@ -102,15 +109,15 @@ export function AdminDataSection({
       }
 
       await onImportFirestore(backup)
-      setMessage(
-        `Zaimportowano do Firestore ${backup.venues.length} miejsc i ${backup.events.length} wydarzeń.`,
-      )
+      setMessage('Zaimportowano dane do Firestore.')
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
           : 'Nie udało się zaimportować danych do Firestore.',
       )
+    } finally {
+      setIsImportingFirestore(false)
     }
   }
 
@@ -126,22 +133,23 @@ export function AdminDataSection({
     clearMessages()
 
     try {
+      setIsMovingToFirestore(true)
       await onMoveCurrentDataToFirestore()
-      setMessage(
-        `Zapisano w Firestore ${venues.length} miejsc i ${events.length} wydarzeń.`,
-      )
+      setMessage('Zaimportowano dane do Firestore.')
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
           : 'Nie udało się przenieść danych do Firestore.',
       )
+    } finally {
+      setIsMovingToFirestore(false)
     }
   }
 
   function resetData() {
     const confirmed = window.confirm(
-      'Przywrócić dane startowe? Lokalne zmiany zostaną usunięte.',
+      'PrzywrÄ‚Ĺ‚ciĂ„â€ˇ dane startowe? Lokalne zmiany zostanĂ„â€¦ usuniĂ„â„˘te.',
     )
 
     if (!confirmed) {
@@ -150,12 +158,12 @@ export function AdminDataSection({
 
     clearMessages()
     onReset()
-    setMessage('Przywrócono dane startowe Event Times.')
+    setMessage('PrzywrÄ‚Ĺ‚cono dane startowe Event Times.')
   }
 
   function clearData() {
     const confirmed = window.confirm(
-      'Usunąć lokalne dane miejsc i wydarzeń? Tej operacji nie można cofnąć bez backupu.',
+      'UsunĂ„â€¦Ă„â€ˇ lokalne dane miejsc i wydarzeÄąâ€ž? Tej operacji nie moÄąÄ˝na cofnĂ„â€¦Ă„â€ˇ bez backupu.',
     )
 
     if (!confirmed) {
@@ -165,7 +173,7 @@ export function AdminDataSection({
     clearMessages()
     onClear()
     setMessage(
-      'Lokalne dane zostały usunięte. Aplikacja korzysta ponownie z danych startowych.',
+      'Lokalne dane zostaÄąâ€šy usuniĂ„â„˘te. Aplikacja korzysta ponownie z danych startowych.',
     )
   }
 
@@ -174,7 +182,7 @@ export function AdminDataSection({
       <div className="admin-section-heading">
         <div>
           <h2 id="admin-data-title">Dane lokalne / Backup</h2>
-          <p>Dane są obecnie zapisane lokalnie w tej przeglądarce.</p>
+          <p>Dane sĂ„â€¦ obecnie zapisane lokalnie w tej przeglĂ„â€¦darce.</p>
         </div>
       </div>
 
@@ -197,8 +205,9 @@ export function AdminDataSection({
           className="button button-secondary"
           type="button"
           onClick={() => fileInputRef.current?.click()}
+          disabled={isImportingLocal}
         >
-          Importuj dane
+          {isImportingLocal ? 'Importowanie...' : 'Importuj dane'}
         </button>
         <input
           ref={fileInputRef}
@@ -212,24 +221,26 @@ export function AdminDataSection({
       <div className="admin-data-danger-zone admin-firestore-import-zone">
         <h3>Firestore / dane publiczne</h3>
         <p>
-          Dane zapisane tutaj będą używane przez publiczną wersję Event Times.
-          Import jest dostępny tylko dla admina i wymaga reguł Firestore opartych o
-          kolekcję <code>admins</code>.
+          Dane zapisane tutaj bĂ„â„˘dĂ„â€¦ uÄąÄ˝ywane przez publicznĂ„â€¦ wersjĂ„â„˘ Event Times.
+          Import jest dostĂ„â„˘pny tylko dla admina i wymaga reguÄąâ€š Firestore opartych o
+          kolekcjĂ„â„˘ <code>admins</code>.
         </p>
         <div>
           <button
             className="button button-primary"
             type="button"
             onClick={() => firestoreFileInputRef.current?.click()}
+            disabled={isImportingFirestore || isMovingToFirestore}
           >
-            Importuj dane JSON do Firestore
+            {isImportingFirestore ? 'Importowanie...' : 'Importuj dane JSON do Firestore'}
           </button>
           <button
             className="button button-secondary"
             type="button"
             onClick={() => void moveCurrentDataToFirestore()}
+            disabled={isImportingFirestore || isMovingToFirestore}
           >
-            Przenieś aktualne dane do Firestore
+            {isMovingToFirestore ? 'Zapisywanie...' : 'Przenieś aktualne dane do Firestore'}
           </button>
           <input
             ref={firestoreFileInputRef}
@@ -242,14 +253,14 @@ export function AdminDataSection({
       </div>
 
       <div className="admin-data-danger-zone">
-        <h3>Zarządzanie danymi</h3>
-        <p>Przed usunięciem własnych danych warto wykonać eksport.</p>
+        <h3>ZarzĂ„â€¦dzanie danymi</h3>
+        <p>Przed usuniĂ„â„˘ciem wÄąâ€šasnych danych warto wykonaĂ„â€ˇ eksport.</p>
         <div>
           <button className="button button-secondary" type="button" onClick={resetData}>
             Resetuj do danych startowych
           </button>
           <button className="button admin-danger-button" type="button" onClick={clearData}>
-            Wyczyść lokalne dane
+            WyczyÄąâ€şĂ„â€ˇ lokalne dane
           </button>
         </div>
       </div>

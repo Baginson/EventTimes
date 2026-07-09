@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from './auth/authContext'
 import { AccountPanel } from './components/AccountPanel'
 import { AuthModal } from './components/AuthModal'
@@ -36,12 +36,18 @@ type MapMode =
   | { type: 'addingVenue' }
   | { type: 'movingVenue'; venueId: string }
 
+type AppToast = {
+  message: string
+  tone: 'success' | 'error'
+}
+
 function App() {
   const { isAdmin, user } = useAuth()
   const [venues, setVenues] = useState<Venue[]>([])
   const [events, setEvents] = useState<EventTimesEvent[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [dataError, setDataError] = useState('')
+  const [toast, setToast] = useState<AppToast | null>(null)
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<EventTimesEvent | null>(null)
   const [selectedCity, setSelectedCity] = useState('Leszno')
@@ -58,53 +64,53 @@ function App() {
     selectedVenue && !isAdminOpen && !isAccountPanelOpen,
   )
 
-  useEffect(() => {
-    let active = true
-
-    async function loadPublicData() {
+  const refreshPublicData = useCallback(async (showLoading = false) => {
+    if (showLoading) {
       setDataLoading(true)
-      setDataError('')
+    }
+    setDataError('Nie udało się pobrać danych. Odśwież stronę albo spróbuj później.')
 
-      try {
-        const [loadedVenues, loadedEvents] = await Promise.all([
-          getVenues(),
-          getEvents(),
-        ])
+    try {
+      const [loadedVenues, loadedEvents] = await Promise.all([
+        getVenues(),
+        getEvents(),
+      ])
 
-        if (!active) {
-          return
-        }
+      setVenues(loadedVenues)
+      setEvents(loadedEvents)
 
-        setVenues(loadedVenues)
-        setEvents(loadedEvents)
-
-        setSelectedCity((currentCity) =>
-          loadedVenues.length > 0 &&
-          !loadedVenues.some((venue) => venue.city === currentCity)
-            ? loadedVenues[0]?.city ?? 'Leszno'
-            : currentCity,
-        )
-      } catch (error) {
-        if (active) {
-          setDataError(
-            error instanceof Error
-              ? error.message
-              : 'Nie udało się pobrać danych publicznych.',
-          )
-        }
-      } finally {
-        if (active) {
-          setDataLoading(false)
-        }
+      setSelectedCity((currentCity) =>
+        loadedVenues.length > 0 &&
+        !loadedVenues.some((venue) => venue.city === currentCity)
+          ? loadedVenues[0]?.city ?? 'Leszno'
+          : currentCity,
+      )
+    } catch (error) {
+      console.error('Nie udało się pobrać danych publicznych Event Times.', error)
+      setDataError('Nie udaĹ‚o siÄ™ pobraÄ‡ danych. OdĹ›wieĹĽ stronÄ™ albo sprĂłbuj pĂłĹşniej.')
+      throw error
+    } finally {
+      if (showLoading) {
+        setDataLoading(false)
       }
     }
-
-    void loadPublicData()
-
-    return () => {
-      active = false
-    }
   }, [])
+
+  useEffect(() => {
+    void refreshPublicData(true).catch(() => undefined)
+  }, [refreshPublicData])
+
+  useEffect(() => {
+    if (!toast) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setToast(null)
+    }, 3600)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [toast])
 
   useEffect(() => {
     if (selectedVenue) {
@@ -177,6 +183,7 @@ function App() {
     cancelMapMode()
     setSelectedVenue(venue)
     setSelectedEvent(null)
+    showToast('Zapisano miejsce.')
   }
 
   function selectEvent(event: EventTimesEvent, venue: Venue) {
@@ -213,6 +220,10 @@ function App() {
     setIsAdminOpen(false)
   }
 
+  function showToast(message: string, tone: AppToast['tone'] = 'success') {
+    setToast({ message, tone })
+  }
+
   function disableAdminMode() {
     setIsAdminMode(false)
     setIsAdminOpen(false)
@@ -234,9 +245,10 @@ function App() {
     if (selectedVenue?.id === venue.id) {
       setSelectedVenue(venue)
     }
+    showToast('Zaktualizowano miejsce.')
   }
 
-  function deleteVenue(venueId: string) {
+  async function deleteVenue(venueId: string) {
     const confirmed = window.confirm(
       'Czy na pewno chcesz usunąć to miejsce? Usunięte zostaną także wydarzenia przypisane do tego miejsca.',
     )
@@ -245,31 +257,29 @@ function App() {
       return false
     }
 
-    void Promise.all([
-      deleteEventsByVenueId(venueId),
-      persistVenueDelete(venueId),
-    ])
-      .then(([nextEvents, nextVenues]) => {
-        setEvents(nextEvents)
-        setVenues(nextVenues)
-      })
-      .catch((error) => {
-        window.alert(
-          error instanceof Error
-            ? error.message
-            : 'Nie udało się usunąć miejsca.',
-        )
-      })
+    try {
+      const [nextEvents, nextVenues] = await Promise.all([
+        deleteEventsByVenueId(venueId),
+        persistVenueDelete(venueId),
+      ])
+      setEvents(nextEvents)
+      setVenues(nextVenues)
 
-    if (selectedVenue?.id === venueId) {
-      closePanel()
+      if (selectedVenue?.id === venueId) {
+        closePanel()
+      }
+
+      if (movingVenueId === venueId) {
+        cancelMapMode()
+      }
+
+      showToast('Usunięto miejsce.')
+      return true
+    } catch (error) {
+      console.error('Nie udało się usunąć miejsca.', error)
+      showToast('Nie udało się usunąć miejsca.', 'error')
+      return false
     }
-
-    if (movingVenueId === venueId) {
-      cancelMapMode()
-    }
-
-    return true
   }
 
   function handleMapClick(coordinates: Venue['coordinates']) {
@@ -290,11 +300,8 @@ function App() {
       }
 
       void updateVenue({ ...venue, coordinates }).catch((error) => {
-        window.alert(
-          error instanceof Error
-            ? error.message
-            : 'Nie udało się przesunąć pinezki.',
-        )
+        console.error('Nie udało się przesunąć pinezki.', error)
+        showToast('Nie udało się przesunąć pinezki.', 'error')
       })
       cancelMapMode()
     }
@@ -303,11 +310,13 @@ function App() {
   async function addEvent(event: EventTimesEvent) {
     const nextEvents = await saveEvent(event)
     setEvents(nextEvents)
+    showToast('Zapisano wydarzenie.')
   }
 
   async function addEventAndSelect(event: EventTimesEvent) {
     const nextEvents = await saveEvent(event)
     setEvents(nextEvents)
+    showToast('Zapisano wydarzenie.')
 
     const eventVenue = venues.find((venue) => venue.id === event.venueId)
 
@@ -329,9 +338,10 @@ function App() {
         setSelectedVenue(eventVenue)
       }
     }
+    showToast('Zaktualizowano wydarzenie.')
   }
 
-  function deleteEvent(eventId: string) {
+  async function deleteEvent(eventId: string) {
     const confirmed = window.confirm(
       'Czy na pewno chcesz usunąć to wydarzenie?',
     )
@@ -340,21 +350,20 @@ function App() {
       return false
     }
 
-    void persistEventDelete(eventId)
-      .then(setEvents)
-      .catch((error) => {
-        window.alert(
-          error instanceof Error
-            ? error.message
-            : 'Nie udało się usunąć wydarzenia.',
-        )
-      })
+    try {
+      setEvents(await persistEventDelete(eventId))
 
-    if (selectedEvent?.id === eventId) {
-      setSelectedEvent(null)
+      if (selectedEvent?.id === eventId) {
+        setSelectedEvent(null)
+      }
+
+      showToast('Usunięto wydarzenie.')
+      return true
+    } catch (error) {
+      console.error('Nie udało się usunąć wydarzenia.', error)
+      showToast('Nie udało się usunąć wydarzenia.', 'error')
+      return false
     }
-
-    return true
   }
 
   function startMovingVenue(venueId: string) {
@@ -434,6 +443,7 @@ function App() {
     if (!backup.venues.some((venue) => venue.city === selectedCity)) {
       setSelectedCity(backup.venues[0]?.city ?? 'Leszno')
     }
+    showToast('Zaimportowano dane do Firestore.')
   }
 
   async function moveCurrentDataToFirestore() {
@@ -441,6 +451,16 @@ function App() {
     await replaceEventsInFirestore(events)
     setVenues(await getVenues())
     setEvents(await getEvents())
+    showToast('Zaimportowano dane do Firestore.')
+  }
+
+  async function refreshAdminData() {
+    try {
+      await refreshPublicData(false)
+      showToast('Odświeżono dane.')
+    } catch {
+      showToast('Nie udało się odświeżyć danych.', 'error')
+    }
   }
 
   function restoreStarterData() {
@@ -480,12 +500,12 @@ function App() {
         )}
         {dataLoading && (
           <div className="map-move-notice" role="status">
-            <span>Ładowanie danych Event Times…</span>
+            <span>Ładowanie Event Times...</span>
           </div>
         )}
         {!dataLoading && !dataError && isAdmin && venues.length === 0 && events.length === 0 && (
           <div className="map-move-notice" role="status">
-            <span>Baza Firestore jest pusta. Otwórz Panel admina i zaimportuj JSON do Firestore.</span>
+            <span>Baza Firestore jest pusta. OtwĂłrz Panel admina i zaimportuj JSON do Firestore.</span>
           </div>
         )}
 
@@ -504,9 +524,9 @@ function App() {
             <span>
               {mapMode.type === 'addingVenue'
                 ? draftVenueCoordinates
-                  ? 'Uzupełnij formularz miejsca albo kliknij inne miejsce na mapie.'
-                  : 'Kliknij na mapie, aby ustawić pinezkę nowego miejsca.'
-                : 'Kliknij nowe miejsce na mapie, aby przesunąć pinezkę.'}
+                  ? 'UzupeĹ‚nij formularz miejsca albo kliknij inne miejsce na mapie.'
+                  : 'Kliknij na mapie, aby ustawiÄ‡ pinezkÄ™ nowego miejsca.'
+                : 'Kliknij nowe miejsce na mapie, aby przesunÄ…Ä‡ pinezkÄ™.'}
             </span>
             <button type="button" onClick={cancelMapMode}>
               Anuluj
@@ -530,6 +550,7 @@ function App() {
             onImportData={importLocalData}
             onImportFirestoreData={importFirestoreData}
             onMoveCurrentDataToFirestore={moveCurrentDataToFirestore}
+            onRefreshData={refreshAdminData}
             onResetData={restoreStarterData}
             onClearData={restoreStarterData}
             onStartVenueAdd={startAddingVenue}
@@ -581,6 +602,12 @@ function App() {
             panelRef={rightPanelRef}
           />
         ) : null}
+
+        {toast && (
+          <div className={`app-toast app-toast-${toast.tone}`} role="status">
+            {toast.message}
+          </div>
+        )}
       </main>
     </div>
   )

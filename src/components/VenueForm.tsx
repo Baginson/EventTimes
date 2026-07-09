@@ -73,6 +73,7 @@ export function VenueForm({
   )
   const [formError, setFormError] = useState('')
   const [formNotice, setFormNotice] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const previousInitialCoordinates = useRef(initialCoordinates)
 
   useEffect(() => {
@@ -112,7 +113,7 @@ export function VenueForm({
     }
 
     if (!isValidGoogleMapsUrl(googleMapsUrl)) {
-      setFormError('Link Google Maps musi być poprawnym adresem URL.')
+      setFormError('Link Google Maps musi byÄ‡ poprawnym adresem URL.')
       setFormNotice('')
       return
     }
@@ -136,17 +137,17 @@ export function VenueForm({
       setFormNotice('')
       setFormError(
         isShortGoogleMapsUrl(googleMapsUrl)
-          ? 'To wygląda jak krótki link Google Maps. Otwórz go w przeglądarce, a potem skopiuj pełny adres URL z paska. Wtedy Event Times będzie mógł spróbować odczytać pozycję i nazwę.'
+          ? 'To wyglÄ…da jak krĂłtki link Google Maps. OtwĂłrz go w przeglÄ…darce, a potem skopiuj peĹ‚ny adres URL z paska. Wtedy Event Times bÄ™dzie mĂłgĹ‚ sprĂłbowaÄ‡ odczytaÄ‡ pozycjÄ™ i nazwÄ™.'
           : parsedUrl.name
-            ? 'Udało się odczytać nazwę z linku, ale link nie zawiera współrzędnych. Skopiuj pełny adres z widoku mapy albo ustaw pinezkę kliknięciem na mapie.'
-            : 'Ten link Google Maps jest poprawny, ale nie zawiera współrzędnych. Skopiuj pełny adres z widoku mapy albo ustaw pinezkę kliknięciem na mapie.',
+            ? 'UdaĹ‚o siÄ™ odczytaÄ‡ nazwÄ™ z linku, ale link nie zawiera wspĂłĹ‚rzÄ™dnych. Skopiuj peĹ‚ny adres z widoku mapy albo ustaw pinezkÄ™ klikniÄ™ciem na mapie.'
+            : 'Ten link Google Maps jest poprawny, ale nie zawiera wspĂłĹ‚rzÄ™dnych. Skopiuj peĹ‚ny adres z widoku mapy albo ustaw pinezkÄ™ klikniÄ™ciem na mapie.',
       )
       return
     }
 
     if (
       initialVenue &&
-      !window.confirm('Czy zaktualizować pozycję pinezki na podstawie linku Google Maps?')
+      !window.confirm('Czy zaktualizowaÄ‡ pozycjÄ™ pinezki na podstawie linku Google Maps?')
     ) {
       return
     }
@@ -163,11 +164,11 @@ export function VenueForm({
     setFormNotice(
       initialVenue
         ? parsedUrl.name && form.name.trim()
-          ? 'Dane z linku zostały odczytane. Nazwa nie została nadpisana, a współrzędne zapiszą się po zapisaniu formularza.'
-          : 'Dane miejsca zostały odczytane z linku. Zapisz formularz, aby utrwalić zmianę.'
+          ? 'Dane z linku zostaĹ‚y odczytane. Nazwa nie zostaĹ‚a nadpisana, a wspĂłĹ‚rzÄ™dne zapiszÄ… siÄ™ po zapisaniu formularza.'
+          : 'Dane miejsca zostaĹ‚y odczytane z linku. Zapisz formularz, aby utrwaliÄ‡ zmianÄ™.'
         : parsedUrl.name && !form.name.trim()
-          ? 'Pinezka tymczasowa i nazwa miejsca zostały ustawione z linku. Możesz jeszcze dostosować pozycję.'
-          : 'Pinezka tymczasowa została ustawiona z linku Google Maps. Możesz ją jeszcze dostosować.',
+          ? 'Pinezka tymczasowa i nazwa miejsca zostaĹ‚y ustawione z linku. MoĹĽesz jeszcze dostosowaÄ‡ pozycjÄ™.'
+          : 'Pinezka tymczasowa zostaĹ‚a ustawiona z linku Google Maps. MoĹĽesz jÄ… jeszcze dostosowaÄ‡.',
     )
   }
 
@@ -196,19 +197,19 @@ export function VenueForm({
     }
 
     if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
-      setFormError('Latitude musi być liczbą od -90 do 90.')
+      setFormError('Latitude musi byÄ‡ liczbÄ… od -90 do 90.')
       return
     }
 
     if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
-      setFormError('Longitude musi być liczbą od -180 do 180.')
+      setFormError('Longitude musi byÄ‡ liczbÄ… od -180 do 180.')
       return
     }
 
     const googleMapsUrl = form.googleMapsUrl.trim()
 
     if (googleMapsUrl && !isValidGoogleMapsUrl(googleMapsUrl)) {
-      setFormError('Link Google Maps musi być poprawnym adresem URL.')
+      setFormError('Link Google Maps musi byÄ‡ poprawnym adresem URL.')
       return
     }
 
@@ -224,6 +225,7 @@ export function VenueForm({
     }
 
     try {
+      setIsSubmitting(true)
       await onSave(venue)
 
       if (!initialVenue) {
@@ -231,8 +233,10 @@ export function VenueForm({
       }
     } catch (error) {
       setFormError(
-        error instanceof Error ? error.message : 'Nie udało się zapisać miejsca.',
+        error instanceof Error ? error.message : 'Nie udaĹ‚o siÄ™ zapisaÄ‡ miejsca.',
       )
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -260,7 +264,7 @@ export function VenueForm({
         <span>Adres / ulica i numer</span>
         <input
           required
-          placeholder="Krótka 4"
+          placeholder="KrĂłtka 4"
           value={form.address}
           onChange={(event) => updateField('address', event.target.value)}
         />
@@ -283,8 +287,8 @@ export function VenueForm({
       <section className="admin-form-wide admin-google-maps-section" aria-label="Google Maps">
         <h3>Google Maps</h3>
         <p>
-          Z linku Google Maps zwykle da się odczytać pozycję i czasem nazwę.
-          Adres i opis uzupełnij ręcznie.
+          Z linku Google Maps zwykle da siÄ™ odczytaÄ‡ pozycjÄ™ i czasem nazwÄ™.
+          Adres i opis uzupeĹ‚nij rÄ™cznie.
         </p>
       </section>
 
@@ -307,7 +311,7 @@ export function VenueForm({
         />
         <small className="admin-field-help">
           Link do pinezki miejsca w Google Maps. Eventy przypisane do tego miejsca
-          będą używać tego samego linku.
+          bÄ™dÄ… uĹĽywaÄ‡ tego samego linku.
         </small>
       </label>
       <div className="admin-form-wide google-maps-coordinate-actions">
@@ -317,7 +321,7 @@ export function VenueForm({
           onClick={setCoordinatesFromGoogleMapsUrl}
           disabled={!form.googleMapsUrl.trim()}
         >
-          {initialVenue ? 'Zaktualizuj pinezkę z linku' : 'Ustaw pinezkę z linku'}
+          {initialVenue ? 'Zaktualizuj pinezkÄ™ z linku' : 'Ustaw pinezkÄ™ z linku'}
         </button>
         {!initialVenue && form.lat && form.lng && onAdjustTemporaryPin && (
           <button
@@ -325,18 +329,18 @@ export function VenueForm({
             type="button"
             onClick={onAdjustTemporaryPin}
           >
-            Dostosuj pozycję pinezki
+            Dostosuj pozycjÄ™ pinezki
           </button>
         )}
       </div>
       {!initialVenue && form.googleMapsUrl.trim() && form.lat && form.lng && (
         <p className="admin-form-wide google-maps-pin-status">
-          Pinezka ustawiona z linku Google Maps. Możesz ją jeszcze dostosować.
+          Pinezka ustawiona z linku Google Maps. MoĹĽesz jÄ… jeszcze dostosowaÄ‡.
         </p>
       )}
 
       <details className="admin-form-wide admin-advanced-fields" open={!initialCoordinates && !initialVenue}>
-        <summary>Zaawansowane / współrzędne</summary>
+        <summary>Zaawansowane / wspĂłĹ‚rzÄ™dne</summary>
         <div>
           <label>
             <span>Latitude / lat</span>
@@ -380,11 +384,16 @@ export function VenueForm({
       )}
 
       <div className="admin-form-actions">
-        <button className="button button-primary" type="submit">
-          Zapisz
+        <button className="button button-primary" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Zapisywanie...' : 'Zapisz'}
         </button>
         {onCancel && (
-          <button className="button button-secondary" type="button" onClick={onCancel}>
+          <button
+            className="button button-secondary"
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
             Anuluj
           </button>
         )}
