@@ -7,6 +7,7 @@ import {
   getAllUserActions,
 } from '../services/userActionService'
 import type { EventAction, VenueAction } from '../services/userActionService'
+import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
 
 type AccountPanelProps = {
   venues: Venue[]
@@ -208,7 +209,7 @@ export function AccountPanel({
               {event && venue ? (
                 <button type="button" onClick={() => onEventSelect(event, venue)}>
                   <strong>{event.name}</strong>
-                  <span>{venue.name}</span>
+                  <span>{getVenueDisplayName(venue)}</span>
                 </button>
               ) : (
                 <div><strong>Element niedostępny</strong><span>{action.eventId}</span></div>
@@ -305,7 +306,7 @@ export function AccountPanel({
                       <li key={action.venueId}>
                         {venue ? (
                           <button type="button" onClick={() => onVenueSelect(venue)}>
-                            <strong>{venue.name}</strong><span>{venue.address}</span>
+                            <strong>{getVenueDisplayName(venue)}</strong><span>{formatVenueAddress(venue)}</span>
                           </button>
                         ) : (
                           <div><strong>Element niedostępny</strong><span>{action.venueId}</span></div>

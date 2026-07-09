@@ -11,13 +11,14 @@ import {
 } from 'firebase/auth'
 import type { User } from 'firebase/auth'
 import { auth, isFirebaseConfigured } from '../lib/firebase'
+import { getIsCurrentUserAdmin } from '../services/adminService'
 import { syncUserProfile, updateUserProfile } from '../services/userProfileService'
-import { isAdminUser } from './admin'
 import { AuthContext } from './authContext'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(isFirebaseConfigured)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [, setProfileVersion] = useState(0)
   const configurationError = isFirebaseConfigured
@@ -35,6 +36,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
     })
   }, [])
+
+  useEffect(() => {
+    let active = true
+
+    setIsAdmin(false)
+
+    if (!user) {
+      return () => {
+        active = false
+      }
+    }
+
+    void getIsCurrentUserAdmin(user.uid)
+      .then((nextIsAdmin) => {
+        if (active) {
+          setIsAdmin(nextIsAdmin)
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setIsAdmin(false)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [user])
 
   async function signInWithGoogle() {
     if (!auth) {
@@ -95,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         loading,
         isAuthenticated: Boolean(user),
-        isAdmin: isAdminUser(user),
+        isAdmin,
         configurationError,
         isAuthModalOpen,
         openAuthModal: () => setIsAuthModalOpen(true),

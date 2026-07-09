@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { Ref } from 'react'
 import { useAuth } from '../auth/authContext'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
@@ -7,8 +8,18 @@ import {
   toggleEventAction,
 } from '../services/userActionService'
 import type { EventAction, EventActionKey } from '../services/userActionService'
-import { getEventStatus } from '../utils/eventStatus'
-import { getVenueGoogleMapsUrl } from '../utils/googleMaps'
+import {
+  formatEventDate,
+  getEventStatus,
+  getEventStatusLabel,
+  isEventDateValid,
+} from '../utils/eventStatus'
+import {
+  buildVenueDirectionsUrl,
+  getVenueGoogleMapsUrl,
+  hasValidVenueCoordinates,
+} from '../utils/googleMaps'
+import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
 import { EventForm } from './EventForm'
 
 type EventPanelProps = {
@@ -17,15 +28,12 @@ type EventPanelProps = {
   venues: Venue[]
   isAdminMode: boolean
   onBack: () => void
-  onUpdateEvent: (event: EventTimesEvent) => void
+  onAddEvent: (event: EventTimesEvent) => void | Promise<void>
+  onUpdateEvent: (event: EventTimesEvent) => void | Promise<void>
   onDeleteEvent: () => void
   onClose: () => void
+  panelRef?: Ref<HTMLElement>
 }
-
-const dateFormatter = new Intl.DateTimeFormat('pl-PL', {
-  dateStyle: 'long',
-  timeStyle: 'short',
-})
 
 export function EventPanel({
   event,
@@ -33,12 +41,18 @@ export function EventPanel({
   venues,
   isAdminMode,
   onBack,
+  onAddEvent,
   onUpdateEvent,
   onDeleteEvent,
   onClose,
+  panelRef,
 }: EventPanelProps) {
   const { user } = useAuth()
+  const venueDisplayName = getVenueDisplayName(venue)
+  const venueAddress = formatVenueAddress(venue)
+  const eventDescription = event.description?.trim() ?? ''
   const [isEditingEvent, setIsEditingEvent] = useState(false)
+  const [isDuplicatingEvent, setIsDuplicatingEvent] = useState(false)
   const [eventAction, setEventAction] = useState<EventAction>({
     eventId: event.id,
     venueId: event.venueId,
@@ -49,10 +63,13 @@ export function EventPanel({
   })
   const [pendingAction, setPendingAction] = useState<EventActionKey | null>(null)
   const [userActionError, setUserActionError] = useState('')
+  const hasValidEventDate = isEventDateValid(event)
   const eventStatus = getEventStatus(event)
+  const shouldShowTicketAction = Boolean(event.ticketUrl && eventStatus !== 'past')
 
   useEffect(() => {
     setIsEditingEvent(false)
+    setIsDuplicatingEvent(false)
   }, [event.id])
 
   useEffect(() => {
@@ -77,7 +94,11 @@ export function EventPanel({
         })
         .catch((error: unknown) => {
           if (active) {
-            setUserActionError(error instanceof Error ? error.message : 'Nie udało się pobrać akcji wydarzenia.')
+            setUserActionError(
+              error instanceof Error
+                ? error.message
+                : 'Nie udało się pobrać akcji wydarzenia.',
+            )
           }
         })
     }
@@ -87,9 +108,14 @@ export function EventPanel({
     }
   }, [event, user])
 
-  function saveEvent(updatedEvent: EventTimesEvent) {
-    onUpdateEvent(updatedEvent)
+  async function saveEvent(updatedEvent: EventTimesEvent) {
+    await onUpdateEvent(updatedEvent)
     setIsEditingEvent(false)
+  }
+
+  async function saveDuplicatedEvent(duplicatedEvent: EventTimesEvent) {
+    await onAddEvent(duplicatedEvent)
+    setIsDuplicatingEvent(false)
   }
 
   async function handleUserAction(key: EventActionKey) {
@@ -104,7 +130,9 @@ export function EventPanel({
       const nextAction = await toggleEventAction(user.uid, event, key, eventAction)
       setEventAction(nextAction)
     } catch (error) {
-      setUserActionError(error instanceof Error ? error.message : 'Nie udało się zapisać akcji.')
+      setUserActionError(
+        error instanceof Error ? error.message : 'Nie udało się zapisać akcji.',
+      )
     } finally {
       setPendingAction(null)
     }
@@ -112,8 +140,10 @@ export function EventPanel({
 
   return (
     <aside
+      ref={panelRef}
       className="venue-panel event-panel"
       aria-label={`Szczegóły wydarzenia: ${event.name}`}
+      onPointerDown={(event) => event.stopPropagation()}
     >
       <div className="venue-panel-handle" aria-hidden="true" />
       <button
@@ -124,20 +154,39 @@ export function EventPanel({
       >
         ×
       </button>
+      {user && !isEditingEvent && !isDuplicatingEvent && (
+        <button
+          className={`event-like-floating${eventAction.saved ? ' is-active' : ''}`}
+          type="button"
+          aria-label={eventAction.saved ? 'Usuń z polubionych' : 'Polub wydarzenie'}
+          aria-pressed={eventAction.saved}
+          disabled={pendingAction !== null}
+          onClick={() => void handleUserAction('saved')}
+        >
+          {eventAction.saved ? '♥' : '♡'}
+        </button>
+      )}
 
       <div className="venue-panel-content">
-        {isEditingEvent ? (
+        {isEditingEvent || isDuplicatingEvent ? (
           <div className="context-edit-view">
             <header className="context-edit-header">
               <span>Tryb admina</span>
-              <h1>Edytuj wydarzenie</h1>
+              <h1>{isDuplicatingEvent ? 'Duplikuj wydarzenie' : 'Edytuj wydarzenie'}</h1>
+              {isDuplicatingEvent && (
+                <p>Zmień datę, godzinę lub inne dane i zapisz jako nowe wydarzenie.</p>
+              )}
             </header>
             <EventForm
-              key={event.id}
+              key={isDuplicatingEvent ? `duplicate-${event.id}` : event.id}
               venues={venues}
               initialEvent={event}
-              onSave={saveEvent}
-              onCancel={() => setIsEditingEvent(false)}
+              isDuplicate={isDuplicatingEvent}
+              onSave={isDuplicatingEvent ? saveDuplicatedEvent : saveEvent}
+              onCancel={() => {
+                setIsEditingEvent(false)
+                setIsDuplicatingEvent(false)
+              }}
             />
           </div>
         ) : (
@@ -148,6 +197,9 @@ export function EventPanel({
 
             <header className="event-panel-header">
               <span className="event-type-badge">{event.eventType}</span>
+              <span className={`event-status-badge event-status-badge-${hasValidEventDate ? eventStatus : 'invalid'}`}>
+                {hasValidEventDate ? getEventStatusLabel(eventStatus) : 'Bez poprawnej daty'}
+              </span>
               <h1>{event.name}</h1>
             </header>
 
@@ -158,6 +210,9 @@ export function EventPanel({
                   <button type="button" onClick={() => setIsEditingEvent(true)}>
                     Edytuj event
                   </button>
+                  <button type="button" onClick={() => setIsDuplicatingEvent(true)}>
+                    Duplikuj event
+                  </button>
                   <button className="inline-admin-danger" type="button" onClick={onDeleteEvent}>
                     Usuń event
                   </button>
@@ -167,28 +222,63 @@ export function EventPanel({
 
             <section className="event-schedule" aria-labelledby="event-schedule-title">
               <h2 id="event-schedule-title">Termin</h2>
-              <dl className="event-detail-list">
-                <div>
-                  <dt>Start</dt>
-                  <dd><time dateTime={event.startDate}>{dateFormatter.format(new Date(event.startDate))}</time></dd>
-                </div>
+              <div className="event-date-summary">
+                <time className="event-date-main" dateTime={event.startDate}>
+                  {formatEventDate(event.startDate, 'long')}
+                </time>
                 {event.endDate && (
-                  <div>
-                    <dt>Koniec</dt>
-                    <dd><time dateTime={event.endDate}>{dateFormatter.format(new Date(event.endDate))}</time></dd>
-                  </div>
+                  <span className="event-date-end">
+                    Do:{' '}
+                    <time dateTime={event.endDate}>
+                      {formatEventDate(event.endDate, 'long')}
+                    </time>
+                  </span>
                 )}
-              </dl>
+              </div>
             </section>
+
+            {user && (
+              <section className="event-user-primary-actions" aria-label="Twoje akcje dla wydarzenia">
+                {hasValidEventDate && eventStatus === 'upcoming' && (
+                  <button
+                    className={eventAction.going ? 'is-active' : ''}
+                    type="button"
+                    aria-pressed={eventAction.going}
+                    disabled={pendingAction !== null}
+                    onClick={() => void handleUserAction('going')}
+                  >
+                    {pendingAction === 'going' ? 'Zapisywanie…' : 'Chcę iść'}
+                  </button>
+                )}
+
+                {hasValidEventDate && eventStatus === 'past' && (
+                  <button
+                    className={eventAction.visited ? 'is-active' : ''}
+                    type="button"
+                    aria-pressed={eventAction.visited}
+                    disabled={pendingAction !== null}
+                    onClick={() => void handleUserAction('visited')}
+                  >
+                    {pendingAction === 'visited' ? 'Zapisywanie…' : 'Byłem'}
+                  </button>
+                )}
+
+                {userActionError && <p className="user-action-error" role="alert">{userActionError}</p>}
+              </section>
+            )}
 
             <section className="event-location" aria-labelledby="event-location-title">
               <h2 id="event-location-title">Miejsce</h2>
               <div className="event-location-card">
-                <strong>{venue.name}</strong>
-                <p>{venue.address}</p>
+                <strong>{venueDisplayName}</strong>
+                <p>{venueAddress}</p>
                 <a
                   className="navigation-link"
-                  href={getVenueGoogleMapsUrl(venue)}
+                  href={
+                    hasValidVenueCoordinates(venue)
+                      ? buildVenueDirectionsUrl(venue)
+                      : getVenueGoogleMapsUrl(venue)
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -197,10 +287,17 @@ export function EventPanel({
               </div>
             </section>
 
-            <section className="event-description" aria-labelledby="event-description-title">
-              <h2 id="event-description-title">O wydarzeniu</h2>
-              <p>{event.description}</p>
-            </section>
+            {eventDescription ? (
+              <section className="event-description" aria-labelledby="event-description-title">
+                <h2 id="event-description-title">O wydarzeniu</h2>
+                <p>{eventDescription}</p>
+              </section>
+            ) : isAdminMode ? (
+              <section className="event-description event-description-empty">
+                <h2>O wydarzeniu</h2>
+                <p>Brak opisu wydarzenia</p>
+              </section>
+            ) : null}
 
             {event.sourceUrl && (
               <a className="event-source-link" href={event.sourceUrl} target="_blank" rel="noreferrer">
@@ -208,68 +305,14 @@ export function EventPanel({
               </a>
             )}
 
-            <section className="future-actions" aria-labelledby="future-actions-title">
-              <h2 id="future-actions-title">Akcje</h2>
-              {event.ticketUrl ? (
+            {shouldShowTicketAction && event.ticketUrl && (
+              <section className="future-actions" aria-labelledby="future-actions-title">
+                <h2 id="future-actions-title">Bilety</h2>
                 <a className="event-action event-action-primary" href={event.ticketUrl} target="_blank" rel="noopener noreferrer">
                   Kup bilet
                 </a>
-              ) : (
-                <span className="event-ticket-unavailable">Brak linku do biletu</span>
-              )}
-
-              {user && (
-                <div className="user-event-actions" aria-label="Twoje akcje dla wydarzenia">
-                  {eventStatus === 'upcoming' && (
-                    <>
-                      <button
-                        className={eventAction.interested ? 'is-active' : ''}
-                        type="button"
-                        aria-pressed={eventAction.interested}
-                        disabled={pendingAction !== null}
-                        onClick={() => void handleUserAction('interested')}
-                      >
-                        {pendingAction === 'interested' ? 'Zapisywanie…' : 'Zainteresowany'}
-                      </button>
-                      <button
-                        className={eventAction.going ? 'is-active' : ''}
-                        type="button"
-                        aria-pressed={eventAction.going}
-                        disabled={pendingAction !== null}
-                        onClick={() => void handleUserAction('going')}
-                      >
-                        {pendingAction === 'going' ? 'Zapisywanie…' : 'Chcę iść'}
-                      </button>
-                    </>
-                  )}
-
-                  {eventStatus === 'past' && (
-                    <button
-                      className={eventAction.visited ? 'is-active' : ''}
-                      type="button"
-                      aria-pressed={eventAction.visited}
-                      disabled={pendingAction !== null}
-                      onClick={() => void handleUserAction('visited')}
-                    >
-                      {pendingAction === 'visited' ? 'Zapisywanie…' : 'Byłem'}
-                    </button>
-                  )}
-
-                  <button
-                    className={`user-like-action${eventAction.saved ? ' is-active' : ''}`}
-                    type="button"
-                    aria-pressed={eventAction.saved}
-                    disabled={pendingAction !== null}
-                    onClick={() => void handleUserAction('saved')}
-                  >
-                    <span aria-hidden="true">{eventAction.saved ? '♥' : '♡'}</span>
-                    {pendingAction === 'saved' ? 'Zapisywanie…' : eventAction.saved ? 'Polubione' : 'Polub'}
-                  </button>
-                </div>
-              )}
-
-              {user && userActionError && <p className="user-action-error" role="alert">{userActionError}</p>}
-            </section>
+              </section>
+            )}
           </>
         )}
       </div>

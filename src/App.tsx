@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from './auth/authContext'
 import { AccountPanel } from './components/AccountPanel'
 import { AuthModal } from './components/AuthModal'
@@ -15,6 +15,7 @@ import {
   deleteEventsByVenueId,
   getEvents,
   replaceEvents,
+  replaceEventsInFirestore,
   saveEvent,
   updateEvent as persistEventUpdate,
 } from './services/eventService'
@@ -24,28 +25,104 @@ import {
   deleteVenue as persistVenueDelete,
   getVenues,
   replaceVenues,
+  replaceVenuesInFirestore,
   saveVenue,
   updateVenue as persistVenueUpdate,
 } from './services/venueService'
 import './App.css'
 
+type MapMode =
+  | { type: 'normal' }
+  | { type: 'addingVenue' }
+  | { type: 'movingVenue'; venueId: string }
+
 function App() {
   const { isAdmin, user } = useAuth()
-  const [venues, setVenues] = useState<Venue[]>(() => getVenues())
-  const [events, setEvents] = useState<EventTimesEvent[]>(() => getEvents())
+  const [venues, setVenues] = useState<Venue[]>([])
+  const [events, setEvents] = useState<EventTimesEvent[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
+  const [dataError, setDataError] = useState('')
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<EventTimesEvent | null>(null)
   const [selectedCity, setSelectedCity] = useState('Leszno')
   const [isAdminMode, setIsAdminMode] = useState(false)
   const [isAdminOpen, setIsAdminOpen] = useState(false)
-  const [movingVenueId, setMovingVenueId] = useState<string | null>(null)
+  const [mapMode, setMapMode] = useState<MapMode>({ type: 'normal' })
+  const [draftVenueCoordinates, setDraftVenueCoordinates] =
+    useState<Venue['coordinates'] | null>(null)
   const [isAccountPanelOpen, setIsAccountPanelOpen] = useState(false)
+  const rightPanelRef = useRef<HTMLElement>(null)
+  const movingVenueId = mapMode.type === 'movingVenue' ? mapMode.venueId : null
+  const isAddingVenue = mapMode.type === 'addingVenue'
+  const isRightPanelOpen = Boolean(
+    selectedVenue && !isAdminOpen && !isAccountPanelOpen,
+  )
+
+  useEffect(() => {
+    let active = true
+
+    async function loadPublicData() {
+      setDataLoading(true)
+      setDataError('')
+
+      try {
+        const [loadedVenues, loadedEvents] = await Promise.all([
+          getVenues(),
+          getEvents(),
+        ])
+
+        if (!active) {
+          return
+        }
+
+        setVenues(loadedVenues)
+        setEvents(loadedEvents)
+
+        setSelectedCity((currentCity) =>
+          loadedVenues.length > 0 &&
+          !loadedVenues.some((venue) => venue.city === currentCity)
+            ? loadedVenues[0]?.city ?? 'Leszno'
+            : currentCity,
+        )
+      } catch (error) {
+        if (active) {
+          setDataError(
+            error instanceof Error
+              ? error.message
+              : 'Nie udało się pobrać danych publicznych.',
+          )
+        }
+      } finally {
+        if (active) {
+          setDataLoading(false)
+        }
+      }
+    }
+
+    void loadPublicData()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (selectedVenue) {
+      const updatedVenue = venues.find((venue) => venue.id === selectedVenue.id)
+      setSelectedVenue(updatedVenue ?? null)
+    }
+
+    if (selectedEvent) {
+      const updatedEvent = events.find((event) => event.id === selectedEvent.id)
+      setSelectedEvent(updatedEvent ?? null)
+    }
+  }, [events, selectedEvent, selectedVenue, venues])
 
   useEffect(() => {
     if (!isAdmin) {
       setIsAdminMode(false)
       setIsAdminOpen(false)
-      setMovingVenueId(null)
+      cancelMapMode()
     }
   }, [isAdmin])
 
@@ -54,6 +131,39 @@ function App() {
       setIsAccountPanelOpen(false)
     }
   }, [user])
+
+  useEffect(() => {
+    if (!isRightPanelOpen) {
+      return
+    }
+
+    function handleOutsideRightPanelClick(event: PointerEvent) {
+      const target = event.target
+
+      if (!(target instanceof Node)) {
+        return
+      }
+
+      if (rightPanelRef.current?.contains(target)) {
+        return
+      }
+
+      if (
+        target instanceof Element &&
+        (target.closest('.top-bar') || target.closest('.leaflet-marker-icon'))
+      ) {
+        return
+      }
+
+      closePanel()
+    }
+
+    document.addEventListener('pointerdown', handleOutsideRightPanelClick)
+
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsideRightPanelClick)
+    }
+  }, [isRightPanelOpen])
 
   const visibleVenues = venues.filter((venue) => venue.city === selectedCity)
 
@@ -64,7 +174,7 @@ function App() {
   function selectVenue(venue: Venue) {
     setIsAdminOpen(false)
     setIsAccountPanelOpen(false)
-    setMovingVenueId(null)
+    cancelMapMode()
     setSelectedVenue(venue)
     setSelectedEvent(null)
   }
@@ -72,7 +182,7 @@ function App() {
   function selectEvent(event: EventTimesEvent, venue: Venue) {
     setIsAdminOpen(false)
     setIsAccountPanelOpen(false)
-    setMovingVenueId(null)
+    cancelMapMode()
     setSelectedVenue(venue)
     setSelectedEvent(event)
   }
@@ -94,7 +204,7 @@ function App() {
 
     setIsAdminMode(true)
     setIsAdminOpen(true)
-    setMovingVenueId(null)
+    cancelMapMode()
     setIsAccountPanelOpen(false)
     closePanel()
   }
@@ -106,15 +216,20 @@ function App() {
   function disableAdminMode() {
     setIsAdminMode(false)
     setIsAdminOpen(false)
-    setMovingVenueId(null)
+    cancelMapMode()
   }
 
-  function addVenue(venue: Venue) {
-    setVenues(saveVenue(venue))
+  async function addVenue(venue: Venue) {
+    const nextVenues = await saveVenue(venue)
+    setVenues(nextVenues)
+    cancelMapMode()
+    setSelectedVenue(venue)
+    setSelectedEvent(null)
   }
 
-  function updateVenue(venue: Venue) {
-    setVenues(persistVenueUpdate(venue))
+  async function updateVenue(venue: Venue) {
+    const nextVenues = await persistVenueUpdate(venue)
+    setVenues(nextVenues)
 
     if (selectedVenue?.id === venue.id) {
       setSelectedVenue(venue)
@@ -130,42 +245,81 @@ function App() {
       return false
     }
 
-    setEvents(deleteEventsByVenueId(venueId))
-    setVenues(persistVenueDelete(venueId))
+    void Promise.all([
+      deleteEventsByVenueId(venueId),
+      persistVenueDelete(venueId),
+    ])
+      .then(([nextEvents, nextVenues]) => {
+        setEvents(nextEvents)
+        setVenues(nextVenues)
+      })
+      .catch((error) => {
+        window.alert(
+          error instanceof Error
+            ? error.message
+            : 'Nie udało się usunąć miejsca.',
+        )
+      })
 
     if (selectedVenue?.id === venueId) {
       closePanel()
     }
 
     if (movingVenueId === venueId) {
-      setMovingVenueId(null)
+      cancelMapMode()
     }
 
     return true
   }
 
-  function moveVenuePin(coordinates: Venue['coordinates']) {
-    if (!movingVenueId) {
+  function handleMapClick(coordinates: Venue['coordinates']) {
+    if (mapMode.type === 'addingVenue') {
+      setDraftVenueCoordinates(coordinates)
+      setIsAdminMode(true)
+      setIsAdminOpen(true)
+      closePanel()
       return
     }
 
-    const venue = venues.find((candidate) => candidate.id === movingVenueId)
+    if (mapMode.type === 'movingVenue') {
+      const venue = venues.find((candidate) => candidate.id === mapMode.venueId)
 
-    if (!venue) {
-      setMovingVenueId(null)
-      return
+      if (!venue) {
+        cancelMapMode()
+        return
+      }
+
+      void updateVenue({ ...venue, coordinates }).catch((error) => {
+        window.alert(
+          error instanceof Error
+            ? error.message
+            : 'Nie udało się przesunąć pinezki.',
+        )
+      })
+      cancelMapMode()
     }
-
-    updateVenue({ ...venue, coordinates })
-    setMovingVenueId(null)
   }
 
-  function addEvent(event: EventTimesEvent) {
-    setEvents(saveEvent(event))
+  async function addEvent(event: EventTimesEvent) {
+    const nextEvents = await saveEvent(event)
+    setEvents(nextEvents)
   }
 
-  function updateEvent(event: EventTimesEvent) {
-    setEvents(persistEventUpdate(event))
+  async function addEventAndSelect(event: EventTimesEvent) {
+    const nextEvents = await saveEvent(event)
+    setEvents(nextEvents)
+
+    const eventVenue = venues.find((venue) => venue.id === event.venueId)
+
+    if (eventVenue) {
+      setSelectedVenue(eventVenue)
+      setSelectedEvent(event)
+    }
+  }
+
+  async function updateEvent(event: EventTimesEvent) {
+    const nextEvents = await persistEventUpdate(event)
+    setEvents(nextEvents)
 
     if (selectedEvent?.id === event.id) {
       setSelectedEvent(event)
@@ -186,7 +340,15 @@ function App() {
       return false
     }
 
-    setEvents(persistEventDelete(eventId))
+    void persistEventDelete(eventId)
+      .then(setEvents)
+      .catch((error) => {
+        window.alert(
+          error instanceof Error
+            ? error.message
+            : 'Nie udało się usunąć wydarzenia.',
+        )
+      })
 
     if (selectedEvent?.id === eventId) {
       setSelectedEvent(null)
@@ -202,7 +364,50 @@ function App() {
 
     setIsAdminMode(true)
     setIsAdminOpen(false)
-    setMovingVenueId(venueId)
+    setDraftVenueCoordinates(null)
+    setMapMode({ type: 'movingVenue', venueId })
+  }
+
+  function startAddingVenue() {
+    if (!isAdmin) {
+      return
+    }
+
+    setIsAdminMode(true)
+    setIsAdminOpen(true)
+    setDraftVenueCoordinates(null)
+    setSelectedVenue(null)
+    setSelectedEvent(null)
+    setMapMode({ type: 'addingVenue' })
+  }
+
+  function setDraftVenueFromGoogleMapsLink(coordinates: Venue['coordinates']) {
+    if (!isAdmin) {
+      return
+    }
+
+    setIsAdminMode(true)
+    setIsAdminOpen(true)
+    setSelectedVenue(null)
+    setSelectedEvent(null)
+    setDraftVenueCoordinates(coordinates)
+    setMapMode({ type: 'addingVenue' })
+  }
+
+  function adjustDraftVenuePin() {
+    if (!isAdmin) {
+      return
+    }
+
+    setIsAdminMode(true)
+    setIsAdminOpen(true)
+    closePanel()
+    setMapMode({ type: 'addingVenue' })
+  }
+
+  function cancelMapMode() {
+    setMapMode({ type: 'normal' })
+    setDraftVenueCoordinates(null)
   }
 
   function importLocalData(backup: LocalBackupData) {
@@ -210,7 +415,7 @@ function App() {
     const importedEvents = replaceEvents(backup.events)
     setVenues(importedVenues)
     setEvents(importedEvents)
-    setMovingVenueId(null)
+    cancelMapMode()
     closePanel()
 
     if (!importedVenues.some((venue) => venue.city === selectedCity)) {
@@ -218,16 +423,36 @@ function App() {
     }
   }
 
+  async function importFirestoreData(backup: LocalBackupData) {
+    await replaceVenuesInFirestore(backup.venues)
+    await replaceEventsInFirestore(backup.events)
+    setVenues(await getVenues())
+    setEvents(await getEvents())
+    cancelMapMode()
+    closePanel()
+
+    if (!backup.venues.some((venue) => venue.city === selectedCity)) {
+      setSelectedCity(backup.venues[0]?.city ?? 'Leszno')
+    }
+  }
+
+  async function moveCurrentDataToFirestore() {
+    await replaceVenuesInFirestore(venues)
+    await replaceEventsInFirestore(events)
+    setVenues(await getVenues())
+    setEvents(await getEvents())
+  }
+
   function restoreStarterData() {
     setVenues(clearStoredVenues())
     setEvents(clearStoredEvents())
     setSelectedCity('Leszno')
-    setMovingVenueId(null)
+    cancelMapMode()
     closePanel()
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" lang="pl">
       <AuthModal />
       <TopBar
         selectedCity={selectedCity}
@@ -235,6 +460,7 @@ function App() {
         events={events}
         isAdminMode={isAdminMode}
         isAdmin={isAdmin}
+        isRightPanelOpen={isRightPanelOpen}
         onCityChange={setSelectedCity}
         onVenueSelect={selectVenue}
         onEventSelect={selectEvent}
@@ -247,18 +473,42 @@ function App() {
       />
 
       <main className="map-workspace">
+        {dataError && (
+          <div className="map-move-notice map-error-notice" role="alert">
+            <span>{dataError}</span>
+          </div>
+        )}
+        {dataLoading && (
+          <div className="map-move-notice" role="status">
+            <span>Ładowanie danych Event Times…</span>
+          </div>
+        )}
+        {!dataLoading && !dataError && isAdmin && venues.length === 0 && events.length === 0 && (
+          <div className="map-move-notice" role="status">
+            <span>Baza Firestore jest pusta. Otwórz Panel admina i zaimportuj JSON do Firestore.</span>
+          </div>
+        )}
+
         <EventMap
           venues={visibleVenues}
           selectedVenueId={selectedVenue?.id ?? null}
-          isPinMoveActive={movingVenueId !== null}
+          isMapClickActive={mapMode.type !== 'normal'}
+          temporaryVenueCoordinates={draftVenueCoordinates}
+          focusCoordinates={draftVenueCoordinates}
           onVenueSelect={selectVenue}
-          onMapClick={moveVenuePin}
+          onMapClick={handleMapClick}
         />
 
-        {movingVenueId && (
+        {mapMode.type !== 'normal' && (
           <div className="map-move-notice" role="status">
-            <span>Następne kliknięcie na mapie ustawi nową lokalizację pinezki.</span>
-            <button type="button" onClick={() => setMovingVenueId(null)}>
+            <span>
+              {mapMode.type === 'addingVenue'
+                ? draftVenueCoordinates
+                  ? 'Uzupełnij formularz miejsca albo kliknij inne miejsce na mapie.'
+                  : 'Kliknij na mapie, aby ustawić pinezkę nowego miejsca.'
+                : 'Kliknij nowe miejsce na mapie, aby przesunąć pinezkę.'}
+            </span>
+            <button type="button" onClick={cancelMapMode}>
               Anuluj
             </button>
           </div>
@@ -269,6 +519,8 @@ function App() {
             venues={venues}
             events={events}
             movingVenueId={movingVenueId}
+            isAddingVenue={isAddingVenue}
+            draftVenueCoordinates={draftVenueCoordinates}
             onAddVenue={addVenue}
             onUpdateVenue={updateVenue}
             onDeleteVenue={deleteVenue}
@@ -276,10 +528,15 @@ function App() {
             onUpdateEvent={updateEvent}
             onDeleteEvent={deleteEvent}
             onImportData={importLocalData}
+            onImportFirestoreData={importFirestoreData}
+            onMoveCurrentDataToFirestore={moveCurrentDataToFirestore}
             onResetData={restoreStarterData}
             onClearData={restoreStarterData}
+            onStartVenueAdd={startAddingVenue}
+            onSetDraftVenueCoordinates={setDraftVenueFromGoogleMapsLink}
+            onAdjustTemporaryPin={adjustDraftVenuePin}
             onStartPinMove={startMovingVenue}
-            onCancelPinMove={() => setMovingVenueId(null)}
+            onCancelMapMode={cancelMapMode}
             onDisableAdminMode={disableAdminMode}
             onClose={closeAdminDrawer}
           />
@@ -302,9 +559,11 @@ function App() {
             venues={venues}
             isAdminMode={isAdmin && isAdminMode}
             onBack={() => setSelectedEvent(null)}
+            onAddEvent={addEventAndSelect}
             onUpdateEvent={updateEvent}
             onDeleteEvent={() => deleteEvent(selectedEvent.id)}
             onClose={closePanel}
+            panelRef={rightPanelRef}
           />
         ) : !isAdminOpen && !isAccountPanelOpen && selectedVenue ? (
           <VenuePanel
@@ -313,10 +572,13 @@ function App() {
             isAdminMode={isAdmin && isAdminMode}
             isPinMoveActive={movingVenueId === selectedVenue.id}
             onEventSelect={(event) => selectEvent(event, selectedVenue)}
+            venues={venues}
+            onAddEvent={addEvent}
             onUpdateVenue={updateVenue}
             onDeleteVenue={() => deleteVenue(selectedVenue.id)}
             onMoveVenue={() => startMovingVenue(selectedVenue.id)}
             onClose={closePanel}
+            panelRef={rightPanelRef}
           />
         ) : null}
       </main>

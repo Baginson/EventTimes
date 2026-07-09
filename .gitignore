@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+event-times-local-backup*.json
+*-backup.json
 
 # Environment variables
 .env

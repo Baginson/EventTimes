@@ -1,20 +1,17 @@
 import { useState } from 'react'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import { formatEventDate } from '../utils/eventStatus'
+import { getVenueDisplayName } from '../utils/venueDisplay'
 import { EventForm } from './EventForm'
 
 type AdminEventsSectionProps = {
   events: EventTimesEvent[]
   venues: Venue[]
-  onAddEvent: (event: EventTimesEvent) => void
-  onUpdateEvent: (event: EventTimesEvent) => void
+  onAddEvent: (event: EventTimesEvent) => void | Promise<void>
+  onUpdateEvent: (event: EventTimesEvent) => void | Promise<void>
   onDeleteEvent: (eventId: string) => boolean
 }
-
-const listDateFormatter = new Intl.DateTimeFormat('pl-PL', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
 
 export function AdminEventsSection({
   events,
@@ -24,16 +21,26 @@ export function AdminEventsSection({
   onDeleteEvent,
 }: AdminEventsSectionProps) {
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
+  const [duplicatingEventId, setDuplicatingEventId] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
   const editingEvent = events.find((event) => event.id === editingEventId)
+  const duplicatingEvent = events.find((event) => event.id === duplicatingEventId)
 
   function resetForm() {
     setEditingEventId(null)
+    setDuplicatingEventId(null)
     setSuccessMessage('')
   }
 
   function startEditing(event: EventTimesEvent) {
     setEditingEventId(event.id)
+    setDuplicatingEventId(null)
+    setSuccessMessage('')
+  }
+
+  function startDuplicating(event: EventTimesEvent) {
+    setDuplicatingEventId(event.id)
+    setEditingEventId(null)
     setSuccessMessage('')
   }
 
@@ -43,16 +50,21 @@ export function AdminEventsSection({
     }
   }
 
-  function saveEventFromForm(event: EventTimesEvent) {
+  async function saveEventFromForm(event: EventTimesEvent) {
     if (editingEventId) {
-      onUpdateEvent(event)
+      await onUpdateEvent(event)
       setSuccessMessage(`Zapisano zmiany: ${event.name}`)
     } else {
-      onAddEvent(event)
-      setSuccessMessage(`Dodano wydarzenie: ${event.name}`)
+      await onAddEvent(event)
+      setSuccessMessage(
+        duplicatingEventId
+          ? `Utworzono kopię wydarzenia: ${event.name}`
+          : `Dodano wydarzenie: ${event.name}`,
+      )
     }
 
     setEditingEventId(null)
+    setDuplicatingEventId(null)
   }
 
   return (
@@ -72,12 +84,15 @@ export function AdminEventsSection({
                 <li key={event.id}>
                   <strong>{event.name}</strong>
                   <span>
-                    {event.eventType} · {venue?.name ?? 'Nieznane miejsce'}
+                    {event.eventType} · {venue ? getVenueDisplayName(venue) : 'Nieznane miejsce'}
                   </span>
-                  <small>{listDateFormatter.format(new Date(event.startDate))}</small>
+                  <small>{formatEventDate(event.startDate)}</small>
                   <div className="admin-venue-actions">
                     <button type="button" onClick={() => startEditing(event)}>
                       Edytuj
+                    </button>
+                    <button type="button" onClick={() => startDuplicating(event)}>
+                      Duplikuj
                     </button>
                     <button
                       className="admin-list-delete"
@@ -101,17 +116,33 @@ export function AdminEventsSection({
 
       <section className="admin-section" aria-labelledby="event-form-title">
         <h2 id="event-form-title">
-          {editingEventId ? 'Edytuj wydarzenie' : 'Dodaj wydarzenie'}
+          {editingEventId
+            ? 'Edytuj wydarzenie'
+            : duplicatingEventId
+              ? 'Duplikuj wydarzenie'
+              : 'Dodaj wydarzenie'}
         </h2>
+        {duplicatingEventId && (
+          <p className="admin-form-hint">
+            Zmień datę, godzinę lub inne dane i zapisz jako nowe wydarzenie.
+          </p>
+        )}
         {successMessage && (
           <p className="admin-form-message admin-form-success">{successMessage}</p>
         )}
         <EventForm
-          key={editingEventId ?? 'new-event'}
+          key={
+            editingEventId
+              ? `edit-${editingEventId}`
+              : duplicatingEventId
+                ? `duplicate-${duplicatingEventId}`
+                : 'new-event'
+          }
           venues={venues}
-          initialEvent={editingEvent}
+          initialEvent={editingEvent ?? duplicatingEvent}
+          isDuplicate={Boolean(duplicatingEventId)}
           onSave={saveEventFromForm}
-          onCancel={editingEventId ? resetForm : undefined}
+          onCancel={editingEventId || duplicatingEventId ? resetForm : undefined}
         />
       </section>
     </div>

@@ -1,5 +1,6 @@
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import { parseEventDate } from '../utils/eventStatus'
 import { isValidGoogleMapsUrl } from '../utils/googleMaps'
 
 export type LocalBackupData = {
@@ -38,8 +39,6 @@ function parseVenue(value: unknown, index: number): Venue {
   if (
     typeof value.id !== 'string' ||
     !value.id.trim() ||
-    typeof value.name !== 'string' ||
-    !value.name.trim() ||
     !isRecord(coordinates) ||
     typeof coordinates.lat !== 'number' ||
     !Number.isFinite(coordinates.lat) ||
@@ -61,12 +60,12 @@ function parseVenue(value: unknown, index: number): Venue {
 
   return {
     id: value.id.trim(),
-    name: value.name.trim(),
+    name: typeof value.name === 'string' ? value.name.trim() : '',
     city: optionalString(value.city) ?? 'Leszno',
     address: optionalString(value.address) ?? '',
     venueType: optionalString(value.venueType) ?? 'Inne',
     description: optionalString(value.description) ?? '',
-    googleMapsUrl: optionalGoogleMapsUrl(value.googleMapsUrl, value.name),
+    googleMapsUrl: optionalGoogleMapsUrl(value.googleMapsUrl, optionalString(value.name) ?? `nr ${index + 1}`),
     coordinates: {
       lat: coordinates.lat,
       lng: coordinates.lng,
@@ -94,13 +93,13 @@ function parseEvent(value: unknown, index: number): EventTimesEvent {
     )
   }
 
-  if (Number.isNaN(new Date(value.startDate).getTime())) {
+  if (!parseEventDate(value.startDate)) {
     throw new Error(`Wydarzenie „${value.name}” ma niepoprawną datę startu.`)
   }
 
   const endDate = optionalString(value.endDate)
 
-  if (endDate && Number.isNaN(new Date(endDate).getTime())) {
+  if (endDate && !parseEventDate(endDate)) {
     throw new Error(`Wydarzenie „${value.name}” ma niepoprawną datę końca.`)
   }
 

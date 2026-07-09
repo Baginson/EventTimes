@@ -1,8 +1,20 @@
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  writeBatch,
+} from 'firebase/firestore'
 import { mockVenues } from '../data/mockVenues'
 import type { Venue } from '../data/mockVenues'
+import { db } from '../lib/firebase'
 import { isValidGoogleMapsUrl } from '../utils/googleMaps'
 
 const VENUES_STORAGE_KEY = 'event-times.venues.v1'
+const VENUES_COLLECTION = 'venues'
 
 function cloneStarterVenues(): Venue[] {
   return mockVenues.map((venue) => ({
@@ -36,11 +48,49 @@ function isVenue(value: unknown): value is Venue {
   )
 }
 
-function persistVenues(venues: Venue[]) {
+function normalizeVenue(value: unknown, fallbackId: string): Venue {
+  const venue = value && typeof value === 'object' ? (value as Partial<Venue>) : {}
+  const coordinates = venue.coordinates
+
+  return {
+    id: typeof venue.id === 'string' && venue.id.trim() ? venue.id.trim() : fallbackId,
+    name: typeof venue.name === 'string' ? venue.name : '',
+    city: typeof venue.city === 'string' ? venue.city : 'Leszno',
+    address: typeof venue.address === 'string' ? venue.address : '',
+    venueType: typeof venue.venueType === 'string' ? venue.venueType : 'Inne',
+    description: typeof venue.description === 'string' ? venue.description : '',
+    coordinates: {
+      lat: typeof coordinates?.lat === 'number' ? coordinates.lat : 0,
+      lng: typeof coordinates?.lng === 'number' ? coordinates.lng : 0,
+    },
+    googleMapsUrl:
+      typeof venue.googleMapsUrl === 'string' ? venue.googleMapsUrl : undefined,
+    websiteUrl: typeof venue.websiteUrl === 'string' ? venue.websiteUrl : undefined,
+    imageUrl: typeof venue.imageUrl === 'string' ? venue.imageUrl : undefined,
+    createdAt: typeof venue.createdAt === 'string' ? venue.createdAt : undefined,
+    updatedAt: typeof venue.updatedAt === 'string' ? venue.updatedAt : undefined,
+  }
+}
+
+function withWriteTimestamps(venue: Venue, isCreate: boolean): Venue {
+  const now = new Date().toISOString()
+
+  return {
+    ...venue,
+    createdAt: isCreate ? venue.createdAt ?? now : venue.createdAt,
+    updatedAt: now,
+  }
+}
+
+function toFirestoreData(venue: Venue) {
+  return JSON.parse(JSON.stringify(venue)) as Venue
+}
+
+function persistVenuesLocally(venues: Venue[]) {
   localStorage.setItem(VENUES_STORAGE_KEY, JSON.stringify(venues))
 }
 
-export function getVenues(): Venue[] {
+export function getLocalVenues(): Venue[] {
   if (typeof localStorage === 'undefined') {
     return cloneStarterVenues()
   }
@@ -61,36 +111,76 @@ export function getVenues(): Venue[] {
   }
 }
 
-export function saveVenue(venue: Venue): Venue[] {
-  const venues = getVenues()
+export async function getVenues(): Promise<Venue[]> {
+  if (!db) {
+    return getLocalVenues()
+  }
 
-  if (venues.some((existingVenue) => existingVenue.id === venue.id)) {
+  const snapshot = await getDocs(collection(db, VENUES_COLLECTION))
+  return snapshot.docs.map((venueDocument) =>
+    normalizeVenue(venueDocument.data(), venueDocument.id),
+  )
+}
+
+export async function createVenue(venue: Venue): Promise<Venue[]> {
+  if (!db) {
+    const venues = getLocalVenues()
+
+    if (venues.some((existingVenue) => existingVenue.id === venue.id)) {
+      throw new Error('Miejsce z tym identyfikatorem już istnieje.')
+    }
+
+    const updatedVenues = [...venues, venue]
+    persistVenuesLocally(updatedVenues)
+    return updatedVenues
+  }
+
+  const venueRef = doc(db, VENUES_COLLECTION, venue.id)
+  const existingVenue = await getDoc(venueRef)
+
+  if (existingVenue.exists()) {
     throw new Error('Miejsce z tym identyfikatorem już istnieje.')
   }
 
-  const updatedVenues = [...venues, venue]
-  persistVenues(updatedVenues)
-  return updatedVenues
+  await setDoc(venueRef, toFirestoreData(withWriteTimestamps(venue, true)))
+  return getVenues()
 }
 
-export function updateVenue(updatedVenue: Venue): Venue[] {
-  const venues = getVenues()
+export async function saveVenue(venue: Venue): Promise<Venue[]> {
+  return createVenue(venue)
+}
 
-  if (!venues.some((venue) => venue.id === updatedVenue.id)) {
-    throw new Error('Nie znaleziono miejsca do aktualizacji.')
+export async function updateVenue(updatedVenue: Venue): Promise<Venue[]> {
+  if (!db) {
+    const venues = getLocalVenues()
+
+    if (!venues.some((venue) => venue.id === updatedVenue.id)) {
+      throw new Error('Nie znaleziono miejsca do aktualizacji.')
+    }
+
+    const updatedVenues = venues.map((venue) =>
+      venue.id === updatedVenue.id ? updatedVenue : venue,
+    )
+    persistVenuesLocally(updatedVenues)
+    return updatedVenues
   }
 
-  const updatedVenues = venues.map((venue) =>
-    venue.id === updatedVenue.id ? updatedVenue : venue,
+  await updateDoc(
+    doc(db, VENUES_COLLECTION, updatedVenue.id),
+    toFirestoreData(withWriteTimestamps(updatedVenue, false)),
   )
-  persistVenues(updatedVenues)
-  return updatedVenues
+  return getVenues()
 }
 
-export function deleteVenue(venueId: string): Venue[] {
-  const updatedVenues = getVenues().filter((venue) => venue.id !== venueId)
-  persistVenues(updatedVenues)
-  return updatedVenues
+export async function deleteVenue(venueId: string): Promise<Venue[]> {
+  if (!db) {
+    const updatedVenues = getLocalVenues().filter((venue) => venue.id !== venueId)
+    persistVenuesLocally(updatedVenues)
+    return updatedVenues
+  }
+
+  await deleteDoc(doc(db, VENUES_COLLECTION, venueId))
+  return getVenues()
 }
 
 export function replaceVenues(venues: Venue[]): Venue[] {
@@ -98,8 +188,27 @@ export function replaceVenues(venues: Venue[]): Venue[] {
     ...venue,
     coordinates: { ...venue.coordinates },
   }))
-  persistVenues(nextVenues)
+  persistVenuesLocally(nextVenues)
   return nextVenues
+}
+
+export async function replaceVenuesInFirestore(venues: Venue[]) {
+  if (!db) {
+    throw new Error('Firebase Firestore nie jest skonfigurowany.')
+  }
+
+  const database = db
+  const batch = writeBatch(database)
+
+  venues.forEach((venue) => {
+    batch.set(
+      doc(database, VENUES_COLLECTION, venue.id),
+      toFirestoreData(withWriteTimestamps(venue, !venue.createdAt)),
+      { merge: true },
+    )
+  })
+
+  await batch.commit()
 }
 
 export function clearStoredVenues(): Venue[] {

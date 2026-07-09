@@ -2,6 +2,8 @@ export const VENUE_TYPES = [
   'Wszystkie',
   'Dom kultury',
   'Hala',
+  'Aula',
+  'Sala koncertowa',
   'Stadion',
   'Plener',
   'Klub',
@@ -17,6 +19,7 @@ export const EVENT_TYPES = [
   'Sport',
   'Stand-up',
   'Teatr',
+  'Spektakl',
   'Targi',
   'Festiwal',
   'Spotkanie',
@@ -27,6 +30,7 @@ export const EVENT_TYPES = [
 export const EVENT_DATE_FILTERS = [
   'Wszystkie',
   'Dzisiaj',
+  'Jutro',
   'Weekend',
   'Wybierz datę',
 ] as const

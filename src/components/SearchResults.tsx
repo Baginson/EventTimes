@@ -1,6 +1,9 @@
 import type { SearchMode } from '../data/searchFilters'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import type { EventStatus } from '../utils/eventStatus'
+import { getEventStartTime, getEventStatus } from '../utils/eventStatus'
+import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
 
 export type EventSearchResult = {
   event: EventTimesEvent
@@ -9,20 +12,83 @@ export type EventSearchResult = {
 
 type SearchResultsProps = {
   mode: SearchMode
+  isFilteringActive: boolean
   venues: Venue[]
   events: EventSearchResult[]
   onVenueSelect: (venue: Venue) => void
   onEventSelect: (event: EventTimesEvent, venue: Venue) => void
 }
 
+type EventResultGroup = {
+  id: EventStatus
+  title: string
+  results: EventSearchResult[]
+}
+
+function sortAscendingByStart(first: EventSearchResult, second: EventSearchResult) {
+  return getEventStartTime(first.event) - getEventStartTime(second.event)
+}
+
+function sortDescendingByStart(first: EventSearchResult, second: EventSearchResult) {
+  return getEventStartTime(second.event) - getEventStartTime(first.event)
+}
+
+function groupEventResults(events: EventSearchResult[]): EventResultGroup[] {
+  const grouped = {
+    ongoing: [] as EventSearchResult[],
+    upcoming: [] as EventSearchResult[],
+    past: [] as EventSearchResult[],
+  }
+
+  for (const result of events) {
+    grouped[getEventStatus(result.event)].push(result)
+  }
+
+  grouped.ongoing.sort(sortAscendingByStart)
+  grouped.upcoming.sort(sortAscendingByStart)
+  grouped.past.sort(sortDescendingByStart)
+
+  const groups: EventResultGroup[] = [
+    {
+      id: 'ongoing',
+      title: 'Trwa teraz',
+      results: grouped.ongoing,
+    },
+    {
+      id: 'upcoming',
+      title: 'Nadchodzące',
+      results: grouped.upcoming,
+    },
+    {
+      id: 'past',
+      title: 'Minione',
+      results: grouped.past,
+    },
+  ]
+
+  return groups.filter((group) => group.results.length > 0)
+}
+
 export function SearchResults({
   mode,
+  isFilteringActive,
   venues,
   events,
   onVenueSelect,
   onEventSelect,
 }: SearchResultsProps) {
   const hasResults = mode === 'venues' ? venues.length > 0 : events.length > 0
+  const eventGroups = mode === 'events' ? groupEventResults(events) : []
+
+  if (!isFilteringActive) {
+    return (
+      <div className="empty-state search-empty">
+        <span className="empty-state-icon" aria-hidden="true">ET</span>
+        <strong>Zacznij filtrować</strong>
+        <p>Wybierz typ, datę albo wpisz szukaną frazę.</p>
+      </div>
+    )
+  }
 
   if (!hasResults) {
     return (
@@ -30,9 +96,9 @@ export function SearchResults({
         <span className="empty-state-icon" aria-hidden="true">?</span>
         <strong>Brak wyników</strong>
         <p>
-          {mode === 'venues'
-            ? 'Spróbuj innej nazwy lub typu miejsca.'
-            : 'Spróbuj innej nazwy, daty lub typu wydarzenia.'}
+          {mode === 'events'
+            ? 'Brak wydarzeń dla wybranych filtrów.'
+            : 'Brak wyników dla wybranych filtrów.'}
         </p>
       </div>
     )
@@ -51,9 +117,9 @@ export function SearchResults({
                     M
                   </span>
                   <span>
-                    <strong>{venue.name}</strong>
+                    <strong>{getVenueDisplayName(venue)}</strong>
                     <small>
-                      {venue.venueType} · {venue.address}
+                      {venue.venueType} · {formatVenueAddress(venue)}
                     </small>
                   </span>
                 </button>
@@ -62,26 +128,37 @@ export function SearchResults({
           </ul>
         </section>
       ) : (
-        <section className="search-results-group" aria-labelledby="event-results-title">
-          <h3 id="event-results-title">Wydarzenia ({events.length})</h3>
-          <ul>
-            {events.map(({ event, venue }) => (
-              <li key={event.id}>
-                <button type="button" onClick={() => onEventSelect(event, venue)}>
-                  <span className="result-icon result-icon-event" aria-hidden="true">
-                    E
-                  </span>
-                  <span>
-                    <strong>{event.name}</strong>
-                    <small>
-                      {event.eventType} · {venue.name}
-                    </small>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+        eventGroups.map((group) => (
+          <section
+            className={`search-results-group search-event-group search-event-group-${group.id}`}
+            aria-labelledby={`event-results-${group.id}-title`}
+            key={group.id}
+          >
+            <h3 id={`event-results-${group.id}-title`}>
+              {group.title} <span>{group.results.length}</span>
+            </h3>
+            <ul>
+              {group.results.map(({ event, venue }) => (
+                <li
+                  className={group.id === 'past' ? 'search-event-result-past' : undefined}
+                  key={event.id}
+                >
+                  <button type="button" onClick={() => onEventSelect(event, venue)}>
+                    <span className="result-icon result-icon-event" aria-hidden="true">
+                      E
+                    </span>
+                    <span>
+                      <strong>{event.name}</strong>
+                      <small>
+                        {event.eventType} · {getVenueDisplayName(venue)}
+                      </small>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
       )}
     </div>
   )

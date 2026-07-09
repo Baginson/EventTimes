@@ -10,6 +10,10 @@ export type Venue = {
   }
   description: string
   googleMapsUrl?: string
+  websiteUrl?: string
+  imageUrl?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 // TODO: Współrzędne są przybliżone i należy je zweryfikować przed użyciem produkcyjnym.

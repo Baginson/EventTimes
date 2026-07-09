@@ -6,42 +6,41 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function ownsUserDocument(userId) {
+    function isOwner(userId) {
       return signedIn() && request.auth.uid == userId;
     }
 
-    // Zastąp adresem zgodnym z VITE_ADMIN_EMAIL przed wdrożeniem reguł.
     function isAdmin() {
-      return signedIn() && request.auth.token.email == 'xiron.yt@gmail.com';
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    match /users/{userId} {
-      allow create: if ownsUserDocument(userId)
-        && request.resource.data.uid == userId;
-      allow read, update, delete: if ownsUserDocument(userId);
-
-      match /eventActions/{eventId} {
-        allow read, delete: if ownsUserDocument(userId);
-        allow create, update: if ownsUserDocument(userId)
-          && request.resource.data.eventId == eventId;
-      }
-
-      match /venueActions/{venueId} {
-        allow read, delete: if ownsUserDocument(userId);
-        allow create, update: if ownsUserDocument(userId)
-          && request.resource.data.venueId == venueId;
-      }
-    }
-
-    // Kolekcje są przygotowane na późniejszą migrację danych publicznych.
     match /venues/{venueId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /events/{eventId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /eventActions/{eventId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /venueActions/{venueId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    match /admins/{adminId} {
+      allow get: if signedIn() && request.auth.uid == adminId;
+      allow list: if false;
+      allow create, update, delete: if false;
     }
   }
 }

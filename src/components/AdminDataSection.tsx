@@ -12,6 +12,8 @@ type AdminDataSectionProps = {
   venues: Venue[]
   events: EventTimesEvent[]
   onImport: (backup: LocalBackupData) => void
+  onImportFirestore: (backup: LocalBackupData) => Promise<void>
+  onMoveCurrentDataToFirestore: () => Promise<void>
   onReset: () => void
   onClear: () => void
 }
@@ -20,10 +22,13 @@ export function AdminDataSection({
   venues,
   events,
   onImport,
+  onImportFirestore,
+  onMoveCurrentDataToFirestore,
   onReset,
   onClear,
 }: AdminDataSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const firestoreFileInputRef = useRef<HTMLInputElement>(null)
   const [message, setMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -62,6 +67,74 @@ export function AdminDataSection({
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : 'Nie udało się zaimportować danych.',
+      )
+    }
+  }
+
+  async function importDataToFirestore(changeEvent: ChangeEvent<HTMLInputElement>) {
+    const file = changeEvent.target.files?.[0]
+    changeEvent.target.value = ''
+
+    if (!file) {
+      return
+    }
+
+    const confirmed = window.confirm(
+      'To zapisze dane do Firestore i będą widoczne na publicznej stronie. Kontynuować?',
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    clearMessages()
+
+    try {
+      const backup = await readLocalBackup(file)
+
+      if (
+        (venues.length > 0 || events.length > 0) &&
+        !window.confirm(
+          `Firestore ma obecnie ${venues.length} miejsc i ${events.length} wydarzeń w stanie aplikacji. Import zapisze dokumenty z tymi samymi id przez merge. Kontynuować?`,
+        )
+      ) {
+        return
+      }
+
+      await onImportFirestore(backup)
+      setMessage(
+        `Zaimportowano do Firestore ${backup.venues.length} miejsc i ${backup.events.length} wydarzeń.`,
+      )
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Nie udało się zaimportować danych do Firestore.',
+      )
+    }
+  }
+
+  async function moveCurrentDataToFirestore() {
+    const confirmed = window.confirm(
+      'Przenieść aktualnie widoczne miejsca i wydarzenia do Firestore? Dane będą widoczne na publicznej stronie.',
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    clearMessages()
+
+    try {
+      await onMoveCurrentDataToFirestore()
+      setMessage(
+        `Zapisano w Firestore ${venues.length} miejsc i ${events.length} wydarzeń.`,
+      )
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Nie udało się przenieść danych do Firestore.',
       )
     }
   }
@@ -134,6 +207,38 @@ export function AdminDataSection({
           accept="application/json,.json"
           onChange={importData}
         />
+      </div>
+
+      <div className="admin-data-danger-zone admin-firestore-import-zone">
+        <h3>Firestore / dane publiczne</h3>
+        <p>
+          Dane zapisane tutaj będą używane przez publiczną wersję Event Times.
+          Import jest dostępny tylko dla admina i wymaga reguł Firestore opartych o
+          kolekcję <code>admins</code>.
+        </p>
+        <div>
+          <button
+            className="button button-primary"
+            type="button"
+            onClick={() => firestoreFileInputRef.current?.click()}
+          >
+            Importuj dane JSON do Firestore
+          </button>
+          <button
+            className="button button-secondary"
+            type="button"
+            onClick={() => void moveCurrentDataToFirestore()}
+          >
+            Przenieś aktualne dane do Firestore
+          </button>
+          <input
+            ref={firestoreFileInputRef}
+            className="visually-hidden"
+            type="file"
+            accept="application/json,.json"
+            onChange={(event) => void importDataToFirestore(event)}
+          />
+        </div>
       </div>
 
       <div className="admin-data-danger-zone">

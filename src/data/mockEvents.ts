@@ -9,6 +9,10 @@ export type EventTimesEvent = {
   ticketUrl?: string
   sourceUrl?: string
   imageUrl?: string
+  organizer?: string
+  isPromoted?: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
 // Dane są fikcyjne i służą wyłącznie do rozwijania oraz testowania aplikacji.

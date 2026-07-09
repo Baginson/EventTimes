@@ -1,7 +1,21 @@
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+  writeBatch,
+} from 'firebase/firestore'
 import { mockEvents } from '../data/mockEvents'
 import type { EventTimesEvent } from '../data/mockEvents'
+import { db } from '../lib/firebase'
 
 const EVENTS_STORAGE_KEY = 'event-times.events.v1'
+const EVENTS_COLLECTION = 'events'
 
 function cloneStarterEvents(): EventTimesEvent[] {
   return mockEvents.map((event) => ({ ...event }))
@@ -32,11 +46,46 @@ function isEvent(value: unknown): value is EventTimesEvent {
   )
 }
 
-function persistEvents(events: EventTimesEvent[]) {
+function normalizeEvent(value: unknown, fallbackId: string): EventTimesEvent {
+  const event = value && typeof value === 'object' ? (value as Partial<EventTimesEvent>) : {}
+
+  return {
+    id: typeof event.id === 'string' && event.id.trim() ? event.id.trim() : fallbackId,
+    venueId: typeof event.venueId === 'string' ? event.venueId : '',
+    name: typeof event.name === 'string' ? event.name : '',
+    eventType: typeof event.eventType === 'string' ? event.eventType : 'Inne',
+    description: typeof event.description === 'string' ? event.description : '',
+    startDate: typeof event.startDate === 'string' ? event.startDate : '',
+    endDate: typeof event.endDate === 'string' ? event.endDate : undefined,
+    ticketUrl: typeof event.ticketUrl === 'string' ? event.ticketUrl : undefined,
+    sourceUrl: typeof event.sourceUrl === 'string' ? event.sourceUrl : undefined,
+    imageUrl: typeof event.imageUrl === 'string' ? event.imageUrl : undefined,
+    organizer: typeof event.organizer === 'string' ? event.organizer : undefined,
+    isPromoted: typeof event.isPromoted === 'boolean' ? event.isPromoted : undefined,
+    createdAt: typeof event.createdAt === 'string' ? event.createdAt : undefined,
+    updatedAt: typeof event.updatedAt === 'string' ? event.updatedAt : undefined,
+  }
+}
+
+function withWriteTimestamps(event: EventTimesEvent, isCreate: boolean): EventTimesEvent {
+  const now = new Date().toISOString()
+
+  return {
+    ...event,
+    createdAt: isCreate ? event.createdAt ?? now : event.createdAt,
+    updatedAt: now,
+  }
+}
+
+function toFirestoreData(event: EventTimesEvent) {
+  return JSON.parse(JSON.stringify(event)) as EventTimesEvent
+}
+
+function persistEventsLocally(events: EventTimesEvent[]) {
   localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events))
 }
 
-export function getEvents(): EventTimesEvent[] {
+export function getLocalEvents(): EventTimesEvent[] {
   if (typeof localStorage === 'undefined') {
     return cloneStarterEvents()
   }
@@ -57,48 +106,124 @@ export function getEvents(): EventTimesEvent[] {
   }
 }
 
-export function saveEvent(event: EventTimesEvent): EventTimesEvent[] {
-  const events = getEvents()
+export async function getEvents(): Promise<EventTimesEvent[]> {
+  if (!db) {
+    return getLocalEvents()
+  }
 
-  if (events.some((existingEvent) => existingEvent.id === event.id)) {
+  const snapshot = await getDocs(collection(db, EVENTS_COLLECTION))
+  return snapshot.docs.map((eventDocument) =>
+    normalizeEvent(eventDocument.data(), eventDocument.id),
+  )
+}
+
+export async function createEvent(event: EventTimesEvent): Promise<EventTimesEvent[]> {
+  if (!db) {
+    const events = getLocalEvents()
+
+    if (events.some((existingEvent) => existingEvent.id === event.id)) {
+      throw new Error('Wydarzenie z tym identyfikatorem już istnieje.')
+    }
+
+    const updatedEvents = [...events, event]
+    persistEventsLocally(updatedEvents)
+    return updatedEvents
+  }
+
+  const eventRef = doc(db, EVENTS_COLLECTION, event.id)
+  const existingEvent = await getDoc(eventRef)
+
+  if (existingEvent.exists()) {
     throw new Error('Wydarzenie z tym identyfikatorem już istnieje.')
   }
 
-  const updatedEvents = [...events, event]
-  persistEvents(updatedEvents)
-  return updatedEvents
+  await setDoc(eventRef, toFirestoreData(withWriteTimestamps(event, true)))
+  return getEvents()
 }
 
-export function updateEvent(updatedEvent: EventTimesEvent): EventTimesEvent[] {
-  const events = getEvents()
+export async function saveEvent(event: EventTimesEvent): Promise<EventTimesEvent[]> {
+  return createEvent(event)
+}
 
-  if (!events.some((event) => event.id === updatedEvent.id)) {
-    throw new Error('Nie znaleziono wydarzenia do aktualizacji.')
+export async function updateEvent(updatedEvent: EventTimesEvent): Promise<EventTimesEvent[]> {
+  if (!db) {
+    const events = getLocalEvents()
+
+    if (!events.some((event) => event.id === updatedEvent.id)) {
+      throw new Error('Nie znaleziono wydarzenia do aktualizacji.')
+    }
+
+    const updatedEvents = events.map((event) =>
+      event.id === updatedEvent.id ? updatedEvent : event,
+    )
+    persistEventsLocally(updatedEvents)
+    return updatedEvents
   }
 
-  const updatedEvents = events.map((event) =>
-    event.id === updatedEvent.id ? updatedEvent : event,
+  await updateDoc(
+    doc(db, EVENTS_COLLECTION, updatedEvent.id),
+    toFirestoreData(withWriteTimestamps(updatedEvent, false)),
   )
-  persistEvents(updatedEvents)
-  return updatedEvents
+  return getEvents()
 }
 
-export function deleteEvent(eventId: string): EventTimesEvent[] {
-  const updatedEvents = getEvents().filter((event) => event.id !== eventId)
-  persistEvents(updatedEvents)
-  return updatedEvents
+export async function deleteEvent(eventId: string): Promise<EventTimesEvent[]> {
+  if (!db) {
+    const updatedEvents = getLocalEvents().filter((event) => event.id !== eventId)
+    persistEventsLocally(updatedEvents)
+    return updatedEvents
+  }
+
+  await deleteDoc(doc(db, EVENTS_COLLECTION, eventId))
+  return getEvents()
 }
 
-export function deleteEventsByVenueId(venueId: string): EventTimesEvent[] {
-  const updatedEvents = getEvents().filter((event) => event.venueId !== venueId)
-  persistEvents(updatedEvents)
-  return updatedEvents
+export async function deleteEventsByVenueId(venueId: string): Promise<EventTimesEvent[]> {
+  if (!db) {
+    const updatedEvents = getLocalEvents().filter((event) => event.venueId !== venueId)
+    persistEventsLocally(updatedEvents)
+    return updatedEvents
+  }
+
+  const snapshot = await getDocs(
+    query(collection(db, EVENTS_COLLECTION), where('venueId', '==', venueId)),
+  )
+  const batch = writeBatch(db)
+  snapshot.docs.forEach((eventDocument) => {
+    batch.delete(eventDocument.ref)
+  })
+  await batch.commit()
+
+  return getEvents()
 }
 
 export function replaceEvents(events: EventTimesEvent[]): EventTimesEvent[] {
   const nextEvents = events.map((event) => ({ ...event }))
-  persistEvents(nextEvents)
+  persistEventsLocally(nextEvents)
   return nextEvents
+}
+
+export async function replaceEventsInFirestore(events: EventTimesEvent[]) {
+  if (!db) {
+    throw new Error('Firebase Firestore nie jest skonfigurowany.')
+  }
+
+  const database = db
+  const batch = writeBatch(database)
+
+  events.forEach((event) => {
+    batch.set(
+      doc(database, EVENTS_COLLECTION, event.id),
+      toFirestoreData(withWriteTimestamps(event, !event.createdAt)),
+      { merge: true },
+    )
+  })
+
+  await batch.commit()
+}
+
+export async function duplicateEvent(eventData: EventTimesEvent) {
+  return createEvent(eventData)
 }
 
 export function clearStoredEvents(): EventTimesEvent[] {

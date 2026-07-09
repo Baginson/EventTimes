@@ -10,6 +10,7 @@ type TopBarProps = {
   events: EventTimesEvent[]
   isAdminMode: boolean
   isAdmin: boolean
+  isRightPanelOpen: boolean
   onCityChange: (city: string) => void
   onVenueSelect: (venue: Venue) => void
   onEventSelect: (event: EventTimesEvent, venue: Venue) => void
@@ -23,6 +24,7 @@ export function TopBar({
   events,
   isAdminMode,
   isAdmin,
+  isRightPanelOpen,
   onCityChange,
   onVenueSelect,
   onEventSelect,
@@ -44,19 +46,21 @@ export function TopBar({
         onEventSelect={onEventSelect}
       />
 
-      <nav className="top-bar-actions" aria-label="Główne akcje">
-        {isAdmin && (
-          <button
-            className="button button-secondary admin-toggle"
-            type="button"
-            aria-pressed={isAdminMode}
-            onClick={onAdminToggle}
-          >
-            Panel admina
-          </button>
-        )}
-        <UserMenu onOpenProfile={onOpenProfile} />
-      </nav>
+      {!isRightPanelOpen && (
+        <nav className="top-bar-actions" aria-label="Główne akcje">
+          {isAdmin && (
+            <button
+              className="button button-secondary admin-toggle"
+              type="button"
+              aria-pressed={isAdminMode}
+              onClick={onAdminToggle}
+            >
+              Panel admina
+            </button>
+          )}
+          <UserMenu onOpenProfile={onOpenProfile} />
+        </nav>
+      )}
     </header>
   )
 }

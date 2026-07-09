@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
 import type { LocalBackupData } from '../services/localBackupService'
+import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
 import { AdminDataSection } from './AdminDataSection'
 import { AdminEventsSection } from './AdminEventsSection'
 import { VenueForm } from './VenueForm'
@@ -10,17 +11,24 @@ type AdminPanelProps = {
   venues: Venue[]
   events: EventTimesEvent[]
   movingVenueId: string | null
-  onAddVenue: (venue: Venue) => void
-  onUpdateVenue: (venue: Venue) => void
+  isAddingVenue: boolean
+  draftVenueCoordinates: Venue['coordinates'] | null
+  onAddVenue: (venue: Venue) => void | Promise<void>
+  onUpdateVenue: (venue: Venue) => void | Promise<void>
   onDeleteVenue: (venueId: string) => boolean
-  onAddEvent: (event: EventTimesEvent) => void
-  onUpdateEvent: (event: EventTimesEvent) => void
+  onAddEvent: (event: EventTimesEvent) => void | Promise<void>
+  onUpdateEvent: (event: EventTimesEvent) => void | Promise<void>
   onDeleteEvent: (eventId: string) => boolean
   onImportData: (backup: LocalBackupData) => void
+  onImportFirestoreData: (backup: LocalBackupData) => Promise<void>
+  onMoveCurrentDataToFirestore: () => Promise<void>
   onResetData: () => void
   onClearData: () => void
+  onStartVenueAdd: () => void
+  onSetDraftVenueCoordinates: (coordinates: Venue['coordinates']) => void
+  onAdjustTemporaryPin: () => void
   onStartPinMove: (venueId: string) => void
-  onCancelPinMove: () => void
+  onCancelMapMode: () => void
   onDisableAdminMode: () => void
   onClose: () => void
 }
@@ -29,6 +37,8 @@ export function AdminPanel({
   venues,
   events,
   movingVenueId,
+  isAddingVenue,
+  draftVenueCoordinates,
   onAddVenue,
   onUpdateVenue,
   onDeleteVenue,
@@ -36,10 +46,15 @@ export function AdminPanel({
   onUpdateEvent,
   onDeleteEvent,
   onImportData,
+  onImportFirestoreData,
+  onMoveCurrentDataToFirestore,
   onResetData,
   onClearData,
+  onStartVenueAdd,
+  onSetDraftVenueCoordinates,
+  onAdjustTemporaryPin,
   onStartPinMove,
-  onCancelPinMove,
+  onCancelMapMode,
   onDisableAdminMode,
   onClose,
 }: AdminPanelProps) {
@@ -47,9 +62,10 @@ export function AdminPanel({
   const [editingVenueId, setEditingVenueId] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
   const editingVenue = venues.find((venue) => venue.id === editingVenueId)
+  const isAddingVenueDraft = isAddingVenue && draftVenueCoordinates !== null
 
   function startEditing(venue: Venue) {
-    onCancelPinMove()
+    onCancelMapMode()
     setEditingVenueId(venue.id)
     setSuccessMessage('')
   }
@@ -64,22 +80,36 @@ export function AdminPanel({
     onStartPinMove(venueId)
   }
 
+  function startVenueAdd() {
+    cancelEditing()
+    setActiveTab('venues')
+    setSuccessMessage('')
+    onStartVenueAdd()
+  }
+
   function removeVenue(venueId: string) {
     if (onDeleteVenue(venueId) && editingVenueId === venueId) {
       cancelEditing()
     }
   }
 
-  function saveVenueFromForm(venue: Venue) {
+  async function saveVenueFromForm(venue: Venue) {
     if (editingVenueId) {
-      onUpdateVenue(venue)
-      setSuccessMessage(`Zapisano zmiany: ${venue.name}`)
+      await onUpdateVenue(venue)
+      setSuccessMessage(`Zapisano zmiany: ${getVenueDisplayName(venue)}`)
     } else {
-      onAddVenue(venue)
-      setSuccessMessage(`Dodano miejsce: ${venue.name}`)
+      await onAddVenue(venue)
+      setSuccessMessage(`Dodano miejsce: ${getVenueDisplayName(venue)}`)
     }
 
     setEditingVenueId(null)
+  }
+
+  function cancelVenueForm() {
+    cancelEditing()
+    if (isAddingVenue) {
+      onCancelMapMode()
+    }
   }
 
   return (
@@ -121,7 +151,7 @@ export function AdminPanel({
             aria-selected={activeTab === 'events'}
             className={activeTab === 'events' ? 'is-active' : ''}
             onClick={() => {
-              onCancelPinMove()
+              onCancelMapMode()
               setActiveTab('events')
             }}
           >
@@ -133,7 +163,7 @@ export function AdminPanel({
             aria-selected={activeTab === 'data'}
             className={activeTab === 'data' ? 'is-active' : ''}
             onClick={() => {
-              onCancelPinMove()
+              onCancelMapMode()
               setActiveTab('data')
             }}
           >
@@ -143,12 +173,20 @@ export function AdminPanel({
 
         {activeTab === 'venues' ? (
           <>
-            {movingVenueId && (
+            {(movingVenueId || isAddingVenue) && (
               <div className="admin-move-notice" role="status">
-                <strong>Przesuwanie pinezki jest aktywne</strong>
-                <span>Kliknij nowe miejsce na mapie albo anuluj operację.</span>
-                <button type="button" onClick={onCancelPinMove}>
-                  Anuluj przesuwanie
+                <strong>
+                  {isAddingVenue ? 'Dodawanie miejsca na mapie' : 'Przesuwanie pinezki jest aktywne'}
+                </strong>
+                <span>
+                  {isAddingVenue
+                    ? draftVenueCoordinates
+                      ? 'Pinezka tymczasowa jest ustawiona. Uzupełnij formularz i zapisz miejsce.'
+                      : 'Kliknij na mapie, aby ustawić pinezkę nowego miejsca.'
+                    : 'Kliknij nowe miejsce na mapie albo anuluj operację.'}
+                </span>
+                <button type="button" onClick={onCancelMapMode}>
+                  Anuluj
                 </button>
               </div>
             )}
@@ -158,12 +196,15 @@ export function AdminPanel({
                 <h2 id="admin-venues-title">Miejsca</h2>
                 <span>{venues.length}</span>
               </div>
+              <button className="admin-add-map-button" type="button" onClick={startVenueAdd}>
+                Dodaj miejsce na mapie
+              </button>
               {venues.length > 0 ? (
                 <ul className="admin-venue-list">
                   {venues.map((venue) => (
                     <li key={venue.id}>
-                      <strong>{venue.name}</strong>
-                      <span>{venue.venueType} · {venue.address}</span>
+                      <strong>{getVenueDisplayName(venue)}</strong>
+                      <span>{venue.venueType} · {formatVenueAddress(venue)}</span>
                       <small>{venue.coordinates.lat}, {venue.coordinates.lng}</small>
                       <div className="admin-venue-actions">
                         <button type="button" onClick={() => startEditing(venue)}>
@@ -198,7 +239,7 @@ export function AdminPanel({
 
             <section className="admin-section" aria-labelledby="venue-form-title">
               <h2 id="venue-form-title">
-                {editingVenueId ? 'Edytuj miejsce' : 'Dodaj miejsce'}
+                {editingVenueId ? 'Edytuj miejsce' : isAddingVenueDraft ? 'Dodaj miejsce z mapy' : 'Dodaj miejsce'}
               </h2>
               {successMessage && (
                 <p className="admin-form-message admin-form-success">{successMessage}</p>
@@ -206,8 +247,13 @@ export function AdminPanel({
               <VenueForm
                 key={editingVenueId ?? 'new-venue'}
                 initialVenue={editingVenue}
+                initialCoordinates={draftVenueCoordinates ?? undefined}
+                onCoordinatesFromGoogleMapsUrl={
+                  editingVenue ? undefined : onSetDraftVenueCoordinates
+                }
+                onAdjustTemporaryPin={onAdjustTemporaryPin}
                 onSave={saveVenueFromForm}
-                onCancel={editingVenueId ? cancelEditing : undefined}
+                onCancel={editingVenueId || isAddingVenue ? cancelVenueForm : undefined}
               />
             </section>
           </>
@@ -224,6 +270,8 @@ export function AdminPanel({
             venues={venues}
             events={events}
             onImport={onImportData}
+            onImportFirestore={onImportFirestoreData}
+            onMoveCurrentDataToFirestore={onMoveCurrentDataToFirestore}
             onReset={onResetData}
             onClear={onClearData}
           />
