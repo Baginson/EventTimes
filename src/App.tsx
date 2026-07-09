@@ -68,7 +68,7 @@ function App() {
     if (showLoading) {
       setDataLoading(true)
     }
-    setDataError('Nie udało się pobrać danych. Odśwież stronę albo spróbuj później.')
+    setDataError('')
 
     try {
       const [loadedVenues, loadedEvents] = await Promise.all([
@@ -87,7 +87,7 @@ function App() {
       )
     } catch (error) {
       console.error('Nie udało się pobrać danych publicznych Event Times.', error)
-      setDataError('Nie udaĹ‚o siÄ™ pobraÄ‡ danych. OdĹ›wieĹĽ stronÄ™ albo sprĂłbuj pĂłĹşniej.')
+      setDataError('Nie udało się pobrać danych. Odśwież stronę albo spróbuj później.')
       throw error
     } finally {
       if (showLoading) {
