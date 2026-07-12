@@ -497,11 +497,6 @@ function App() {
             <span>{dataError}</span>
           </div>
         )}
-        {dataLoading && (
-          <div className="map-move-notice" role="status">
-            <span>Ładowanie Event Times...</span>
-          </div>
-        )}
         {!dataLoading && !dataError && isAdmin && venues.length === 0 && events.length === 0 && (
           <div className="map-move-notice" role="status">
             <span>Baza Firestore jest pusta. Otwórz Panel admina i zaimportuj JSON do Firestore.</span>
@@ -605,6 +600,13 @@ function App() {
         {toast && (
           <div className={`app-toast app-toast-${toast.tone}`} role="status">
             {toast.message}
+          </div>
+        )}
+
+        {dataLoading && (
+          <div className="loading-overlay" role="status" aria-label="Ładowanie Event Times">
+            <div className="loading-brand">Event Times</div>
+            <div className="loading-spinner" aria-hidden="true" />
           </div>
         )}
       </main>

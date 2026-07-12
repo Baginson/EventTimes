@@ -51,8 +51,15 @@ export function EventPanel({
   const venueDisplayName = getVenueDisplayName(venue)
   const venueAddress = formatVenueAddress(venue)
   const eventDescription = event.description?.trim() ?? ''
+  const descriptionParagraphs = eventDescription
+    .split(/\n{1,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+  const isLongDescription =
+    eventDescription.length > 650 || descriptionParagraphs.length > 3
   const [isEditingEvent, setIsEditingEvent] = useState(false)
   const [isDuplicatingEvent, setIsDuplicatingEvent] = useState(false)
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
   const [eventAction, setEventAction] = useState<EventAction>({
     eventId: event.id,
     venueId: event.venueId,
@@ -70,6 +77,7 @@ export function EventPanel({
   useEffect(() => {
     setIsEditingEvent(false)
     setIsDuplicatingEvent(false)
+    setIsDescriptionExpanded(false)
   }, [event.id])
 
   useEffect(() => {
@@ -290,7 +298,33 @@ export function EventPanel({
             {eventDescription ? (
               <section className="event-description" aria-labelledby="event-description-title">
                 <h2 id="event-description-title">O wydarzeniu</h2>
-                <p>{eventDescription}</p>
+                <div
+                  className={`event-description-text${
+                    isLongDescription && !isDescriptionExpanded ? ' is-collapsed' : ''
+                  }`}
+                >
+                  {descriptionParagraphs.length > 0 ? (
+                    descriptionParagraphs.map((paragraph, paragraphIndex) => (
+                      <p key={`${paragraphIndex}-${paragraph.slice(0, 24)}`}>
+                        {paragraph}
+                      </p>
+                    ))
+                  ) : (
+                    <p>{eventDescription}</p>
+                  )}
+                </div>
+                {isLongDescription && (
+                  <button
+                    className="event-description-toggle"
+                    type="button"
+                    aria-expanded={isDescriptionExpanded}
+                    onClick={() =>
+                      setIsDescriptionExpanded((currentValue) => !currentValue)
+                    }
+                  >
+                    {isDescriptionExpanded ? 'Zwiń opis' : 'Czytaj więcej'}
+                  </button>
+                )}
               </section>
             ) : isAdminMode ? (
               <section className="event-description event-description-empty">

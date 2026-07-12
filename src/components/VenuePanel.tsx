@@ -21,6 +21,7 @@ import { VenueForm } from './VenueForm'
 
 type EventSectionVariant = 'ongoing' | 'upcoming' | 'past' | 'invalid'
 type CollapsibleEventSectionVariant = Exclude<EventSectionVariant, 'invalid'>
+const brandMarkUrl = `${import.meta.env.BASE_URL}brand/event-times-mark.png`
 
 type VenuePanelProps = {
   venue: Venue
@@ -188,10 +189,6 @@ export function VenuePanel({
           </span>
           <span className="event-meta">
             <span>{event.eventType}</span>
-            {variant === 'ongoing' && <span className="event-status-pill">TRWA TERAZ</span>}
-            {variant === 'past' && (
-              <span className="event-status-pill event-status-past">MINIONE</span>
-            )}
             {variant === 'invalid' && (
               <span className="event-status-pill event-status-invalid">BRAK DATY</span>
             )}
@@ -431,7 +428,11 @@ export function VenuePanel({
                 </div>
               ) : (
                 <div className="empty-state empty-events">
-                  <span className="empty-state-icon" aria-hidden="true">ET</span>
+                  <img
+                    className="empty-state-brand-mark"
+                    src={brandMarkUrl}
+                    alt="Event Times"
+                  />
                   <strong>Brak wydarzeń</strong>
                   <p>Brak wydarzeń dla tego miejsca.</p>
                 </div>

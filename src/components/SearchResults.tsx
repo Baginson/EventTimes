@@ -25,6 +25,8 @@ type EventResultGroup = {
   results: EventSearchResult[]
 }
 
+const brandMarkUrl = `${import.meta.env.BASE_URL}brand/event-times-mark.png`
+
 function sortAscendingByStart(first: EventSearchResult, second: EventSearchResult) {
   return getEventStartTime(first.event) - getEventStartTime(second.event)
 }
@@ -83,7 +85,7 @@ export function SearchResults({
   if (!isFilteringActive) {
     return (
       <div className="empty-state search-empty">
-        <span className="empty-state-icon" aria-hidden="true">ET</span>
+        <img className="empty-state-brand-mark" src={brandMarkUrl} alt="Event Times" />
         <strong>Zacznij filtrować</strong>
         <p>Wybierz typ, datę albo wpisz szukaną frazę.</p>
       </div>
@@ -93,7 +95,7 @@ export function SearchResults({
   if (!hasResults) {
     return (
       <div className="empty-state search-empty">
-        <span className="empty-state-icon" aria-hidden="true">?</span>
+        <img className="empty-state-brand-mark" src={brandMarkUrl} alt="Event Times" />
         <strong>Brak wyników</strong>
         <p>
           {mode === 'events'
