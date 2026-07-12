@@ -19,7 +19,7 @@ import {
   getVenueGoogleMapsUrl,
   hasValidVenueCoordinates,
 } from '../utils/googleMaps'
-import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
+import { getVenueDisplayName } from '../utils/venueDisplay'
 import { EventForm } from './EventForm'
 
 type EventPanelProps = {
@@ -49,7 +49,6 @@ export function EventPanel({
 }: EventPanelProps) {
   const { user } = useAuth()
   const venueDisplayName = getVenueDisplayName(venue)
-  const venueAddress = formatVenueAddress(venue)
   const eventDescription = event.description?.trim() ?? ''
   const descriptionParagraphs = eventDescription
     .split(/\n{1,}/)
@@ -214,6 +213,18 @@ export function EventPanel({
               <div className="event-pass-meta">
                 <time dateTime={event.startDate}>{formatEventDate(event.startDate, 'long')}</time>
                 <span>{venueDisplayName}</span>
+                <a
+                  className="navigation-link"
+                  href={
+                    hasValidVenueCoordinates(venue)
+                      ? buildVenueDirectionsUrl(venue)
+                      : getVenueGoogleMapsUrl(venue)
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Nawiguj w Google Maps
+                </a>
               </div>
             </header>
 
@@ -233,23 +244,6 @@ export function EventPanel({
                 </div>
               </section>
             )}
-
-            <section className="event-schedule" aria-labelledby="event-schedule-title">
-              <h2 id="event-schedule-title">Termin</h2>
-              <div className="event-date-summary">
-                <time className="event-date-main" dateTime={event.startDate}>
-                  {formatEventDate(event.startDate, 'long')}
-                </time>
-                {event.endDate && (
-                  <span className="event-date-end">
-                    Do:{' '}
-                    <time dateTime={event.endDate}>
-                      {formatEventDate(event.endDate, 'long')}
-                    </time>
-                  </span>
-                )}
-              </div>
-            </section>
 
             {user && (
               <section className="event-user-primary-actions" aria-label="Twoje akcje dla wydarzenia">
@@ -290,25 +284,6 @@ export function EventPanel({
               </section>
             )}
 
-            <section className="event-location" aria-labelledby="event-location-title">
-              <h2 id="event-location-title">Miejsce</h2>
-              <div className="event-location-card">
-                <strong>{venueDisplayName}</strong>
-                <p>{venueAddress}</p>
-                <a
-                  className="navigation-link"
-                  href={
-                    hasValidVenueCoordinates(venue)
-                      ? buildVenueDirectionsUrl(venue)
-                      : getVenueGoogleMapsUrl(venue)
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Nawiguj w Google Maps ↗
-                </a>
-              </div>
-            </section>
 
             {eventDescription ? (
               <section className="event-description" aria-labelledby="event-description-title">

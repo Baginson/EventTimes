@@ -251,9 +251,6 @@ export function VenuePanel({
           >
             <span className="event-status-title">{title}</span>
             <span className="event-status-count">{sectionEvents.length}</span>
-            <span className="event-status-chevron" aria-hidden="true">
-              {isExpanded ? '⌃' : '⌄'}
-            </span>
           </button>
         ) : (
           <div className="event-status-heading">

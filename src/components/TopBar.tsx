@@ -50,8 +50,11 @@ export function TopBar({
         onEventSelect={onEventSelect}
       />
 
-      {!isRightPanelOpen && (
-        <nav className="top-bar-actions" aria-label="Główne akcje">
+      {(
+        <nav
+          className={`top-bar-actions${isRightPanelOpen ? ' is-under-panel' : ''}`}
+          aria-label="Główne akcje"
+        >
           {isAdmin && (
             <button
               className="button button-secondary admin-toggle"
