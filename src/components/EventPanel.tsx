@@ -203,12 +203,18 @@ export function EventPanel({
               ← Wróć do miejsca
             </button>
 
-            <header className="event-panel-header">
-              <span className="event-type-badge">{event.eventType}</span>
-              <span className={`event-status-badge event-status-badge-${hasValidEventDate ? eventStatus : 'invalid'}`}>
-                {hasValidEventDate ? getEventStatusLabel(eventStatus) : 'Bez poprawnej daty'}
-              </span>
+            <header className="event-panel-header event-pass-hero">
+              <div className="event-pass-kicker">
+                <span className="event-type-badge">{event.eventType}</span>
+                <span className={`event-status-badge event-status-badge-${hasValidEventDate ? eventStatus : 'invalid'}`}>
+                  {hasValidEventDate ? getEventStatusLabel(eventStatus) : 'Bez poprawnej daty'}
+                </span>
+              </div>
               <h1>{event.name}</h1>
+              <div className="event-pass-meta">
+                <time dateTime={event.startDate}>{formatEventDate(event.startDate, 'long')}</time>
+                <span>{venueDisplayName}</span>
+              </div>
             </header>
 
             {isAdminMode && (
@@ -272,6 +278,15 @@ export function EventPanel({
                 )}
 
                 {userActionError && <p className="user-action-error" role="alert">{userActionError}</p>}
+              </section>
+            )}
+
+            {shouldShowTicketAction && event.ticketUrl && (
+              <section className="future-actions future-actions-priority" aria-labelledby="future-actions-title">
+                <h2 id="future-actions-title">Bilety</h2>
+                <a className="event-action event-action-primary" href={event.ticketUrl} target="_blank" rel="noopener noreferrer">
+                  Kup bilet
+                </a>
               </section>
             )}
 
@@ -339,14 +354,6 @@ export function EventPanel({
               </a>
             )}
 
-            {shouldShowTicketAction && event.ticketUrl && (
-              <section className="future-actions" aria-labelledby="future-actions-title">
-                <h2 id="future-actions-title">Bilety</h2>
-                <a className="event-action event-action-primary" href={event.ticketUrl} target="_blank" rel="noopener noreferrer">
-                  Kup bilet
-                </a>
-              </section>
-            )}
           </>
         )}
       </div>

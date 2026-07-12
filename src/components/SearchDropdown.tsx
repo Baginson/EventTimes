@@ -275,6 +275,10 @@ export function SearchDropdown({
 
   return (
     <div className="search-dropdown">
+      <div className="search-discovery-strip" aria-hidden="true">
+        <strong>Odkrywaj</strong>
+        <span>Miejsca / wydarzenia / historia miasta</span>
+      </div>
       <SearchModeTabs value={mode} onChange={onModeChange} />
 
       <div className="search-filters">

@@ -176,6 +176,10 @@ export function VenuePanel({
     event: EventTimesEvent,
     variant: EventSectionVariant,
   ) {
+    const shouldShowTicketLink =
+      Boolean(event.ticketUrl) && variant !== 'past' && variant !== 'invalid'
+    const formattedDate = formatEventDate(event.startDate)
+
     return (
       <li className={`event-card event-card-${variant}`} key={event.id}>
         <button
@@ -183,24 +187,25 @@ export function VenuePanel({
           type="button"
           onClick={() => onEventSelect(event)}
         >
-          <span className="event-poster-placeholder" aria-hidden="true">
-            <span>{event.eventType}</span>
-            <strong>{event.name}</strong>
+          <span className="event-agenda-date" aria-hidden="true">
+            <span>{formattedDate}</span>
           </span>
-          <span className="event-meta">
-            <span>{event.eventType}</span>
+          <span className="event-card-copy">
+            <span className="event-meta">
+              <span>{event.eventType}</span>
+              <time dateTime={event.startDate}>{formattedDate}</time>
+            </span>
+            <strong>{event.name}</strong>
             {variant === 'invalid' && (
               <span className="event-status-pill event-status-invalid">BRAK DATY</span>
             )}
-            <time dateTime={event.startDate}>{formatEventDate(event.startDate)}</time>
+            {event.description?.trim() && (
+              <span className="event-card-description">{event.description.trim()}</span>
+            )}
+            <span className="event-details-link">Zobacz szczegóły</span>
           </span>
-          <strong>{event.name}</strong>
-          {event.description?.trim() && (
-            <span className="event-card-description">{event.description.trim()}</span>
-          )}
-          <span className="event-details-link">Zobacz szczegóły →</span>
         </button>
-        {event.ticketUrl && (
+        {shouldShowTicketLink && event.ticketUrl && (
           <a href={event.ticketUrl} target="_blank" rel="noreferrer">
             Kup bilet
           </a>
@@ -319,10 +324,17 @@ export function VenuePanel({
           </div>
         ) : (
           <>
-            <span className="venue-type">{venue.venueType}</span>
-            <h1>{venueDisplayName}</h1>
-            <p className="venue-address">{venueAddress}</p>
-            <a
+            <header className="venue-editorial-header">
+              <span className="venue-type">{venue.venueType}</span>
+              <h1>{venueDisplayName}</h1>
+              <p>Przystanek na mapie wydarzeń</p>
+            </header>
+            <section className="venue-location-module" aria-label="Adres i nawigacja">
+              <div>
+                <span>Adres</span>
+                <p className="venue-address">{venueAddress}</p>
+              </div>
+              <a
               className="navigation-link"
               href={
                 hasValidVenueCoordinates(venue)
@@ -333,9 +345,10 @@ export function VenuePanel({
               rel="noopener noreferrer"
             >
               Nawiguj w Google Maps ↗
-            </a>
+              </a>
+            </section>
             {user && (
-              <>
+              <div className="venue-action-row">
                 <button
                   className={`venue-save-action${isVenueSaved ? ' is-active' : ''}`}
                   type="button"
@@ -346,10 +359,13 @@ export function VenuePanel({
                   {isVenueSaved ? 'Polubione' : 'Polub'}
                 </button>
                 {userActionError && <p className="user-action-error" role="alert">{userActionError}</p>}
-              </>
+              </div>
             )}
             {venue.description.trim() ? (
-              <p className="venue-description">{venue.description}</p>
+              <section className="venue-story">
+                <span>O miejscu</span>
+                <p className="venue-description">{venue.description}</p>
+              </section>
             ) : isAdminMode ? (
               <p className="venue-description venue-description-empty">Brak opisu miejsca</p>
             ) : null}

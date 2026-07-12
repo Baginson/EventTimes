@@ -2,7 +2,7 @@ import type { SearchMode } from '../data/searchFilters'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
 import type { EventStatus } from '../utils/eventStatus'
-import { getEventStartTime, getEventStatus } from '../utils/eventStatus'
+import { formatEventDate, getEventStartTime, getEventStatus } from '../utils/eventStatus'
 import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
 
 export type EventSearchResult = {
@@ -110,13 +110,15 @@ export function SearchResults({
     <div className="search-results">
       {mode === 'venues' ? (
         <section className="search-results-group" aria-labelledby="venue-results-title">
-          <h3 id="venue-results-title">Miejsca ({venues.length})</h3>
+          <h3 id="venue-results-title">
+            Miejsca <span>{venues.length}</span>
+          </h3>
           <ul>
             {venues.map((venue) => (
               <li key={venue.id}>
                 <button type="button" onClick={() => onVenueSelect(venue)}>
-                  <span className="result-icon" aria-hidden="true">
-                    M
+                  <span className="result-icon result-icon-venue" aria-hidden="true">
+                    {venue.venueType.slice(0, 2)}
                   </span>
                   <span>
                     <strong>{getVenueDisplayName(venue)}</strong>
@@ -147,7 +149,7 @@ export function SearchResults({
                 >
                   <button type="button" onClick={() => onEventSelect(event, venue)}>
                     <span className="result-icon result-icon-event" aria-hidden="true">
-                      E
+                      {formatEventDate(event.startDate)}
                     </span>
                     <span>
                       <strong>{event.name}</strong>

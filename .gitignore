@@ -23,6 +23,7 @@ event-times-local-backup*.json
 CODEX_INSTRUCTIONS.md
 EVENT_TIMES_SPEC.md
 EVENT_TIMES_UI_RULES.md
+docs/design-references/
 
 # Editor directories and files
 .vscode/*

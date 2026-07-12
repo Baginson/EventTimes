@@ -35,6 +35,10 @@ export function TopBar({
     <header className="top-bar">
       <button className="brand" type="button" aria-label="Event Times">
         <img className="brand-logo" src={eventTimesMark} alt="Event Times" />
+        <span className="brand-copy" aria-hidden="true">
+          <strong>Event Times</strong>
+          <small>Mapa wydarzeń</small>
+        </span>
       </button>
 
       <SearchBar
