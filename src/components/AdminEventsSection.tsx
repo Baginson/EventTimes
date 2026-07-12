@@ -91,7 +91,7 @@ export function AdminEventsSection({
                 <li key={event.id}>
                   <strong>{event.name}</strong>
                   <span>
-                    {event.eventType} Ă‚Â· {venue ? getVenueDisplayName(venue) : 'Nieznane miejsce'}
+                    {event.eventType} · {venue ? getVenueDisplayName(venue) : 'Nieznane miejsce'}
                   </span>
                   <small>{formatEventDate(event.startDate)}</small>
                   <div className="admin-venue-actions">
@@ -124,8 +124,8 @@ export function AdminEventsSection({
           </ul>
         ) : (
           <div className="empty-state admin-empty-state">
-            <strong>Brak wydarzeÄąâ€ž</strong>
-            <p>Dodaj pierwsze wydarzenie za pomocĂ„â€¦ formularza poniÄąÄ˝ej.</p>
+            <strong>Brak wydarzeń</strong>
+            <p>Dodaj pierwsze wydarzenie za pomocą formularza poniżej.</p>
           </div>
         )}
       </section>
@@ -140,7 +140,7 @@ export function AdminEventsSection({
         </h2>
         {duplicatingEventId && (
           <p className="admin-form-hint">
-            ZmieÄąâ€ž datĂ„â„˘, godzinĂ„â„˘ lub inne dane i zapisz jako nowe wydarzenie.
+            Zmień datę, godzinę lub inne dane i zapisz jako nowe wydarzenie.
           </p>
         )}
         {successMessage && (

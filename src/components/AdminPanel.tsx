@@ -154,7 +154,7 @@ export function AdminPanel({
             {isRefreshingData ? 'Odświeżanie...' : 'Odśwież dane z Firestore'}
           </button>
           <button className="admin-mode-disable" type="button" onClick={onDisableAdminMode}>
-            WyĂ„Ä…Ă˘â‚¬ĹˇÄ‚â€žĂ˘â‚¬Â¦cz tryb admina
+            Wyłącz tryb admina
           </button>
           <button
             className="admin-panel-close"
@@ -162,7 +162,7 @@ export function AdminPanel({
             onClick={onClose}
             aria-label="Zamknij panel admina"
           >
-            Ă„â€šĂ˘â‚¬â€ť
+            ×
           </button>
         </div>
       </div>
@@ -214,9 +214,9 @@ export function AdminPanel({
                 <span>
                   {isAddingVenue
                     ? draftVenueCoordinates
-                      ? 'Pinezka tymczasowa jest ustawiona. UzupeĂ„Ä…Ă˘â‚¬Ĺˇnij formularz i zapisz miejsce.'
-                      : 'Kliknij na mapie, aby ustawiÄ‚â€žĂ˘â‚¬Ë‡ pinezkÄ‚â€žĂ˘â€žË nowego miejsca.'
-                    : 'Kliknij nowe miejsce na mapie albo anuluj operacjÄ‚â€žĂ˘â€žË.'}
+                      ? 'Pinezka tymczasowa jest ustawiona. Uzupełnij formularz i zapisz miejsce.'
+                      : 'Kliknij na mapie, aby ustawić pinezkę nowego miejsca.'
+                    : 'Kliknij nowe miejsce na mapie albo anuluj operację.'}
                 </span>
                 <button type="button" onClick={onCancelMapMode}>
                   Anuluj
@@ -237,7 +237,7 @@ export function AdminPanel({
                   {venues.map((venue) => (
                     <li key={venue.id}>
                       <strong>{getVenueDisplayName(venue)}</strong>
-                      <span>{venue.venueType} Ä‚â€šĂ‚Â· {formatVenueAddress(venue)}</span>
+                      <span>{venue.venueType} · {formatVenueAddress(venue)}</span>
                       <small>{venue.coordinates.lat}, {venue.coordinates.lng}</small>
                       <div className="admin-venue-actions">
                         <button type="button" onClick={() => startEditing(venue)}>
@@ -249,7 +249,7 @@ export function AdminPanel({
                           onClick={() => startPinMove(venue.id)}
                           disabled={movingVenueId === venue.id}
                         >
-                          {movingVenueId === venue.id ? 'PrzesuwanieÄ‚ËĂ˘â€šÂ¬Ă‚Â¦' : 'PrzesuĂ„Ä…Ă˘â‚¬Ĺľ pinezkÄ‚â€žĂ˘â€žË'}
+                          {movingVenueId === venue.id ? 'Przesuwanie…' : 'Przesuń pinezkę'}
                         </button>
                         <button
                           className="admin-list-delete"
@@ -266,7 +266,7 @@ export function AdminPanel({
               ) : (
                 <div className="empty-state admin-empty-state">
                   <strong>Brak miejsc</strong>
-                  <p>Dodaj pierwsze miejsce za pomocÄ‚â€žĂ˘â‚¬Â¦ formularza poniĂ„Ä…Ă„Ëťej.</p>
+                  <p>Dodaj pierwsze miejsce za pomocą formularza poniżej.</p>
                 </div>
               )}
             </section>
@@ -312,7 +312,7 @@ export function AdminPanel({
         )}
 
         <p className="admin-storage-note">
-          Dane testowe sÄ‚â€žĂ˘â‚¬Â¦ zapisywane lokalnie w tej przeglÄ‚â€žĂ˘â‚¬Â¦darce.
+          Dane testowe są zapisywane lokalnie w tej przeglądarce.
         </p>
       </div>
     </aside>

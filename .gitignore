@@ -22,6 +22,7 @@ event-times-local-backup*.json
 # Local project notes for Codex only
 CODEX_INSTRUCTIONS.md
 EVENT_TIMES_SPEC.md
+EVENT_TIMES_UI_RULES.md
 
 # Editor directories and files
 .vscode/*

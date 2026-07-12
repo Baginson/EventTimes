@@ -45,9 +45,9 @@ export function AdminDataSection({
 
     try {
       downloadLocalBackup(venues, events)
-      setMessage('Backup zostaÄąâ€š wygenerowany.')
+      setMessage('Backup został wygenerowany.')
     } catch {
-      setErrorMessage('Nie udaÄąâ€šo siĂ„â„˘ wygenerowaĂ„â€ˇ pliku backupu.')
+      setErrorMessage('Nie udało się wygenerować pliku backupu.')
     }
   }
 
@@ -66,11 +66,11 @@ export function AdminDataSection({
       const backup = await readLocalBackup(file)
       onImport(backup)
       setMessage(
-        `Zaimportowano ${backup.venues.length} miejsc i ${backup.events.length} wydarzeÄąâ€ž.`,
+        `Zaimportowano ${backup.venues.length} miejsc i ${backup.events.length} wydarzeń.`,
       )
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Nie udaÄąâ€šo siĂ„â„˘ zaimportowaĂ„â€ˇ danych.',
+        error instanceof Error ? error.message : 'Nie udało się zaimportować danych.',
       )
     } finally {
       setIsImportingLocal(false)
@@ -149,7 +149,7 @@ export function AdminDataSection({
 
   function resetData() {
     const confirmed = window.confirm(
-      'PrzywrÄ‚Ĺ‚ciĂ„â€ˇ dane startowe? Lokalne zmiany zostanĂ„â€¦ usuniĂ„â„˘te.',
+      'Przywrócić dane startowe? Lokalne zmiany zostaną usunięte.',
     )
 
     if (!confirmed) {
@@ -158,12 +158,12 @@ export function AdminDataSection({
 
     clearMessages()
     onReset()
-    setMessage('PrzywrÄ‚Ĺ‚cono dane startowe Event Times.')
+    setMessage('Przywrócono dane startowe Event Times.')
   }
 
   function clearData() {
     const confirmed = window.confirm(
-      'UsunĂ„â€¦Ă„â€ˇ lokalne dane miejsc i wydarzeÄąâ€ž? Tej operacji nie moÄąÄ˝na cofnĂ„â€¦Ă„â€ˇ bez backupu.',
+      'Usunąć lokalne dane miejsc i wydarzeń? Tej operacji nie można cofnąć bez backupu.',
     )
 
     if (!confirmed) {
@@ -173,7 +173,7 @@ export function AdminDataSection({
     clearMessages()
     onClear()
     setMessage(
-      'Lokalne dane zostaÄąâ€šy usuniĂ„â„˘te. Aplikacja korzysta ponownie z danych startowych.',
+      'Lokalne dane zostały usunięte. Aplikacja korzysta ponownie z danych startowych.',
     )
   }
 
@@ -182,7 +182,7 @@ export function AdminDataSection({
       <div className="admin-section-heading">
         <div>
           <h2 id="admin-data-title">Dane lokalne / Backup</h2>
-          <p>Dane sĂ„â€¦ obecnie zapisane lokalnie w tej przeglĂ„â€¦darce.</p>
+          <p>Dane są obecnie zapisane lokalnie w tej przeglądarce.</p>
         </div>
       </div>
 
@@ -221,9 +221,9 @@ export function AdminDataSection({
       <div className="admin-data-danger-zone admin-firestore-import-zone">
         <h3>Firestore / dane publiczne</h3>
         <p>
-          Dane zapisane tutaj bĂ„â„˘dĂ„â€¦ uÄąÄ˝ywane przez publicznĂ„â€¦ wersjĂ„â„˘ Event Times.
-          Import jest dostĂ„â„˘pny tylko dla admina i wymaga reguÄąâ€š Firestore opartych o
-          kolekcjĂ„â„˘ <code>admins</code>.
+          Dane zapisane tutaj będą używane przez publiczną wersję Event Times.
+          Import jest dostępny tylko dla admina i wymaga reguł Firestore opartych o
+          kolekcję <code>admins</code>.
         </p>
         <div>
           <button
@@ -253,14 +253,14 @@ export function AdminDataSection({
       </div>
 
       <div className="admin-data-danger-zone">
-        <h3>ZarzĂ„â€¦dzanie danymi</h3>
-        <p>Przed usuniĂ„â„˘ciem wÄąâ€šasnych danych warto wykonaĂ„â€ˇ eksport.</p>
+        <h3>Zarządzanie danymi</h3>
+        <p>Przed usunięciem własnych danych warto wykonać eksport.</p>
         <div>
           <button className="button button-secondary" type="button" onClick={resetData}>
             Resetuj do danych startowych
           </button>
           <button className="button admin-danger-button" type="button" onClick={clearData}>
-            WyczyÄąâ€şĂ„â€ˇ lokalne dane
+            Wyczyść lokalne dane
           </button>
         </div>
       </div>

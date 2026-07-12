@@ -153,7 +153,7 @@ export function EventForm({
     submitEvent.preventDefault()
 
     if (!form.name.trim()) {
-      setFormError('Podaj nazwÄ™ wydarzenia.')
+      setFormError('Podaj nazwę wydarzenia.')
       return
     }
 
@@ -173,17 +173,17 @@ export function EventForm({
       : null
 
     if (!startDate) {
-      setFormError('Podaj poprawnÄ… datÄ™ rozpoczÄ™cia.')
+      setFormError('Podaj poprawną datę rozpoczęcia.')
       return
     }
 
     if (form.endTime && !form.endDate) {
-      setFormError('Podaj datÄ™ koĹ„ca albo usuĹ„ godzinÄ™ koĹ„ca.')
+      setFormError('Podaj datę końca albo usuń godzinę końca.')
       return
     }
 
     if (endDate && endDate < startDate) {
-      setFormError('Data koĹ„ca nie moĹĽe byÄ‡ wczeĹ›niejsza niĹĽ data startu.')
+      setFormError('Data końca nie może być wcześniejsza niż data startu.')
       return
     }
 
@@ -212,7 +212,7 @@ export function EventForm({
       }
     } catch (error) {
       setFormError(
-        error instanceof Error ? error.message : 'Nie udaĹ‚o siÄ™ zapisaÄ‡ wydarzenia.',
+        error instanceof Error ? error.message : 'Nie udało się zapisać wydarzenia.',
       )
     } finally {
       setIsSubmitting(false)
@@ -309,7 +309,7 @@ export function EventForm({
       </label>
 
       <label>
-        <span>Data koĹ„ca</span>
+        <span>Data końca</span>
         <input
           type="date"
           value={form.endDate}
@@ -318,7 +318,7 @@ export function EventForm({
       </label>
 
       <label>
-        <span>Godzina koĹ„ca</span>
+        <span>Godzina końca</span>
         <div className="admin-time-field">
           <input
             type="time"
@@ -346,7 +346,7 @@ export function EventForm({
       </label>
 
       <label className="admin-form-wide">
-        <span>Link do ĹşrĂłdĹ‚a</span>
+        <span>Link do źródła</span>
         <input
           type="url"
           placeholder="https://"

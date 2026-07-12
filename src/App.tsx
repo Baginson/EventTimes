@@ -183,7 +183,6 @@ function App() {
     cancelMapMode()
     setSelectedVenue(venue)
     setSelectedEvent(null)
-    showToast('Zapisano miejsce.')
   }
 
   function selectEvent(event: EventTimesEvent, venue: Venue) {
@@ -505,7 +504,7 @@ function App() {
         )}
         {!dataLoading && !dataError && isAdmin && venues.length === 0 && events.length === 0 && (
           <div className="map-move-notice" role="status">
-            <span>Baza Firestore jest pusta. OtwĂłrz Panel admina i zaimportuj JSON do Firestore.</span>
+            <span>Baza Firestore jest pusta. Otwórz Panel admina i zaimportuj JSON do Firestore.</span>
           </div>
         )}
 
@@ -524,9 +523,9 @@ function App() {
             <span>
               {mapMode.type === 'addingVenue'
                 ? draftVenueCoordinates
-                  ? 'UzupeĹ‚nij formularz miejsca albo kliknij inne miejsce na mapie.'
-                  : 'Kliknij na mapie, aby ustawiÄ‡ pinezkÄ™ nowego miejsca.'
-                : 'Kliknij nowe miejsce na mapie, aby przesunÄ…Ä‡ pinezkÄ™.'}
+                  ? 'Uzupełnij formularz miejsca albo kliknij inne miejsce na mapie.'
+                  : 'Kliknij na mapie, aby ustawić pinezkę nowego miejsca.'
+                : 'Kliknij nowe miejsce na mapie, aby przesunąć pinezkę.'}
             </span>
             <button type="button" onClick={cancelMapMode}>
               Anuluj
