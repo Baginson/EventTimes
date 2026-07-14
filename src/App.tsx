@@ -5,6 +5,7 @@ import { AuthModal } from './components/AuthModal'
 import { AdminPanel } from './components/AdminPanel'
 import { EventMap } from './components/EventMap'
 import { EventPanel } from './components/EventPanel'
+import { MobileBottomBar } from './components/MobileBottomBar'
 import { TopBar } from './components/TopBar'
 import { VenuePanel } from './components/VenuePanel'
 import type { EventTimesEvent } from './data/mockEvents'
@@ -42,7 +43,7 @@ type AppToast = {
 }
 
 function App() {
-  const { isAdmin, user } = useAuth()
+  const { isAdmin, openAuthModal, user } = useAuth()
   const [venues, setVenues] = useState<Venue[]>([])
   const [events, setEvents] = useState<EventTimesEvent[]>([])
   const [dataLoading, setDataLoading] = useState(true)
@@ -57,6 +58,7 @@ function App() {
   const [draftVenueCoordinates, setDraftVenueCoordinates] =
     useState<Venue['coordinates'] | null>(null)
   const [isAccountPanelOpen, setIsAccountPanelOpen] = useState(false)
+  const [mobileSearchFocusRequest, setMobileSearchFocusRequest] = useState(0)
   const rightPanelRef = useRef<HTMLElement>(null)
   const movingVenueId = mapMode.type === 'movingVenue' ? mapMode.venueId : null
   const isAddingVenue = mapMode.type === 'addingVenue'
@@ -196,6 +198,29 @@ function App() {
   function closePanel() {
     setSelectedVenue(null)
     setSelectedEvent(null)
+  }
+
+  function showMapOnly() {
+    setIsAdminOpen(false)
+    setIsAccountPanelOpen(false)
+    closePanel()
+    cancelMapMode()
+  }
+
+  function focusMobileSearch() {
+    setMobileSearchFocusRequest((requestCount) => requestCount + 1)
+  }
+
+  function openProfileFromMobile() {
+    closePanel()
+    setIsAdminOpen(false)
+
+    if (user) {
+      setIsAccountPanelOpen(true)
+      return
+    }
+
+    openAuthModal()
   }
 
   function toggleAdminPanel() {
@@ -484,6 +509,7 @@ function App() {
         onVenueSelect={selectVenue}
         onEventSelect={selectEvent}
         onAdminToggle={toggleAdminPanel}
+        searchFocusRequest={mobileSearchFocusRequest}
         onOpenProfile={() => {
           closePanel()
           setIsAdminOpen(false)
@@ -596,6 +622,21 @@ function App() {
             panelRef={rightPanelRef}
           />
         ) : null}
+
+        <MobileBottomBar
+          isAdmin={isAdmin}
+          isAdminMode={isAdminMode}
+          isHidden={Boolean(
+            selectedVenue ||
+              isAdminOpen ||
+              isAccountPanelOpen ||
+              mapMode.type !== 'normal',
+          )}
+          onSearch={focusMobileSearch}
+          onMap={showMapOnly}
+          onProfile={openProfileFromMobile}
+          onAdmin={toggleAdminPanel}
+        />
 
         {toast && (
           <div className={`app-toast app-toast-${toast.tone}`} role="status">

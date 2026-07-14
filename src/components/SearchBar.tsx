@@ -17,6 +17,7 @@ type SearchBarProps = {
   onCityChange: (city: string) => void
   onVenueSelect: (venue: Venue) => void
   onEventSelect: (event: EventTimesEvent, venue: Venue) => void
+  focusRequest?: number
 }
 
 export function SearchBar({
@@ -26,6 +27,7 @@ export function SearchBar({
   onCityChange,
   onVenueSelect,
   onEventSelect,
+  focusRequest = 0,
 }: SearchBarProps) {
   const [mode, setMode] = useState<SearchMode>('venues')
   const [query, setQuery] = useState('')
@@ -38,6 +40,7 @@ export function SearchBar({
   const [customDateTo, setCustomDateTo] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const searchAreaRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     function handleOutsideClick(event: PointerEvent) {
@@ -64,6 +67,15 @@ export function SearchBar({
       document.removeEventListener('keydown', handleEscape)
     }
   }, [])
+
+  useEffect(() => {
+    if (focusRequest <= 0) {
+      return
+    }
+
+    setIsOpen(true)
+    searchInputRef.current?.focus()
+  }, [focusRequest])
 
   function changeMode(nextMode: SearchMode) {
     setMode(nextMode)
@@ -99,6 +111,7 @@ export function SearchBar({
           <path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" />
         </svg>
         <input
+          ref={searchInputRef}
           type="search"
           value={query}
           placeholder={searchLabel}

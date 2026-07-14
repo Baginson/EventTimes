@@ -15,6 +15,7 @@ type TopBarProps = {
   onVenueSelect: (venue: Venue) => void
   onEventSelect: (event: EventTimesEvent, venue: Venue) => void
   onAdminToggle: () => void
+  searchFocusRequest?: number
   onOpenProfile: () => void
 }
 
@@ -29,6 +30,7 @@ export function TopBar({
   onVenueSelect,
   onEventSelect,
   onAdminToggle,
+  searchFocusRequest,
   onOpenProfile,
 }: TopBarProps) {
   return (
@@ -48,6 +50,7 @@ export function TopBar({
         onCityChange={onCityChange}
         onVenueSelect={onVenueSelect}
         onEventSelect={onEventSelect}
+        focusRequest={searchFocusRequest}
       />
 
       {(

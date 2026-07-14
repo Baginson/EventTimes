@@ -512,6 +512,10 @@
   pointer-events: none;
 }
 
+.mobile-bottom-bar {
+  display: none;
+}
+
 .button,
 .navigation-link,
 .venue-save-action,
@@ -2175,6 +2179,7 @@
 
   .search-dropdown {
     max-height: min(68svh, 560px);
+    margin-bottom: calc(86px + env(safe-area-inset-bottom));
   }
 
   .search-filters,
@@ -2184,14 +2189,77 @@
   }
 
   .top-bar-actions {
-    top: auto;
-    right: 12px;
-    bottom: 12px;
-    max-width: calc(100vw - 24px);
+    display: none;
   }
 
-  .top-bar-actions.is-under-panel {
-    display: none;
+  .mobile-bottom-bar {
+    position: fixed;
+    z-index: 1250;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    max-width: 420px;
+    padding: 6px;
+    margin: 0 auto;
+    pointer-events: auto;
+    background: rgba(255, 253, 248, 0.96);
+    border: 1px solid rgba(7, 20, 47, 0.12);
+    border-radius: 20px;
+    box-shadow: 0 18px 46px rgba(7, 20, 47, 0.22);
+    backdrop-filter: blur(16px);
+    transition:
+      opacity var(--transition-ui),
+      transform var(--transition-ui);
+  }
+
+  .mobile-bottom-bar.is-admin {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .mobile-bottom-bar.is-hidden {
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(calc(100% + 18px));
+  }
+
+  .mobile-bottom-bar button {
+    display: grid;
+    min-width: 0;
+    min-height: 48px;
+    place-items: center;
+    gap: 2px;
+    padding: 6px 4px 5px;
+    color: #344159;
+    font-family: var(--font-control);
+    font-size: 10px;
+    font-weight: 850;
+    line-height: 1;
+    background: transparent;
+    border: 0;
+    border-radius: 15px;
+    cursor: pointer;
+  }
+
+  .mobile-bottom-bar button:active,
+  .mobile-bottom-bar button.is-active {
+    color: var(--color-primary);
+    background: rgba(6, 75, 255, 0.1);
+  }
+
+  .mobile-bottom-bar svg {
+    width: 21px;
+    height: 21px;
+    stroke-width: 2.2;
+  }
+
+  .app-toast {
+    right: 12px;
+    bottom: calc(82px + env(safe-area-inset-bottom));
+    left: 12px;
+    max-width: none;
   }
 
   .map-move-notice {
@@ -2209,7 +2277,7 @@
     left: 0;
     width: 100%;
     max-width: none;
-    max-height: min(82svh, 760px);
+    max-height: min(82dvh, 760px);
     border-right: 0;
     border-bottom: 0;
     border-left: 0;
@@ -2241,7 +2309,7 @@
   }
 
   .admin-panel-content {
-    padding: 16px 16px 24px;
+    padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
   }
 
   .admin-panel-header {
@@ -2297,6 +2365,14 @@
     width: 72px;
     height: 72px;
   }
+
+  .admin-form-actions,
+  .admin-data-actions,
+  .admin-data-danger-zone > div,
+  .google-maps-coordinate-actions,
+  .ticketmaster-result-actions {
+    align-items: stretch;
+  }
 }
 
 @media (max-width: 520px) {
@@ -2306,19 +2382,6 @@
   .venue-save-action {
     width: 100%;
   }
-
-  .top-bar-actions {
-    left: 12px;
-    justify-content: stretch;
-  }
-
-  .top-bar-actions .button,
-  .top-bar-actions .user-menu,
-  .top-bar-actions .user-menu-trigger {
-    width: 100%;
-    max-width: none;
-  }
-
   .search-results-group button {
     grid-template-columns: 58px minmax(0, 1fr);
   }
@@ -2340,6 +2403,73 @@
   .account-panel {
     padding: 22px 18px;
     border-radius: 20px;
+  }
+
+  .top-bar {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .brand {
+    min-height: 50px;
+    padding: 5px;
+  }
+
+  .brand-logo {
+    width: 38px;
+  }
+
+  .search-box {
+    grid-template-columns: 18px minmax(0, 1fr) 38px;
+    min-height: 50px;
+    gap: 8px;
+    padding-left: 14px;
+  }
+
+  .search-box input {
+    height: 46px;
+    font-size: 13px;
+  }
+
+  .search-chevron {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+
+  .admin-tabs {
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .admin-tabs button {
+    min-width: 94px;
+    min-height: 42px;
+    font-size: 12px;
+  }
+
+  .ticketmaster-result-card {
+    grid-template-columns: 1fr;
+  }
+
+  .ticketmaster-result-card > img {
+    width: 100%;
+    height: 120px;
+  }
+
+  .ticketmaster-result-actions .button,
+  .ticketmaster-venue-card .button,
+  .admin-form-actions .button,
+  .admin-data-actions .button,
+  .admin-data-danger-zone .button,
+  .google-maps-coordinate-actions .button,
+  .google-maps-coordinate-actions .admin-add-map-button {
+    width: 100%;
+  }
+
+  .admin-time-field {
+    grid-template-columns: 1fr;
   }
 }
 
