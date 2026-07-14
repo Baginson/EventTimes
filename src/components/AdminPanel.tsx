@@ -1,4 +1,13 @@
 import { useState } from 'react'
+import {
+  MapPinPlus,
+  Move,
+  Pencil,
+  RefreshCw,
+  ShieldOff,
+  Trash2,
+  X,
+} from 'lucide-react'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
 import type { LocalBackupData } from '../services/localBackupService'
@@ -224,9 +233,11 @@ export function AdminPanel({
             onClick={() => void refreshData()}
             disabled={isRefreshingData}
           >
+            <RefreshCw className="ui-icon" aria-hidden="true" />
             {isRefreshingData ? 'Odświeżanie...' : 'Odśwież dane z Firestore'}
           </button>
           <button className="admin-mode-disable" type="button" onClick={onDisableAdminMode}>
+            <ShieldOff className="ui-icon" aria-hidden="true" />
             Wyłącz tryb admina
           </button>
           <button
@@ -235,7 +246,7 @@ export function AdminPanel({
             onClick={onClose}
             aria-label="Zamknij panel admina"
           >
-            ×
+            <X className="ui-icon" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -303,6 +314,7 @@ export function AdminPanel({
                 <span>{venues.length}</span>
               </div>
               <button className="admin-add-map-button" type="button" onClick={startVenueAdd}>
+                <MapPinPlus className="ui-icon" aria-hidden="true" />
                 Dodaj miejsce na mapie
               </button>
               {venues.length > 0 ? (
@@ -314,6 +326,7 @@ export function AdminPanel({
                       <small>{venue.coordinates.lat}, {venue.coordinates.lng}</small>
                       <div className="admin-venue-actions">
                         <button type="button" onClick={() => startEditing(venue)}>
+                          <Pencil className="ui-icon" aria-hidden="true" />
                           Edytuj
                         </button>
                         <button
@@ -322,6 +335,7 @@ export function AdminPanel({
                           onClick={() => startPinMove(venue.id)}
                           disabled={movingVenueId === venue.id}
                         >
+                          <Move className="ui-icon" aria-hidden="true" />
                           {movingVenueId === venue.id ? 'Przesuwanie…' : 'Przesuń pinezkę'}
                         </button>
                         <button
@@ -330,6 +344,7 @@ export function AdminPanel({
                           onClick={() => void removeVenue(venue.id)}
                           disabled={pendingVenueAction !== null}
                         >
+                          <Trash2 className="ui-icon" aria-hidden="true" />
                           {pendingVenueAction === `delete-${venue.id}` ? 'Usuwanie...' : 'Usuń'}
                         </button>
                       </div>

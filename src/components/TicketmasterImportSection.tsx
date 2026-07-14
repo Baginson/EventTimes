@@ -1,5 +1,14 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
+import {
+  CheckCircle,
+  Download,
+  ExternalLink,
+  MapPinPlus,
+  Pencil,
+  Search,
+  X,
+} from 'lucide-react'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
 import { EVENT_TYPES } from '../data/searchFilters'
@@ -436,6 +445,7 @@ export function TicketmasterImportSection({
 
         <div className="admin-form-wide admin-form-actions">
           <button className="button button-primary" type="submit" disabled={isSearching}>
+            <Search className="ui-icon" aria-hidden="true" />
             {isSearching ? 'Szukanie...' : 'Szukaj w Ticketmaster'}
           </button>
         </div>
@@ -490,6 +500,7 @@ export function TicketmasterImportSection({
                   {candidate.sourceUrl && (
                     <a href={candidate.sourceUrl} target="_blank" rel="noreferrer">
                       Otwórz źródło
+                      <ExternalLink className="ui-icon" aria-hidden="true" />
                     </a>
                   )}
                 </div>
@@ -521,6 +532,7 @@ export function TicketmasterImportSection({
                       type="button"
                       onClick={() => onCreateVenueDraft(createVenueDraftFromCandidate(candidate))}
                     >
+                      <MapPinPlus className="ui-icon" aria-hidden="true" />
                       Utwórz pinezkę z Ticketmaster
                     </button>
                   )}
@@ -683,6 +695,11 @@ export function TicketmasterImportSection({
                       setEditingCandidateId(isEditing ? null : candidate.ticketmasterId)
                     }
                   >
+                    {isEditing ? (
+                      <X className="ui-icon" aria-hidden="true" />
+                    ) : (
+                      <Pencil className="ui-icon" aria-hidden="true" />
+                    )}
                     {isEditing ? 'Zamknij edycję' : 'Edytuj'}
                   </button>
                   <button
@@ -690,6 +707,7 @@ export function TicketmasterImportSection({
                     type="button"
                     onClick={() => rejectCandidate(candidate.ticketmasterId)}
                   >
+                    <X className="ui-icon" aria-hidden="true" />
                     Odrzuć
                   </button>
                   <button
@@ -698,6 +716,11 @@ export function TicketmasterImportSection({
                     onClick={() => void importCandidate(candidate)}
                     disabled={isImported || pendingImportId === candidate.ticketmasterId}
                   >
+                    {pendingImportId === candidate.ticketmasterId ? (
+                      <Download className="ui-icon" aria-hidden="true" />
+                    ) : (
+                      <CheckCircle className="ui-icon" aria-hidden="true" />
+                    )}
                     {pendingImportId === candidate.ticketmasterId ? 'Importowanie...' : 'Akceptuj'}
                   </button>
                 </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Copy, Pencil, Trash2 } from 'lucide-react'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
 import { formatEventDate } from '../utils/eventStatus'
@@ -104,6 +105,7 @@ export function AdminEventsSection({
                       onClick={() => startEditing(event)}
                       disabled={pendingEventAction !== null}
                     >
+                      <Pencil className="ui-icon" aria-hidden="true" />
                       Edytuj
                     </button>
                     <button
@@ -111,6 +113,7 @@ export function AdminEventsSection({
                       onClick={() => startDuplicating(event)}
                       disabled={pendingEventAction !== null}
                     >
+                      <Copy className="ui-icon" aria-hidden="true" />
                       Duplikuj
                     </button>
                     <button
@@ -119,6 +122,7 @@ export function AdminEventsSection({
                       onClick={() => void removeEvent(event.id)}
                       disabled={pendingEventAction !== null}
                     >
+                      <Trash2 className="ui-icon" aria-hidden="true" />
                       {pendingEventAction === `delete-${event.id}` ? 'Usuwanie...' : 'Usuń'}
                     </button>
                   </div>

@@ -1,5 +1,17 @@
 import { useEffect, useState } from 'react'
 import type { Ref } from 'react'
+import {
+  Copy,
+  ExternalLink,
+  Heart,
+  MapPinPlus,
+  Navigation,
+  Pencil,
+  Plus,
+  Ticket,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useAuth } from '../auth/authContext'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
@@ -207,6 +219,7 @@ export function VenuePanel({
         </button>
         {shouldShowTicketLink && event.ticketUrl && (
           <a href={event.ticketUrl} target="_blank" rel="noreferrer">
+            <Ticket className="ui-icon" aria-hidden="true" />
             Kup bilet
           </a>
         )}
@@ -216,6 +229,7 @@ export function VenuePanel({
             type="button"
             onClick={() => startDuplicatingEvent(event)}
           >
+            <Copy className="ui-icon" aria-hidden="true" />
             Duplikuj event
           </button>
         )}
@@ -302,7 +316,7 @@ export function VenuePanel({
         onClick={onClose}
         aria-label="Zamknij panel miejsca"
       >
-        ×
+        <X className="ui-icon" aria-hidden="true" />
       </button>
 
       <div className="venue-panel-content">
@@ -341,7 +355,9 @@ export function VenuePanel({
               target="_blank"
               rel="noopener noreferrer"
             >
-              Nawiguj w Google Maps ↗
+              <Navigation className="ui-icon" aria-hidden="true" />
+              Nawiguj w Google Maps
+              <ExternalLink className="ui-icon" aria-hidden="true" />
               </a>
             </section>
             {user && (
@@ -352,7 +368,7 @@ export function VenuePanel({
                   aria-pressed={isVenueSaved}
                   onClick={() => void handleVenueSave()}
                 >
-                  <span aria-hidden="true">{isVenueSaved ? '♡' : '♡'}</span>
+                  <Heart className="ui-icon" aria-hidden="true" />
                   {isVenueSaved ? 'Polubione' : 'Polub'}
                 </button>
                 {userActionError && <p className="user-action-error" role="alert">{userActionError}</p>}
@@ -372,15 +388,19 @@ export function VenuePanel({
                 <span>Tryb admina</span>
                 <div>
                   <button type="button" onClick={() => setIsEditingVenue(true)}>
+                    <Pencil className="ui-icon" aria-hidden="true" />
                     Edytuj miejsce
                   </button>
                   <button type="button" onClick={startAddingEvent}>
+                    <Plus className="ui-icon" aria-hidden="true" />
                     Dodaj wydarzenie
                   </button>
                   <button type="button" onClick={onMoveVenue} disabled={isPinMoveActive}>
+                    <MapPinPlus className="ui-icon" aria-hidden="true" />
                     {isPinMoveActive ? 'Przesuwanie…' : 'Przesuń pinezkę'}
                   </button>
                   <button className="inline-admin-danger" type="button" onClick={onDeleteVenue}>
+                    <Trash2 className="ui-icon" aria-hidden="true" />
                     Usuń miejsce
                   </button>
                 </div>

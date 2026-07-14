@@ -1,5 +1,20 @@
 import { useEffect, useState } from 'react'
 import type { Ref } from 'react'
+import {
+  ArrowLeft,
+  BadgeCheck,
+  CalendarPlus,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  ExternalLink,
+  Heart,
+  Navigation,
+  Pencil,
+  Ticket,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useAuth } from '../auth/authContext'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
@@ -159,7 +174,7 @@ export function EventPanel({
         onClick={onClose}
         aria-label="Zamknij panel wydarzenia"
       >
-        ×
+        <X className="ui-icon" aria-hidden="true" />
       </button>
       {user && !isEditingEvent && !isDuplicatingEvent && (
         <button
@@ -170,7 +185,7 @@ export function EventPanel({
           disabled={pendingAction !== null}
           onClick={() => void handleUserAction('saved')}
         >
-          {eventAction.saved ? '♥' : '♡'}
+          <Heart className="ui-icon" aria-hidden="true" />
         </button>
       )}
 
@@ -199,7 +214,8 @@ export function EventPanel({
         ) : (
           <>
             <button className="event-back-button" type="button" onClick={onBack}>
-              ← Wróć do miejsca
+              <ArrowLeft className="ui-icon" aria-hidden="true" />
+              Wróć do miejsca
             </button>
 
             <header className="event-panel-header event-pass-hero">
@@ -223,7 +239,9 @@ export function EventPanel({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
+                  <Navigation className="ui-icon" aria-hidden="true" />
                   Nawiguj w Google Maps
+                  <ExternalLink className="ui-icon" aria-hidden="true" />
                 </a>
               </div>
             </header>
@@ -233,12 +251,15 @@ export function EventPanel({
                 <span>Tryb admina</span>
                 <div>
                   <button type="button" onClick={() => setIsEditingEvent(true)}>
+                    <Pencil className="ui-icon" aria-hidden="true" />
                     Edytuj event
                   </button>
                   <button type="button" onClick={() => setIsDuplicatingEvent(true)}>
+                    <Copy className="ui-icon" aria-hidden="true" />
                     Duplikuj event
                   </button>
                   <button className="inline-admin-danger" type="button" onClick={onDeleteEvent}>
+                    <Trash2 className="ui-icon" aria-hidden="true" />
                     Usuń event
                   </button>
                 </div>
@@ -255,6 +276,7 @@ export function EventPanel({
                     disabled={pendingAction !== null}
                     onClick={() => void handleUserAction('going')}
                   >
+                    <CalendarPlus className="ui-icon" aria-hidden="true" />
                     {pendingAction === 'going' ? 'Zapisywanie…' : 'Chcę iść'}
                   </button>
                 )}
@@ -267,6 +289,7 @@ export function EventPanel({
                     disabled={pendingAction !== null}
                     onClick={() => void handleUserAction('visited')}
                   >
+                    <BadgeCheck className="ui-icon" aria-hidden="true" />
                     {pendingAction === 'visited' ? 'Zapisywanie…' : 'Byłem'}
                   </button>
                 )}
@@ -279,6 +302,7 @@ export function EventPanel({
               <section className="future-actions future-actions-priority" aria-labelledby="future-actions-title">
                 <h2 id="future-actions-title">Bilety</h2>
                 <a className="event-action event-action-primary" href={event.ticketUrl} target="_blank" rel="noopener noreferrer">
+                  <Ticket className="ui-icon" aria-hidden="true" />
                   Kup bilet
                 </a>
               </section>
@@ -312,6 +336,11 @@ export function EventPanel({
                       setIsDescriptionExpanded((currentValue) => !currentValue)
                     }
                   >
+                    {isDescriptionExpanded ? (
+                      <ChevronUp className="ui-icon" aria-hidden="true" />
+                    ) : (
+                      <ChevronDown className="ui-icon" aria-hidden="true" />
+                    )}
                     {isDescriptionExpanded ? 'Zwiń opis' : 'Czytaj więcej'}
                   </button>
                 )}
@@ -325,7 +354,8 @@ export function EventPanel({
 
             {event.sourceUrl && (
               <a className="event-source-link" href={event.sourceUrl} target="_blank" rel="noreferrer">
-                Zobacz źródło wydarzenia ↗
+                Zobacz źródło wydarzenia
+                <ExternalLink className="ui-icon" aria-hidden="true" />
               </a>
             )}
 

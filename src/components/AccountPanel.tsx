@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { X } from 'lucide-react'
 import { useAuth } from '../auth/authContext'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
@@ -231,7 +232,7 @@ export function AccountPanel({
       onMouseDown={(event) => event.stopPropagation()}
     >
       <button className="account-panel-close" type="button" onClick={onClose} aria-label="Zamknij">
-        ×
+        <X className="ui-icon" aria-hidden="true" />
       </button>
 
       <div className="account-profile">

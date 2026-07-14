@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { ChevronDown, ChevronUp, Search } from 'lucide-react'
 import type {
   EventDateFilter,
   EventTypeFilter,
@@ -107,9 +108,7 @@ export function SearchBar({
     >
       <div className={`search-box${isOpen ? ' is-open' : ''}`}>
         <span className="visually-hidden">{searchLabel}</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" />
-        </svg>
+        <Search className="ui-icon" aria-hidden="true" />
         <input
           ref={searchInputRef}
           type="search"
@@ -140,9 +139,11 @@ export function SearchBar({
           onPointerDown={(event) => event.stopPropagation()}
           onClick={() => setIsOpen((current) => !current)}
         >
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path d="m6 8 4 4 4-4" />
-          </svg>
+          {isOpen ? (
+            <ChevronUp className="ui-icon" aria-hidden="true" />
+          ) : (
+            <ChevronDown className="ui-icon" aria-hidden="true" />
+          )}
           {hasActiveFilters && <span className="search-filter-indicator" />}
         </button>
       </div>

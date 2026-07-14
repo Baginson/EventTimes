@@ -516,6 +516,39 @@
   display: none;
 }
 
+.ui-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  stroke-width: 2;
+}
+
+.button,
+.navigation-link,
+.venue-save-action,
+.event-action,
+.admin-add-map-button,
+.admin-mode-disable {
+  grid-auto-flow: column;
+  gap: 7px;
+}
+
+.event-card > a,
+.event-card-admin-action,
+.event-back-button,
+.event-description-toggle,
+.event-source-link,
+.inline-admin-actions button,
+.admin-venue-actions button,
+.admin-move-notice button,
+.event-user-primary-actions > button,
+.ticketmaster-result-main a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
 .button,
 .navigation-link,
 .venue-save-action,

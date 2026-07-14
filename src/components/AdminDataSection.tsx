@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
+import { Database, Download, RotateCcw, Trash2, Upload } from 'lucide-react'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
 import {
@@ -199,6 +200,7 @@ export function AdminDataSection({
 
       <div className="admin-data-actions">
         <button className="button button-primary" type="button" onClick={exportData}>
+          <Download className="ui-icon" aria-hidden="true" />
           Eksportuj dane
         </button>
         <button
@@ -207,6 +209,7 @@ export function AdminDataSection({
           onClick={() => fileInputRef.current?.click()}
           disabled={isImportingLocal}
         >
+          <Upload className="ui-icon" aria-hidden="true" />
           {isImportingLocal ? 'Importowanie...' : 'Importuj dane'}
         </button>
         <input
@@ -232,6 +235,7 @@ export function AdminDataSection({
             onClick={() => firestoreFileInputRef.current?.click()}
             disabled={isImportingFirestore || isMovingToFirestore}
           >
+            <Upload className="ui-icon" aria-hidden="true" />
             {isImportingFirestore ? 'Importowanie...' : 'Importuj dane JSON do Firestore'}
           </button>
           <button
@@ -240,6 +244,7 @@ export function AdminDataSection({
             onClick={() => void moveCurrentDataToFirestore()}
             disabled={isImportingFirestore || isMovingToFirestore}
           >
+            <Database className="ui-icon" aria-hidden="true" />
             {isMovingToFirestore ? 'Zapisywanie...' : 'Przenieś aktualne dane do Firestore'}
           </button>
           <input
@@ -257,9 +262,11 @@ export function AdminDataSection({
         <p>Przed usunięciem własnych danych warto wykonać eksport.</p>
         <div>
           <button className="button button-secondary" type="button" onClick={resetData}>
+            <RotateCcw className="ui-icon" aria-hidden="true" />
             Resetuj do danych startowych
           </button>
           <button className="button admin-danger-button" type="button" onClick={clearData}>
+            <Trash2 className="ui-icon" aria-hidden="true" />
             Wyczyść lokalne dane
           </button>
         </div>

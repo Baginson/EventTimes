@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import { X } from 'lucide-react'
 import { getAuthErrorMessage } from '../auth/authErrors'
 import { useAuth } from '../auth/authContext'
 
@@ -106,7 +107,7 @@ export function AuthModal() {
         onMouseDown={(event) => event.stopPropagation()}
       >
         <button className="auth-modal-close" type="button" onClick={closeAuthModal} aria-label="Zamknij">
-          ×
+          <X className="ui-icon" aria-hidden="true" />
         </button>
 
         <span className="auth-modal-kicker">Event Times</span>
