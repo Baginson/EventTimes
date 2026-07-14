@@ -1,3 +1,4 @@
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import type {
   EventDateFilter,
   EventTypeFilter,
@@ -205,6 +206,7 @@ export function SearchDropdown({
   onVenueSelect,
   onEventSelect,
 }: SearchDropdownProps) {
+  const shouldReduceMotion = useReducedMotion()
   const normalizedQuery = normalize(query)
   const hasQuery = normalizedQuery.length >= 2
   const dateRange = getDateFilterRange(
@@ -275,45 +277,71 @@ export function SearchDropdown({
         results.findIndex((candidate) => candidate.event.id === result.event.id) === index,
     ),
   )
+  const modePanelMotion = shouldReduceMotion
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.12 },
+      }
+    : {
+        initial: {
+          opacity: 0,
+          transform: 'translateY(6px)',
+        },
+        animate: {
+          opacity: 1,
+          transform: 'translateY(0)',
+        },
+        exit: {
+          opacity: 0,
+          transform: 'translateY(4px)',
+        },
+        transition: { duration: 0.18, ease: [0.2, 0.8, 0.2, 1] as const },
+      }
 
   return (
     <div className="search-dropdown">
       <div className="search-discovery-strip" aria-hidden="true">
         <strong>Odkrywaj</strong>
-        <span>Miejsca / wydarzenia / historia miasta</span>
+        <span>Miejsca i wydarzenia</span>
       </div>
       <SearchModeTabs value={mode} onChange={onModeChange} />
 
-      <div className="search-filters">
-        <CityFilter value={selectedCity} onChange={onCityChange} />
-        {mode === 'venues' ? (
-          <VenueTypeFilter value={venueType} onChange={onVenueTypeChange} />
-        ) : (
-          <EventFilters
-            eventType={eventType}
-            dateFilter={dateFilter}
-            customDateMode={customDateMode}
-            customDate={customDate}
-            customDateFrom={customDateFrom}
-            customDateTo={customDateTo}
-            onEventTypeChange={onEventTypeChange}
-            onDateFilterChange={onDateFilterChange}
-            onCustomDateModeChange={onCustomDateModeChange}
-            onCustomDateChange={onCustomDateChange}
-            onCustomDateFromChange={onCustomDateFromChange}
-            onCustomDateToChange={onCustomDateToChange}
-          />
-        )}
-      </div>
+      <AnimatePresence initial={false} mode="wait">
+        <motion.div className="search-mode-panel" key={mode} {...modePanelMotion}>
+          <div className="search-filters">
+            <CityFilter value={selectedCity} onChange={onCityChange} />
+            {mode === 'venues' ? (
+              <VenueTypeFilter value={venueType} onChange={onVenueTypeChange} />
+            ) : (
+              <EventFilters
+                eventType={eventType}
+                dateFilter={dateFilter}
+                customDateMode={customDateMode}
+                customDate={customDate}
+                customDateFrom={customDateFrom}
+                customDateTo={customDateTo}
+                onEventTypeChange={onEventTypeChange}
+                onDateFilterChange={onDateFilterChange}
+                onCustomDateModeChange={onCustomDateModeChange}
+                onCustomDateChange={onCustomDateChange}
+                onCustomDateFromChange={onCustomDateFromChange}
+                onCustomDateToChange={onCustomDateToChange}
+              />
+            )}
+          </div>
 
-      <SearchResults
-        mode={mode}
-        isFilteringActive={isFilteringActive}
-        venues={visibleVenueResults}
-        events={visibleEventResults}
-        onVenueSelect={onVenueSelect}
-        onEventSelect={onEventSelect}
-      />
+          <SearchResults
+            mode={mode}
+            isFilteringActive={isFilteringActive}
+            venues={visibleVenueResults}
+            events={visibleEventResults}
+            onVenueSelect={onVenueSelect}
+            onEventSelect={onEventSelect}
+          />
+        </motion.div>
+      </AnimatePresence>
     </div>
   )
 }

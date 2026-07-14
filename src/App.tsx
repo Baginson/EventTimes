@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { useAuth } from './auth/authContext'
 import { AccountPanel } from './components/AccountPanel'
 import { AuthModal } from './components/AuthModal'
@@ -59,6 +60,7 @@ function App() {
     useState<Venue['coordinates'] | null>(null)
   const [isAccountPanelOpen, setIsAccountPanelOpen] = useState(false)
   const [mobileSearchFocusRequest, setMobileSearchFocusRequest] = useState(0)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const rightPanelRef = useRef<HTMLElement>(null)
   const movingVenueId = mapMode.type === 'movingVenue' ? mapMode.venueId : null
   const isAddingVenue = mapMode.type === 'addingVenue'
@@ -198,13 +200,6 @@ function App() {
   function closePanel() {
     setSelectedVenue(null)
     setSelectedEvent(null)
-  }
-
-  function showMapOnly() {
-    setIsAdminOpen(false)
-    setIsAccountPanelOpen(false)
-    closePanel()
-    cancelMapMode()
   }
 
   function focusMobileSearch() {
@@ -510,6 +505,7 @@ function App() {
         onEventSelect={selectEvent}
         onAdminToggle={toggleAdminPanel}
         searchFocusRequest={mobileSearchFocusRequest}
+        onSearchOpenChange={setIsSearchOpen}
         onOpenProfile={() => {
           closePanel()
           setIsAdminOpen(false)
@@ -593,35 +589,39 @@ function App() {
           />
         )}
 
-        {!isAdminOpen && !isAccountPanelOpen && selectedVenue && selectedEvent ? (
-          <EventPanel
-            event={selectedEvent}
-            venue={selectedVenue}
-            venues={venues}
-            isAdminMode={isAdmin && isAdminMode}
-            onBack={() => setSelectedEvent(null)}
-            onAddEvent={addEventAndSelect}
-            onUpdateEvent={updateEvent}
-            onDeleteEvent={() => deleteEvent(selectedEvent.id)}
-            onClose={closePanel}
-            panelRef={rightPanelRef}
-          />
-        ) : !isAdminOpen && !isAccountPanelOpen && selectedVenue ? (
-          <VenuePanel
-            venue={selectedVenue}
-            events={selectedVenueEvents}
-            isAdminMode={isAdmin && isAdminMode}
-            isPinMoveActive={movingVenueId === selectedVenue.id}
-            onEventSelect={(event) => selectEvent(event, selectedVenue)}
-            venues={venues}
-            onAddEvent={addEvent}
-            onUpdateVenue={updateVenue}
-            onDeleteVenue={() => deleteVenue(selectedVenue.id)}
-            onMoveVenue={() => startMovingVenue(selectedVenue.id)}
-            onClose={closePanel}
-            panelRef={rightPanelRef}
-          />
-        ) : null}
+        <AnimatePresence initial={false} mode="sync">
+          {!isAdminOpen && !isAccountPanelOpen && selectedVenue && selectedEvent ? (
+            <EventPanel
+              key={`event-${selectedEvent.id}`}
+              event={selectedEvent}
+              venue={selectedVenue}
+              venues={venues}
+              isAdminMode={isAdmin && isAdminMode}
+              onBack={() => setSelectedEvent(null)}
+              onAddEvent={addEventAndSelect}
+              onUpdateEvent={updateEvent}
+              onDeleteEvent={() => deleteEvent(selectedEvent.id)}
+              onClose={closePanel}
+              panelRef={rightPanelRef}
+            />
+          ) : !isAdminOpen && !isAccountPanelOpen && selectedVenue ? (
+            <VenuePanel
+              key={`venue-${selectedVenue.id}`}
+              venue={selectedVenue}
+              events={selectedVenueEvents}
+              isAdminMode={isAdmin && isAdminMode}
+              isPinMoveActive={movingVenueId === selectedVenue.id}
+              onEventSelect={(event) => selectEvent(event, selectedVenue)}
+              venues={venues}
+              onAddEvent={addEvent}
+              onUpdateVenue={updateVenue}
+              onDeleteVenue={() => deleteVenue(selectedVenue.id)}
+              onMoveVenue={() => startMovingVenue(selectedVenue.id)}
+              onClose={closePanel}
+              panelRef={rightPanelRef}
+            />
+          ) : null}
+        </AnimatePresence>
 
         <MobileBottomBar
           isAdmin={isAdmin}
@@ -630,10 +630,10 @@ function App() {
             selectedVenue ||
               isAdminOpen ||
               isAccountPanelOpen ||
+              isSearchOpen ||
               mapMode.type !== 'normal',
           )}
           onSearch={focusMobileSearch}
-          onMap={showMapOnly}
           onProfile={openProfileFromMobile}
           onAdmin={toggleAdminPanel}
         />

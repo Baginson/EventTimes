@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Ref } from 'react'
+import { motion } from 'framer-motion'
 import {
   ArrowLeft,
   BadgeCheck,
@@ -18,6 +19,7 @@ import {
 import { useAuth } from '../auth/authContext'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import { usePanelMotion } from '../hooks/usePanelMotion'
 import {
   getEventAction,
   toggleEventAction,
@@ -83,15 +85,18 @@ export function EventPanel({
     saved: false,
   })
   const [pendingAction, setPendingAction] = useState<EventActionKey | null>(null)
+  const [eventHeartAnimationId, setEventHeartAnimationId] = useState(0)
   const [userActionError, setUserActionError] = useState('')
   const hasValidEventDate = isEventDateValid(event)
   const eventStatus = getEventStatus(event)
   const shouldShowTicketAction = Boolean(event.ticketUrl && eventStatus !== 'past')
+  const panelMotion = usePanelMotion()
 
   useEffect(() => {
     setIsEditingEvent(false)
     setIsDuplicatingEvent(false)
     setIsDescriptionExpanded(false)
+    setEventHeartAnimationId(0)
   }, [event.id])
 
   useEffect(() => {
@@ -105,6 +110,7 @@ export function EventPanel({
       saved: false,
     }
     setEventAction(emptyAction)
+    setEventHeartAnimationId(0)
     setUserActionError('')
 
     if (user) {
@@ -151,6 +157,10 @@ export function EventPanel({
       setPendingAction(key)
       const nextAction = await toggleEventAction(user.uid, event, key, eventAction)
       setEventAction(nextAction)
+
+      if (key === 'saved') {
+        setEventHeartAnimationId((animationId) => animationId + 1)
+      }
     } catch (error) {
       setUserActionError(
         error instanceof Error ? error.message : 'Nie udało się zapisać akcji.',
@@ -161,33 +171,46 @@ export function EventPanel({
   }
 
   return (
-    <aside
+    <motion.aside
       ref={panelRef}
       className="venue-panel event-panel"
       aria-label={`Szczegóły wydarzenia: ${event.name}`}
+      {...panelMotion}
       onPointerDown={(event) => event.stopPropagation()}
     >
       <div className="venue-panel-handle" aria-hidden="true" />
-      <button
-        className="venue-panel-close"
-        type="button"
-        onClick={onClose}
-        aria-label="Zamknij panel wydarzenia"
-      >
-        <X className="ui-icon" aria-hidden="true" />
-      </button>
-      {user && !isEditingEvent && !isDuplicatingEvent && (
+      <div className="venue-panel-controls" aria-label="Akcje panelu wydarzenia">
+        {user && !isEditingEvent && !isDuplicatingEvent && (
+          <button
+            className={`venue-panel-icon-action event-like-floating like-heart-button${
+              eventAction.saved ? ' is-active is-liked' : ''
+            }${
+              eventHeartAnimationId > 0 ? ' is-animating' : ''
+            }`}
+            type="button"
+            aria-label={
+              eventAction.saved ? 'Usuń wydarzenie z polubionych' : 'Polub wydarzenie'
+            }
+            aria-pressed={eventAction.saved}
+            disabled={pendingAction !== null}
+            onClick={() => void handleUserAction('saved')}
+          >
+            <Heart
+              key={`event-heart-${eventHeartAnimationId}`}
+              className={`ui-icon like-heart-icon${eventAction.saved ? ' is-liked' : ''}`}
+              aria-hidden="true"
+            />
+          </button>
+        )}
         <button
-          className={`event-like-floating${eventAction.saved ? ' is-active' : ''}`}
+          className="venue-panel-close"
           type="button"
-          aria-label={eventAction.saved ? 'Usuń z polubionych' : 'Polub wydarzenie'}
-          aria-pressed={eventAction.saved}
-          disabled={pendingAction !== null}
-          onClick={() => void handleUserAction('saved')}
+          onClick={onClose}
+          aria-label="Zamknij panel wydarzenia"
         >
-          <Heart className="ui-icon" aria-hidden="true" />
+          <X className="ui-icon" aria-hidden="true" />
         </button>
-      )}
+      </div>
 
       <div className="venue-panel-content">
         {isEditingEvent || isDuplicatingEvent ? (
@@ -298,17 +321,6 @@ export function EventPanel({
               </section>
             )}
 
-            {shouldShowTicketAction && event.ticketUrl && (
-              <section className="future-actions future-actions-priority" aria-labelledby="future-actions-title">
-                <h2 id="future-actions-title">Bilety</h2>
-                <a className="event-action event-action-primary" href={event.ticketUrl} target="_blank" rel="noopener noreferrer">
-                  <Ticket className="ui-icon" aria-hidden="true" />
-                  Kup bilet
-                </a>
-              </section>
-            )}
-
-
             {eventDescription ? (
               <section className="event-description" aria-labelledby="event-description-title">
                 <h2 id="event-description-title">O wydarzeniu</h2>
@@ -359,9 +371,19 @@ export function EventPanel({
               </a>
             )}
 
+            {shouldShowTicketAction && event.ticketUrl && (
+              <section className="future-actions future-actions-priority event-panel-footer-cta" aria-labelledby="future-actions-title">
+                <h2 id="future-actions-title">Bilety</h2>
+                <a className="event-action event-action-primary" href={event.ticketUrl} target="_blank" rel="noopener noreferrer">
+                  <Ticket className="ui-icon" aria-hidden="true" />
+                  Kup bilet
+                </a>
+              </section>
+            )}
+
           </>
         )}
       </div>
-    </aside>
+    </motion.aside>
   )
 }

@@ -7,7 +7,11 @@ type SearchModeTabsProps = {
 
 export function SearchModeTabs({ value, onChange }: SearchModeTabsProps) {
   return (
-    <div className="search-mode-tabs" role="tablist" aria-label="Tryb wyszukiwania">
+    <div
+      className={`search-mode-tabs${value === 'events' ? ' is-events' : ''}`}
+      role="tablist"
+      aria-label="Tryb wyszukiwania"
+    >
       <button
         type="button"
         role="tab"
@@ -26,6 +30,7 @@ export function SearchModeTabs({ value, onChange }: SearchModeTabsProps) {
       >
         Wydarzenia
       </button>
+      <span className="search-mode-glider" aria-hidden="true" />
     </div>
   )
 }

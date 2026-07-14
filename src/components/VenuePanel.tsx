@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Ref } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   Copy,
   ExternalLink,
@@ -15,6 +16,7 @@ import {
 import { useAuth } from '../auth/authContext'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import { usePanelMotion } from '../hooks/usePanelMotion'
 import { getVenueAction, toggleVenueSaved } from '../services/userActionService'
 import {
   formatEventDate,
@@ -98,7 +100,10 @@ export function VenuePanel({
     past: false,
   })
   const [isVenueSaved, setIsVenueSaved] = useState(false)
+  const [venueHeartAnimationId, setVenueHeartAnimationId] = useState(0)
   const [userActionError, setUserActionError] = useState('')
+  const panelMotion = usePanelMotion()
+  const shouldReduceMotion = useReducedMotion()
 
   useEffect(() => {
     setIsEditingVenue(false)
@@ -114,6 +119,7 @@ export function VenuePanel({
   useEffect(() => {
     let active = true
     setIsVenueSaved(false)
+    setVenueHeartAnimationId(0)
     setUserActionError('')
 
     if (user) {
@@ -177,6 +183,7 @@ export function VenuePanel({
 
       const action = await toggleVenueSaved(user.uid, venue.id, isVenueSaved)
       setIsVenueSaved(action.saved)
+      setVenueHeartAnimationId((animationId) => animationId + 1)
     } catch (error) {
       setUserActionError(
         error instanceof Error ? error.message : 'Nie udało się zapisać miejsca.',
@@ -273,11 +280,20 @@ export function VenuePanel({
           </div>
         )}
 
-        {isExpanded && (
-          <ul className="event-list">
+        <AnimatePresence initial={false}>
+          {isExpanded && (
+          <motion.ul
+            className="event-list"
+            style={{ overflow: 'hidden' }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+            animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, height: 'auto' }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+            transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] as const }}
+          >
             {sectionEvents.map((event) => renderEventCard(event, variant))}
-          </ul>
-        )}
+          </motion.ul>
+          )}
+        </AnimatePresence>
       </section>
     )
   }
@@ -303,21 +319,43 @@ export function VenuePanel({
   const singleStatusEventSection = statusEventSections[0]
 
   return (
-    <aside
+    <motion.aside
       ref={panelRef}
       className="venue-panel"
       aria-label={`Informacje o miejscu: ${venueDisplayName}`}
+      {...panelMotion}
       onPointerDown={(event) => event.stopPropagation()}
     >
       <div className="venue-panel-handle" aria-hidden="true" />
-      <button
-        className="venue-panel-close"
-        type="button"
-        onClick={onClose}
-        aria-label="Zamknij panel miejsca"
-      >
-        <X className="ui-icon" aria-hidden="true" />
-      </button>
+      <div className="venue-panel-controls" aria-label="Akcje panelu miejsca">
+        {user && !isEditingVenue && (
+          <button
+            className={`venue-panel-icon-action venue-panel-like like-heart-button${
+              isVenueSaved ? ' is-active is-liked' : ''
+            }${
+              venueHeartAnimationId > 0 ? ' is-animating' : ''
+            }`}
+            type="button"
+            aria-label={isVenueSaved ? 'Usuń miejsce z polubionych' : 'Polub miejsce'}
+            aria-pressed={isVenueSaved}
+            onClick={() => void handleVenueSave()}
+          >
+            <Heart
+              key={`venue-heart-${venueHeartAnimationId}`}
+              className={`ui-icon like-heart-icon${isVenueSaved ? ' is-liked' : ''}`}
+              aria-hidden="true"
+            />
+          </button>
+        )}
+        <button
+          className="venue-panel-close"
+          type="button"
+          onClick={onClose}
+          aria-label="Zamknij panel miejsca"
+        >
+          <X className="ui-icon" aria-hidden="true" />
+        </button>
+      </div>
 
       <div className="venue-panel-content">
         {isEditingVenue ? (
@@ -360,20 +398,7 @@ export function VenuePanel({
               <ExternalLink className="ui-icon" aria-hidden="true" />
               </a>
             </section>
-            {user && (
-              <div className="venue-action-row">
-                <button
-                  className={`venue-save-action${isVenueSaved ? ' is-active' : ''}`}
-                  type="button"
-                  aria-pressed={isVenueSaved}
-                  onClick={() => void handleVenueSave()}
-                >
-                  <Heart className="ui-icon" aria-hidden="true" />
-                  {isVenueSaved ? 'Polubione' : 'Polub'}
-                </button>
-                {userActionError && <p className="user-action-error" role="alert">{userActionError}</p>}
-              </div>
-            )}
+            {userActionError && <p className="user-action-error" role="alert">{userActionError}</p>}
             {venue.description.trim() ? (
               <section className="venue-story">
                 <span>O miejscu</span>
@@ -474,6 +499,6 @@ export function VenuePanel({
           </>
         )}
       </div>
-    </aside>
+    </motion.aside>
   )
 }

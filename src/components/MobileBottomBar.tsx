@@ -1,11 +1,10 @@
-import { Map, Search, Shield, User } from 'lucide-react'
+import { Search, Shield, User } from 'lucide-react'
 
 type MobileBottomBarProps = {
   isAdmin: boolean
   isAdminMode: boolean
   isHidden: boolean
   onSearch: () => void
-  onMap: () => void
   onProfile: () => void
   onAdmin: () => void
 }
@@ -15,7 +14,6 @@ export function MobileBottomBar({
   isAdminMode,
   isHidden,
   onSearch,
-  onMap,
   onProfile,
   onAdmin,
 }: MobileBottomBarProps) {
@@ -29,10 +27,6 @@ export function MobileBottomBar({
       <button type="button" onClick={onSearch} aria-label="Otwórz wyszukiwarkę">
         <Search aria-hidden="true" />
         <span>Szukaj</span>
-      </button>
-      <button type="button" onClick={onMap} aria-label="Wróć do mapy">
-        <Map aria-hidden="true" />
-        <span>Mapa</span>
       </button>
       <button type="button" onClick={onProfile} aria-label="Otwórz profil">
         <User aria-hidden="true" />

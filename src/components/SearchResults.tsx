@@ -1,3 +1,4 @@
+import { CalendarDays, MapPin } from 'lucide-react'
 import type { SearchMode } from '../data/searchFilters'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
@@ -24,8 +25,6 @@ type EventResultGroup = {
   title: string
   results: EventSearchResult[]
 }
-
-const brandMarkUrl = `${import.meta.env.BASE_URL}brand/event-times-mark.png`
 
 function sortAscendingByStart(first: EventSearchResult, second: EventSearchResult) {
   return getEventStartTime(first.event) - getEventStartTime(second.event)
@@ -85,9 +84,8 @@ export function SearchResults({
   if (!isFilteringActive) {
     return (
       <div className="empty-state search-empty">
-        <img className="empty-state-brand-mark" src={brandMarkUrl} alt="Event Times" />
-        <strong>Zacznij filtrować</strong>
-        <p>Wybierz typ, datę albo wpisz szukaną frazę.</p>
+        <strong>Zacznij szukać</strong>
+        <p>Wpisz nazwę, wybierz typ albo ustaw datę.</p>
       </div>
     )
   }
@@ -95,12 +93,11 @@ export function SearchResults({
   if (!hasResults) {
     return (
       <div className="empty-state search-empty">
-        <img className="empty-state-brand-mark" src={brandMarkUrl} alt="Event Times" />
         <strong>Brak wyników</strong>
         <p>
           {mode === 'events'
-            ? 'Brak wydarzeń dla wybranych filtrów.'
-            : 'Brak wyników dla wybranych filtrów.'}
+            ? 'Zmień frazę, typ wydarzenia albo datę.'
+            : 'Zmień frazę, miasto albo typ miejsca.'}
         </p>
       </div>
     )
@@ -118,14 +115,13 @@ export function SearchResults({
               <li key={venue.id}>
                 <button type="button" onClick={() => onVenueSelect(venue)}>
                   <span className="result-icon result-icon-venue" aria-hidden="true">
-                    {venue.venueType.slice(0, 2)}
+                    <MapPin className="ui-icon" />
                   </span>
-                  <span>
+                  <span className="search-result-copy">
                     <strong>{getVenueDisplayName(venue)}</strong>
-                    <small>
-                      {venue.venueType} · {formatVenueAddress(venue)}
-                    </small>
+                    <small>{formatVenueAddress(venue)}</small>
                   </span>
+                  <span className="search-result-chip">{venue.venueType}</span>
                 </button>
               </li>
             ))}
@@ -149,14 +145,15 @@ export function SearchResults({
                 >
                   <button type="button" onClick={() => onEventSelect(event, venue)}>
                     <span className="result-icon result-icon-event" aria-hidden="true">
-                      {formatEventDate(event.startDate)}
+                      <CalendarDays className="ui-icon" />
                     </span>
-                    <span>
+                    <span className="search-result-copy">
                       <strong>{event.name}</strong>
                       <small>
-                        {event.eventType} · {getVenueDisplayName(venue)}
+                        {formatEventDate(event.startDate)} · {getVenueDisplayName(venue)}
                       </small>
                     </span>
+                    <span className="search-result-chip">{event.eventType}</span>
                   </button>
                 </li>
               ))}

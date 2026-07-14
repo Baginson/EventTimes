@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useReducedMotion } from 'framer-motion'
 import { divIcon } from 'leaflet'
 import { MapContainer, Marker, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet'
 import type { Venue } from '../data/mockVenues'
@@ -47,6 +48,7 @@ function MapFocusHandler({
   coordinates?: Venue['coordinates'] | null
 }) {
   const map = useMap()
+  const shouldReduceMotion = useReducedMotion()
 
   useEffect(() => {
     if (!coordinates) {
@@ -54,9 +56,9 @@ function MapFocusHandler({
     }
 
     map.setView([coordinates.lat, coordinates.lng], Math.max(map.getZoom(), 16), {
-      animate: true,
+      animate: !shouldReduceMotion,
     })
-  }, [coordinates, map])
+  }, [coordinates, map, shouldReduceMotion])
 
   return null
 }

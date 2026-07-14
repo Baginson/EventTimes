@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, ChevronUp, Search } from 'lucide-react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { ArrowRight, ChevronDown, Search } from 'lucide-react'
 import type {
   EventDateFilter,
   EventTypeFilter,
@@ -19,6 +20,7 @@ type SearchBarProps = {
   onVenueSelect: (venue: Venue) => void
   onEventSelect: (event: EventTimesEvent, venue: Venue) => void
   focusRequest?: number
+  onOpenChange?: (isOpen: boolean) => void
 }
 
 export function SearchBar({
@@ -29,6 +31,7 @@ export function SearchBar({
   onVenueSelect,
   onEventSelect,
   focusRequest = 0,
+  onOpenChange,
 }: SearchBarProps) {
   const [mode, setMode] = useState<SearchMode>('venues')
   const [query, setQuery] = useState('')
@@ -40,6 +43,7 @@ export function SearchBar({
   const [customDateFrom, setCustomDateFrom] = useState('')
   const [customDateTo, setCustomDateTo] = useState('')
   const [isOpen, setIsOpen] = useState(false)
+  const shouldReduceMotion = useReducedMotion()
   const searchAreaRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -78,6 +82,10 @@ export function SearchBar({
     searchInputRef.current?.focus()
   }, [focusRequest])
 
+  useEffect(() => {
+    onOpenChange?.(isOpen)
+  }, [isOpen, onOpenChange])
+
   function changeMode(nextMode: SearchMode) {
     setMode(nextMode)
     setQuery('')
@@ -100,6 +108,34 @@ export function SearchBar({
 
   const searchLabel = mode === 'venues' ? 'Szukaj miejsc' : 'Szukaj wydarzeń'
 
+  const searchKicker =
+    mode === 'venues' ? `Miejsca w ${selectedCity}` : `Wydarzenia w ${selectedCity}`
+  const hasQuery = query.trim().length > 0
+  const dropdownMotion = shouldReduceMotion
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1, pointerEvents: 'auto' },
+        exit: { opacity: 0, pointerEvents: 'none' },
+        transition: { duration: 0.12 },
+      }
+    : {
+        initial: {
+          opacity: 0,
+          transform: 'translateY(-6px) scaleY(0.98)',
+        },
+        animate: {
+          opacity: 1,
+          pointerEvents: 'auto',
+          transform: 'translateY(0) scaleY(1)',
+        },
+        exit: {
+          opacity: 0,
+          pointerEvents: 'none',
+          transform: 'translateY(-4px) scaleY(0.985)',
+        },
+        transition: { duration: 0.22, ease: [0.2, 0.8, 0.2, 1] as const },
+      }
+
   return (
     <div
       className={`search-area${isOpen ? ' is-open' : ''}`}
@@ -108,28 +144,36 @@ export function SearchBar({
     >
       <div className={`search-box${isOpen ? ' is-open' : ''}`}>
         <span className="visually-hidden">{searchLabel}</span>
-        <Search className="ui-icon" aria-hidden="true" />
-        <input
-          ref={searchInputRef}
-          type="search"
-          value={query}
-          placeholder={searchLabel}
-          aria-label={searchLabel}
-          aria-expanded={isOpen}
-          aria-controls="search-dropdown"
-          onFocus={() => setIsOpen(true)}
-          onClick={() => setIsOpen(true)}
-          onChange={(event) => {
-            setQuery(event.target.value)
-            setIsOpen(true)
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') {
-              setIsOpen(false)
-              event.currentTarget.blur()
-            }
-          }}
-        />
+        <span className={`search-leading-icon${hasQuery ? ' has-query' : ''}`} aria-hidden="true">
+          <Search className="ui-icon search-leading-search" />
+          <ArrowRight className="ui-icon search-leading-action" />
+        </span>
+        <span className="search-input-shell">
+          <span className="search-kicker" aria-hidden="true">
+            {searchKicker}
+          </span>
+          <input
+            ref={searchInputRef}
+            type="search"
+            value={query}
+            placeholder={searchLabel}
+            aria-label={searchLabel}
+            aria-expanded={isOpen}
+            aria-controls="search-dropdown"
+            onFocus={() => setIsOpen(true)}
+            onClick={() => setIsOpen(true)}
+            onChange={(event) => {
+              setQuery(event.target.value)
+              setIsOpen(true)
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                setIsOpen(false)
+                event.currentTarget.blur()
+              }
+            }}
+          />
+        </span>
         <button
           className="search-chevron"
           type="button"
@@ -139,17 +183,19 @@ export function SearchBar({
           onPointerDown={(event) => event.stopPropagation()}
           onClick={() => setIsOpen((current) => !current)}
         >
-          {isOpen ? (
-            <ChevronUp className="ui-icon" aria-hidden="true" />
-          ) : (
-            <ChevronDown className="ui-icon" aria-hidden="true" />
-          )}
+          <ChevronDown className="ui-icon" aria-hidden="true" />
           {hasActiveFilters && <span className="search-filter-indicator" />}
         </button>
       </div>
 
-      {isOpen && (
-        <div id="search-dropdown" onPointerDown={(event) => event.stopPropagation()}>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+        <motion.div
+          id="search-dropdown"
+          key="search-dropdown"
+          {...dropdownMotion}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
           <SearchDropdown
             mode={mode}
             query={query}
@@ -175,8 +221,9 @@ export function SearchBar({
             onVenueSelect={selectVenue}
             onEventSelect={selectEvent}
           />
-        </div>
-      )}
+        </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
