@@ -13,6 +13,12 @@ import { SearchModeTabs } from './SearchModeTabs'
 import { SearchResults } from './SearchResults'
 import { VenueTypeFilter } from './VenueTypeFilter'
 import {
+  limitSearchResults,
+  matchesTokenPrefix,
+  normalizeSearchText,
+  uniqueById,
+} from '../features/search/searchModel'
+import {
   getEventStartTime,
   hasExplicitEventTime,
   parseEventDate,
@@ -51,21 +57,11 @@ type DateRange = {
 }
 
 function normalize(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLocaleLowerCase('pl-PL')
-    .replace(/ł/g, 'l')
-    .trim()
+  return normalizeSearchText(value)
 }
 
 function matchesName(name: string, query: string) {
-  const nameTokens = normalize(name).split(/[^a-z0-9]+/).filter(Boolean)
-  const queryTokens = normalize(query).split(/[^a-z0-9]+/).filter(Boolean)
-
-  return queryTokens.every((queryToken) =>
-    nameTokens.some((nameToken) => nameToken.startsWith(queryToken)),
-  )
+  return matchesTokenPrefix(name, query)
 }
 
 function startOfLocalDay(date: Date) {
@@ -272,6 +268,13 @@ export function SearchDropdown({
 
   const isFilteringActive =
     mode === 'venues' ? hasActiveVenueFiltering : hasActiveEventFiltering
+  const visibleVenueResults = limitSearchResults(uniqueById(venueResults))
+  const visibleEventResults = limitSearchResults(
+    eventResults.filter(
+      (result, index, results) =>
+        results.findIndex((candidate) => candidate.event.id === result.event.id) === index,
+    ),
+  )
 
   return (
     <div className="search-dropdown">
@@ -306,8 +309,8 @@ export function SearchDropdown({
       <SearchResults
         mode={mode}
         isFilteringActive={isFilteringActive}
-        venues={venueResults}
-        events={eventResults}
+        venues={visibleVenueResults}
+        events={visibleEventResults}
         onVenueSelect={onVenueSelect}
         onEventSelect={onEventSelect}
       />

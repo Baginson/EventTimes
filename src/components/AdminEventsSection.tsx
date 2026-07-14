@@ -4,11 +4,14 @@ import type { Venue } from '../data/mockVenues'
 import { formatEventDate } from '../utils/eventStatus'
 import { getVenueDisplayName } from '../utils/venueDisplay'
 import { EventForm } from './EventForm'
+import { TicketmasterImportSection } from './TicketmasterImportSection'
+import type { VenueFormDraft } from './VenueForm'
 
 type AdminEventsSectionProps = {
   events: EventTimesEvent[]
   venues: Venue[]
   onAddEvent: (event: EventTimesEvent) => void | Promise<void>
+  onCreateVenueDraft: (draft: VenueFormDraft) => void
   onUpdateEvent: (event: EventTimesEvent) => void | Promise<void>
   onDeleteEvent: (eventId: string) => boolean | Promise<boolean>
 }
@@ -17,6 +20,7 @@ export function AdminEventsSection({
   events,
   venues,
   onAddEvent,
+  onCreateVenueDraft,
   onUpdateEvent,
   onDeleteEvent,
 }: AdminEventsSectionProps) {
@@ -161,6 +165,13 @@ export function AdminEventsSection({
           onCancel={editingEventId || duplicatingEventId ? resetForm : undefined}
         />
       </section>
+
+      <TicketmasterImportSection
+        events={events}
+        venues={venues}
+        onAddEvent={onAddEvent}
+        onCreateVenueDraft={onCreateVenueDraft}
+      />
     </div>
   )
 }

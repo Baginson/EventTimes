@@ -6,6 +6,7 @@ import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
 import { AdminDataSection } from './AdminDataSection'
 import { AdminEventsSection } from './AdminEventsSection'
 import { VenueForm } from './VenueForm'
+import type { VenueFormDraft } from './VenueForm'
 
 type AdminPanelProps = {
   venues: Venue[]
@@ -65,11 +66,15 @@ export function AdminPanel({
   const [successMessage, setSuccessMessage] = useState('')
   const [pendingVenueAction, setPendingVenueAction] = useState<string | null>(null)
   const [isRefreshingData, setIsRefreshingData] = useState(false)
+  const [prefilledVenueDraft, setPrefilledVenueDraft] = useState<VenueFormDraft | null>(null)
+  const [prefilledVenueDraftKey, setPrefilledVenueDraftKey] = useState(0)
   const editingVenue = venues.find((venue) => venue.id === editingVenueId)
   const isAddingVenueDraft = isAddingVenue && draftVenueCoordinates !== null
+  const isTicketmasterVenueDraft = prefilledVenueDraft !== null && !editingVenueId
 
   function startEditing(venue: Venue) {
     onCancelMapMode()
+    setPrefilledVenueDraft(null)
     setEditingVenueId(venue.id)
     setSuccessMessage('')
   }
@@ -86,9 +91,67 @@ export function AdminPanel({
 
   function startVenueAdd() {
     cancelEditing()
+    setPrefilledVenueDraft(null)
     setActiveTab('venues')
     setSuccessMessage('')
     onStartVenueAdd()
+  }
+
+  function openCreateVenueForm(prefillVenueData: VenueFormDraft) {
+    onCancelMapMode()
+    setEditingVenueId(null)
+    setPrefilledVenueDraft(prefillVenueData)
+    setPrefilledVenueDraftKey((current) => current + 1)
+    setActiveTab('venues')
+    setSuccessMessage('Uzupełniono formularz danymi z Ticketmaster. Sprawdź dane przed zapisem.')
+  }
+
+  function normalizeForMatch(value?: string) {
+    return (value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLocaleLowerCase('pl-PL')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+  }
+
+  function getDistanceMeters(
+    first: Venue['coordinates'],
+    second: Venue['coordinates'],
+  ) {
+    const latMeters = (first.lat - second.lat) * 111_320
+    const lngMeters =
+      (first.lng - second.lng) *
+      111_320 *
+      Math.cos(((first.lat + second.lat) / 2) * (Math.PI / 180))
+
+    return Math.sqrt(latMeters ** 2 + lngMeters ** 2)
+  }
+
+  function findSimilarVenueWarning(venue: Venue) {
+    const similarVenue = venues.find((existingVenue) => {
+      const existingName = normalizeForMatch(existingVenue.name)
+      const venueName = normalizeForMatch(venue.name)
+      const existingAddress = normalizeForMatch(existingVenue.address)
+      const venueAddress = normalizeForMatch(venue.address)
+      const namesMatch =
+        Boolean(existingName && venueName) &&
+        (existingName === venueName ||
+          existingName.includes(venueName) ||
+          venueName.includes(existingName))
+      const sameCity =
+        normalizeForMatch(existingVenue.city) === normalizeForMatch(venue.city)
+      const addressesMatch =
+        Boolean(existingAddress && venueAddress) && existingAddress === venueAddress
+      const coordinatesClose =
+        getDistanceMeters(existingVenue.coordinates, venue.coordinates) <= 150
+
+      return namesMatch || (sameCity && addressesMatch) || coordinatesClose
+    })
+
+    return similarVenue
+      ? `Istnieje podobne miejsce: ${getVenueDisplayName(similarVenue)}. Zapisać mimo to?`
+      : ''
   }
 
   async function removeVenue(venueId: string) {
@@ -102,6 +165,14 @@ export function AdminPanel({
   }
 
   async function saveVenueFromForm(venue: Venue) {
+    if (!editingVenueId && prefilledVenueDraft) {
+      const warning = findSimilarVenueWarning(venue)
+
+      if (warning && !window.confirm(warning)) {
+        return
+      }
+    }
+
     setPendingVenueAction(editingVenueId ? `save-${editingVenueId}` : 'save-new')
 
     try {
@@ -114,6 +185,7 @@ export function AdminPanel({
       }
 
       setEditingVenueId(null)
+      setPrefilledVenueDraft(null)
     } finally {
       setPendingVenueAction(null)
     }
@@ -132,6 +204,7 @@ export function AdminPanel({
 
   function cancelVenueForm() {
     cancelEditing()
+    setPrefilledVenueDraft(null)
     if (isAddingVenue) {
       onCancelMapMode()
     }
@@ -273,21 +346,37 @@ export function AdminPanel({
 
             <section className="admin-section" aria-labelledby="venue-form-title">
               <h2 id="venue-form-title">
-                {editingVenueId ? 'Edytuj miejsce' : isAddingVenueDraft ? 'Dodaj miejsce z mapy' : 'Dodaj miejsce'}
+                {editingVenueId
+                  ? 'Edytuj miejsce'
+                  : isTicketmasterVenueDraft
+                    ? 'Dodaj pinezkę z Ticketmaster'
+                    : isAddingVenueDraft
+                      ? 'Dodaj miejsce z mapy'
+                      : 'Dodaj miejsce'}
               </h2>
               {successMessage && (
                 <p className="admin-form-message admin-form-success">{successMessage}</p>
               )}
+              {prefilledVenueDraft && !prefilledVenueDraft.coordinates && (
+                <p className="admin-form-message admin-form-error" role="alert">
+                  Ticketmaster nie podał koordynatów. Ustaw pinezkę ręcznie albo wpisz latitude i longitude.
+                </p>
+              )}
               <VenueForm
-                key={editingVenueId ?? 'new-venue'}
+                key={editingVenueId ?? `new-venue-${prefilledVenueDraftKey}`}
                 initialVenue={editingVenue}
+                initialDraft={prefilledVenueDraft ?? undefined}
                 initialCoordinates={draftVenueCoordinates ?? undefined}
                 onCoordinatesFromGoogleMapsUrl={
                   editingVenue ? undefined : onSetDraftVenueCoordinates
                 }
                 onAdjustTemporaryPin={onAdjustTemporaryPin}
                 onSave={saveVenueFromForm}
-                onCancel={editingVenueId || isAddingVenue ? cancelVenueForm : undefined}
+                onCancel={
+                  editingVenueId || isAddingVenue || prefilledVenueDraft
+                    ? cancelVenueForm
+                    : undefined
+                }
               />
             </section>
           </>
@@ -296,6 +385,7 @@ export function AdminPanel({
             events={events}
             venues={venues}
             onAddEvent={onAddEvent}
+            onCreateVenueDraft={openCreateVenueForm}
             onUpdateEvent={onUpdateEvent}
             onDeleteEvent={onDeleteEvent}
           />

@@ -1,17 +1,26 @@
+import type { MediaImage } from '../features/media/mediaModel'
+
 export type Venue = {
   id: string
   name: string
+  slug?: string
   city: string
+  country?: string
   address: string
   venueType: string
+  type?: string
+  category?: string
   coordinates: {
     lat: number
     lng: number
   }
+  capacity?: number
   description: string
   googleMapsUrl?: string
   websiteUrl?: string
   imageUrl?: string
+  images?: MediaImage[]
+  status?: 'active' | 'draft' | 'archived'
   createdAt?: string
   updatedAt?: string
 }

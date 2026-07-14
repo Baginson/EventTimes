@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore'
 import { mockVenues } from '../data/mockVenues'
 import type { Venue } from '../data/mockVenues'
+import { isMediaImage } from '../features/media/mediaModel'
 import { db } from '../lib/firebase'
 import { isValidGoogleMapsUrl } from '../utils/googleMaps'
 
@@ -30,17 +31,32 @@ function isVenue(value: unknown): value is Venue {
 
   const venue = value as Partial<Venue>
   const coordinates = venue.coordinates
+  const images = venue.images
 
   return (
     typeof venue.id === 'string' &&
     typeof venue.name === 'string' &&
     typeof venue.city === 'string' &&
     typeof venue.address === 'string' &&
-    typeof venue.venueType === 'string' &&
+    (typeof venue.venueType === 'string' ||
+      typeof venue.category === 'string' ||
+      typeof venue.type === 'string') &&
     typeof venue.description === 'string' &&
     (venue.googleMapsUrl === undefined ||
       (typeof venue.googleMapsUrl === 'string' &&
         (!venue.googleMapsUrl.trim() || isValidGoogleMapsUrl(venue.googleMapsUrl)))) &&
+    (venue.slug === undefined || typeof venue.slug === 'string') &&
+    (venue.country === undefined || typeof venue.country === 'string') &&
+    (venue.type === undefined || typeof venue.type === 'string') &&
+    (venue.category === undefined || typeof venue.category === 'string') &&
+    (venue.capacity === undefined || typeof venue.capacity === 'number') &&
+    (venue.imageUrl === undefined || typeof venue.imageUrl === 'string') &&
+    (venue.websiteUrl === undefined || typeof venue.websiteUrl === 'string') &&
+    (venue.status === undefined ||
+      venue.status === 'active' ||
+      venue.status === 'draft' ||
+      venue.status === 'archived') &&
+    (images === undefined || (Array.isArray(images) && images.every(isMediaImage))) &&
     typeof coordinates?.lat === 'number' &&
     Number.isFinite(coordinates.lat) &&
     typeof coordinates.lng === 'number' &&
@@ -55,18 +71,38 @@ function normalizeVenue(value: unknown, fallbackId: string): Venue {
   return {
     id: typeof venue.id === 'string' && venue.id.trim() ? venue.id.trim() : fallbackId,
     name: typeof venue.name === 'string' ? venue.name : '',
+    slug: typeof venue.slug === 'string' ? venue.slug : undefined,
     city: typeof venue.city === 'string' ? venue.city : 'Leszno',
+    country: typeof venue.country === 'string' ? venue.country : undefined,
     address: typeof venue.address === 'string' ? venue.address : '',
-    venueType: typeof venue.venueType === 'string' ? venue.venueType : 'Inne',
+    venueType:
+      typeof venue.venueType === 'string'
+        ? venue.venueType
+        : typeof venue.category === 'string'
+          ? venue.category
+          : typeof venue.type === 'string'
+            ? venue.type
+            : 'Inne',
+    type: typeof venue.type === 'string' ? venue.type : undefined,
+    category: typeof venue.category === 'string' ? venue.category : undefined,
     description: typeof venue.description === 'string' ? venue.description : '',
     coordinates: {
       lat: typeof coordinates?.lat === 'number' ? coordinates.lat : 0,
       lng: typeof coordinates?.lng === 'number' ? coordinates.lng : 0,
     },
+    capacity: typeof venue.capacity === 'number' ? venue.capacity : undefined,
     googleMapsUrl:
       typeof venue.googleMapsUrl === 'string' ? venue.googleMapsUrl : undefined,
     websiteUrl: typeof venue.websiteUrl === 'string' ? venue.websiteUrl : undefined,
     imageUrl: typeof venue.imageUrl === 'string' ? venue.imageUrl : undefined,
+    images:
+      Array.isArray(venue.images) && venue.images.every(isMediaImage)
+        ? venue.images
+        : undefined,
+    status:
+      venue.status === 'active' || venue.status === 'draft' || venue.status === 'archived'
+        ? venue.status
+        : undefined,
     createdAt: typeof venue.createdAt === 'string' ? venue.createdAt : undefined,
     updatedAt: typeof venue.updatedAt === 'string' ? venue.updatedAt : undefined,
   }

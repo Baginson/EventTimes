@@ -1,16 +1,28 @@
+import type { MediaImage } from '../features/media/mediaModel'
+
 export type EventTimesEvent = {
   id: string
   venueId: string
   name: string
+  title?: string
+  slug?: string
   eventType: string
+  category?: string
   description: string
   startDate: string
   endDate?: string
+  startTime?: string
+  endTime?: string
   ticketUrl?: string
   sourceUrl?: string
   imageUrl?: string
+  images?: MediaImage[]
   organizer?: string
   isPromoted?: boolean
+  status?: 'published' | 'draft' | 'cancelled'
+  externalIds?: {
+    ticketmaster?: string
+  }
   createdAt?: string
   updatedAt?: string
 }

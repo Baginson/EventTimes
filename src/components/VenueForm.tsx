@@ -12,10 +12,22 @@ import { normalizeVenueAddressInput } from '../utils/venueDisplay'
 type VenueFormProps = {
   initialVenue?: Venue
   initialCoordinates?: Venue['coordinates']
+  initialDraft?: VenueFormDraft
   onCoordinatesFromGoogleMapsUrl?: (coordinates: Venue['coordinates']) => void
   onAdjustTemporaryPin?: () => void
   onSave: (venue: Venue) => void | Promise<void>
   onCancel?: () => void
+}
+
+export type VenueFormDraft = {
+  name?: string
+  city?: string
+  address?: string
+  venueType?: string
+  description?: string
+  googleMapsUrl?: string
+  imageUrl?: string
+  coordinates?: Venue['coordinates']
 }
 
 type VenueFormState = {
@@ -25,6 +37,7 @@ type VenueFormState = {
   venueType: string
   description: string
   googleMapsUrl: string
+  imageUrl: string
   lat: string
   lng: string
 }
@@ -36,7 +49,13 @@ function createVenueId() {
   return `venue-${uniquePart}`
 }
 
-function createFormState(venue?: Venue, initialCoordinates?: Venue['coordinates']): VenueFormState {
+function createFormState(
+  venue?: Venue,
+  initialCoordinates?: Venue['coordinates'],
+  initialDraft?: VenueFormDraft,
+): VenueFormState {
+  const draftCoordinates = initialDraft?.coordinates ?? initialCoordinates
+
   return venue
     ? {
         name: venue.name,
@@ -45,31 +64,34 @@ function createFormState(venue?: Venue, initialCoordinates?: Venue['coordinates'
         venueType: venue.venueType,
         description: venue.description,
         googleMapsUrl: venue.googleMapsUrl ?? '',
+        imageUrl: venue.imageUrl ?? '',
         lat: venue.coordinates.lat.toString(),
         lng: venue.coordinates.lng.toString(),
       }
     : {
-        name: '',
-        city: 'Leszno',
-        address: '',
-        venueType: 'Inne',
-        description: '',
-        googleMapsUrl: '',
-        lat: initialCoordinates?.lat.toFixed(6) ?? '',
-        lng: initialCoordinates?.lng.toFixed(6) ?? '',
+        name: initialDraft?.name ?? '',
+        city: initialDraft?.city ?? 'Leszno',
+        address: initialDraft?.address ?? '',
+        venueType: initialDraft?.venueType ?? 'Inne',
+        description: initialDraft?.description ?? '',
+        googleMapsUrl: initialDraft?.googleMapsUrl ?? '',
+        imageUrl: initialDraft?.imageUrl ?? '',
+        lat: draftCoordinates?.lat.toFixed(6) ?? '',
+        lng: draftCoordinates?.lng.toFixed(6) ?? '',
       }
 }
 
 export function VenueForm({
   initialVenue,
   initialCoordinates,
+  initialDraft,
   onCoordinatesFromGoogleMapsUrl,
   onAdjustTemporaryPin,
   onSave,
   onCancel,
 }: VenueFormProps) {
   const [form, setForm] = useState<VenueFormState>(() =>
-    createFormState(initialVenue, initialCoordinates),
+    createFormState(initialVenue, initialCoordinates, initialDraft),
   )
   const [formError, setFormError] = useState('')
   const [formNotice, setFormNotice] = useState('')
@@ -221,6 +243,7 @@ export function VenueForm({
       venueType,
       description: form.description.trim(),
       googleMapsUrl: googleMapsUrl || undefined,
+      imageUrl: form.imageUrl.trim() || undefined,
       coordinates: { lat, lng },
     }
 
@@ -229,7 +252,7 @@ export function VenueForm({
       await onSave(venue)
 
       if (!initialVenue) {
-        setForm(createFormState(undefined, initialCoordinates))
+        setForm(createFormState(undefined, initialCoordinates, initialDraft))
       }
     } catch (error) {
       setFormError(
@@ -312,6 +335,18 @@ export function VenueForm({
         <small className="admin-field-help">
           Link do pinezki miejsca w Google Maps. Eventy przypisane do tego miejsca
           będą używać tego samego linku.
+        </small>
+      </label>
+      <label className="admin-form-wide">
+        <span>Image URL miejsca</span>
+        <input
+          type="url"
+          placeholder="https://"
+          value={form.imageUrl}
+          onChange={(event) => updateField('imageUrl', event.target.value)}
+        />
+        <small className="admin-field-help">
+          Opcjonalny obraz miejsca. Obraz eventu z Ticketmaster nie jest tu wpisywany automatycznie.
         </small>
       </label>
       <div className="admin-form-wide google-maps-coordinate-actions">

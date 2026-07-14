@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore'
 import { mockEvents } from '../data/mockEvents'
 import type { EventTimesEvent } from '../data/mockEvents'
+import { isMediaImage } from '../features/media/mediaModel'
 import { db } from '../lib/firebase'
 
 const EVENTS_STORAGE_KEY = 'event-times.events.v1'
@@ -25,6 +26,23 @@ function isOptionalString(value: unknown) {
   return value === undefined || typeof value === 'string'
 }
 
+function isExternalIds(value: unknown): value is EventTimesEvent['externalIds'] {
+  if (value === undefined) {
+    return true
+  }
+
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const externalIds = value as EventTimesEvent['externalIds']
+  return isOptionalString(externalIds?.ticketmaster)
+}
+
+function isMediaImages(value: unknown): value is EventTimesEvent['images'] {
+  return value === undefined || (Array.isArray(value) && value.every(isMediaImage))
+}
+
 function isEvent(value: unknown): value is EventTimesEvent {
   if (!value || typeof value !== 'object') {
     return false
@@ -35,14 +53,22 @@ function isEvent(value: unknown): value is EventTimesEvent {
   return (
     typeof event.id === 'string' &&
     typeof event.venueId === 'string' &&
-    typeof event.name === 'string' &&
-    typeof event.eventType === 'string' &&
+    (typeof event.name === 'string' || typeof event.title === 'string') &&
+    (typeof event.eventType === 'string' || typeof event.category === 'string') &&
     typeof event.description === 'string' &&
     typeof event.startDate === 'string' &&
     isOptionalString(event.endDate) &&
+    isOptionalString(event.startTime) &&
+    isOptionalString(event.endTime) &&
     isOptionalString(event.ticketUrl) &&
     isOptionalString(event.sourceUrl) &&
-    isOptionalString(event.imageUrl)
+    isOptionalString(event.imageUrl) &&
+    isOptionalString(event.title) &&
+    isOptionalString(event.slug) &&
+    isOptionalString(event.category) &&
+    isOptionalString(event.status) &&
+    isMediaImages(event.images) &&
+    isExternalIds(event.externalIds)
   )
 }
 
@@ -52,16 +78,37 @@ function normalizeEvent(value: unknown, fallbackId: string): EventTimesEvent {
   return {
     id: typeof event.id === 'string' && event.id.trim() ? event.id.trim() : fallbackId,
     venueId: typeof event.venueId === 'string' ? event.venueId : '',
-    name: typeof event.name === 'string' ? event.name : '',
-    eventType: typeof event.eventType === 'string' ? event.eventType : 'Inne',
+    name:
+      typeof event.name === 'string'
+        ? event.name
+        : typeof event.title === 'string'
+          ? event.title
+          : '',
+    title: typeof event.title === 'string' ? event.title : undefined,
+    slug: typeof event.slug === 'string' ? event.slug : undefined,
+    eventType:
+      typeof event.eventType === 'string'
+        ? event.eventType
+        : typeof event.category === 'string'
+          ? event.category
+          : 'Inne',
+    category: typeof event.category === 'string' ? event.category : undefined,
     description: typeof event.description === 'string' ? event.description : '',
     startDate: typeof event.startDate === 'string' ? event.startDate : '',
     endDate: typeof event.endDate === 'string' ? event.endDate : undefined,
+    startTime: typeof event.startTime === 'string' ? event.startTime : undefined,
+    endTime: typeof event.endTime === 'string' ? event.endTime : undefined,
     ticketUrl: typeof event.ticketUrl === 'string' ? event.ticketUrl : undefined,
     sourceUrl: typeof event.sourceUrl === 'string' ? event.sourceUrl : undefined,
     imageUrl: typeof event.imageUrl === 'string' ? event.imageUrl : undefined,
+    images: isMediaImages(event.images) ? event.images : undefined,
     organizer: typeof event.organizer === 'string' ? event.organizer : undefined,
     isPromoted: typeof event.isPromoted === 'boolean' ? event.isPromoted : undefined,
+    status:
+      event.status === 'published' || event.status === 'draft' || event.status === 'cancelled'
+        ? event.status
+        : undefined,
+    externalIds: isExternalIds(event.externalIds) ? event.externalIds : undefined,
     createdAt: typeof event.createdAt === 'string' ? event.createdAt : undefined,
     updatedAt: typeof event.updatedAt === 'string' ? event.updatedAt : undefined,
   }
