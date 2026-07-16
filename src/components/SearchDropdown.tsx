@@ -22,6 +22,7 @@ import {
 import {
   getEventStartTime,
   hasExplicitEventTime,
+  parseDateOnly as createLocalDate,
   parseEventDate,
 } from '../utils/eventStatus'
 import { getVenueDisplayName } from '../utils/venueDisplay'
@@ -75,17 +76,6 @@ function addDays(date: Date, days: number) {
   const nextDate = new Date(date)
   nextDate.setDate(nextDate.getDate() + days)
   return nextDate
-}
-
-function createLocalDate(value: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
-
-  if (!match) {
-    return null
-  }
-
-  const [, year, month, day] = match
-  return new Date(Number(year), Number(month) - 1, Number(day))
 }
 
 function createDayRange(value: string): DateRange | null {

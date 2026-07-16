@@ -10,12 +10,11 @@ import {
 import type { EventTimesEvent } from '../data/mockEvents'
 import { db } from '../lib/firebase'
 
-export type EventActionKey = 'interested' | 'going' | 'visited' | 'saved'
+export type EventActionKey = 'going' | 'visited' | 'saved'
 
 export type EventAction = {
   eventId: string
   venueId: string
-  interested: boolean
   going: boolean
   visited: boolean
   saved: boolean
@@ -31,7 +30,6 @@ export type VenueAction = {
 const emptyEventAction = (event: EventTimesEvent): EventAction => ({
   eventId: event.id,
   venueId: event.venueId,
-  interested: false,
   going: false,
   visited: false,
   saved: false,

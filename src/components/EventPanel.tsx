@@ -79,7 +79,6 @@ export function EventPanel({
   const [eventAction, setEventAction] = useState<EventAction>({
     eventId: event.id,
     venueId: event.venueId,
-    interested: false,
     going: false,
     visited: false,
     saved: false,
@@ -104,7 +103,6 @@ export function EventPanel({
     const emptyAction: EventAction = {
       eventId: event.id,
       venueId: event.venueId,
-      interested: false,
       going: false,
       visited: false,
       saved: false,

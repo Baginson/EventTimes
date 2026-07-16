@@ -11,6 +11,8 @@ import {
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
 import type { LocalBackupData } from '../services/localBackupService'
+import { getDistanceMeters } from '../utils/geo'
+import { normalizeForMatch } from '../utils/textNormalize'
 import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
 import { AdminDataSection } from './AdminDataSection'
 import { AdminEventsSection } from './AdminEventsSection'
@@ -113,28 +115,6 @@ export function AdminPanel({
     setPrefilledVenueDraftKey((current) => current + 1)
     setActiveTab('venues')
     setSuccessMessage('Uzupełniono formularz danymi z Ticketmaster. Sprawdź dane przed zapisem.')
-  }
-
-  function normalizeForMatch(value?: string) {
-    return (value ?? '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLocaleLowerCase('pl-PL')
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim()
-  }
-
-  function getDistanceMeters(
-    first: Venue['coordinates'],
-    second: Venue['coordinates'],
-  ) {
-    const latMeters = (first.lat - second.lat) * 111_320
-    const lngMeters =
-      (first.lng - second.lng) *
-      111_320 *
-      Math.cos(((first.lat + second.lat) / 2) * (Math.PI / 180))
-
-    return Math.sqrt(latMeters ** 2 + lngMeters ** 2)
   }
 
   function findSimilarVenueWarning(venue: Venue) {

@@ -2,7 +2,7 @@ import type { EventTimesEvent } from '../data/mockEvents'
 
 export type EventStatus = 'upcoming' | 'ongoing' | 'past'
 
-function parseDateOnly(value: string) {
+export function parseDateOnly(value: string) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
 
   if (!match) {

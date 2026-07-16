@@ -15,6 +15,8 @@ import { EVENT_TYPES } from '../data/searchFilters'
 import { createEventExternalImage, getEventTitle } from '../features/events/eventModel'
 import type { TicketmasterImportCandidate } from '../services/ticketmasterService'
 import { formatEventDate } from '../utils/eventStatus'
+import { getDistanceMeters } from '../utils/geo'
+import { normalizeForMatch } from '../utils/textNormalize'
 import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
 import type { VenueFormDraft } from './VenueForm'
 
@@ -48,15 +50,6 @@ function createId(prefix: string, value: string) {
   return `${prefix}-${normalizedValue || uniquePart}`
 }
 
-function normalizeText(value?: string) {
-  return (value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLocaleLowerCase('pl-PL')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-}
-
 function getTicketmasterVenueName(candidate: TicketmasterImportCandidate) {
   return candidate.venueName ?? candidate.venueCandidate?.name
 }
@@ -74,12 +67,12 @@ function getTicketmasterVenueCoordinates(candidate: TicketmasterImportCandidate)
 }
 
 function isLikelySameVenue(candidate: TicketmasterImportCandidate, venue: Venue) {
-  const candidateName = normalizeText(getTicketmasterVenueName(candidate))
-  const venueName = normalizeText(venue.name)
-  const candidateCity = normalizeText(getTicketmasterVenueCity(candidate))
-  const venueCity = normalizeText(venue.city)
-  const candidateAddress = normalizeText(getTicketmasterVenueAddress(candidate))
-  const venueAddress = normalizeText(venue.address)
+  const candidateName = normalizeForMatch(getTicketmasterVenueName(candidate))
+  const venueName = normalizeForMatch(venue.name)
+  const candidateCity = normalizeForMatch(getTicketmasterVenueCity(candidate))
+  const venueCity = normalizeForMatch(venue.city)
+  const candidateAddress = normalizeForMatch(getTicketmasterVenueAddress(candidate))
+  const venueAddress = normalizeForMatch(venue.address)
   const candidateCoordinates = getTicketmasterVenueCoordinates(candidate)
 
   if (!candidateName || !venueName) {
@@ -107,19 +100,6 @@ function findSuggestedVenueId(candidate: TicketmasterImportCandidate, venues: Ve
   return venues.find((venue) => isLikelySameVenue(candidate, venue))?.id ?? ''
 }
 
-function getDistanceMeters(
-  first: Venue['coordinates'],
-  second: Venue['coordinates'],
-) {
-  const latMeters = (first.lat - second.lat) * 111_320
-  const lngMeters =
-    (first.lng - second.lng) *
-    111_320 *
-    Math.cos(((first.lat + second.lat) / 2) * (Math.PI / 180))
-
-  return Math.sqrt(latMeters ** 2 + lngMeters ** 2)
-}
-
 function buildGoogleMapsUrl(coordinates?: Venue['coordinates']) {
   if (!coordinates) {
     return undefined
@@ -142,7 +122,7 @@ function isDuplicateCandidate(
     return (
       selectedVenueId &&
       event.venueId === selectedVenueId &&
-      normalizeText(getEventTitle(event)) === normalizeText(candidate.name) &&
+      normalizeForMatch(getEventTitle(event)) === normalizeForMatch(candidate.name) &&
       event.startDate === candidate.startDate
     )
   })

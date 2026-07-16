@@ -269,10 +269,6 @@ export async function replaceEventsInFirestore(events: EventTimesEvent[]) {
   await batch.commit()
 }
 
-export async function duplicateEvent(eventData: EventTimesEvent) {
-  return createEvent(eventData)
-}
-
 export function clearStoredEvents(): EventTimesEvent[] {
   localStorage.removeItem(EVENTS_STORAGE_KEY)
   return cloneStarterEvents()

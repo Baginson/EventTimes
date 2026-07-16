@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useAuth } from './auth/authContext'
-import { AccountPanel } from './components/AccountPanel'
 import { AuthModal } from './components/AuthModal'
-import { AdminPanel } from './components/AdminPanel'
 import { EventMap } from './components/EventMap'
 import { EventPanel } from './components/EventPanel'
 import { MobileBottomBar } from './components/MobileBottomBar'
@@ -32,6 +30,13 @@ import {
   updateVenue as persistVenueUpdate,
 } from './services/venueService'
 import './App.css'
+
+const AdminPanel = lazy(() =>
+  import('./components/AdminPanel').then((module) => ({ default: module.AdminPanel })),
+)
+const AccountPanel = lazy(() =>
+  import('./components/AccountPanel').then((module) => ({ default: module.AccountPanel })),
+)
 
 type MapMode =
   | { type: 'normal' }
@@ -553,42 +558,46 @@ function App() {
         )}
 
         {isAdmin && isAdminOpen && (
-          <AdminPanel
-            venues={venues}
-            events={events}
-            movingVenueId={movingVenueId}
-            isAddingVenue={isAddingVenue}
-            draftVenueCoordinates={draftVenueCoordinates}
-            onAddVenue={addVenue}
-            onUpdateVenue={updateVenue}
-            onDeleteVenue={deleteVenue}
-            onAddEvent={addEvent}
-            onUpdateEvent={updateEvent}
-            onDeleteEvent={deleteEvent}
-            onImportData={importLocalData}
-            onImportFirestoreData={importFirestoreData}
-            onMoveCurrentDataToFirestore={moveCurrentDataToFirestore}
-            onRefreshData={refreshAdminData}
-            onResetData={restoreStarterData}
-            onClearData={restoreStarterData}
-            onStartVenueAdd={startAddingVenue}
-            onSetDraftVenueCoordinates={setDraftVenueFromGoogleMapsLink}
-            onAdjustTemporaryPin={adjustDraftVenuePin}
-            onStartPinMove={startMovingVenue}
-            onCancelMapMode={cancelMapMode}
-            onDisableAdminMode={disableAdminMode}
-            onClose={closeAdminDrawer}
-          />
+          <Suspense fallback={null}>
+            <AdminPanel
+              venues={venues}
+              events={events}
+              movingVenueId={movingVenueId}
+              isAddingVenue={isAddingVenue}
+              draftVenueCoordinates={draftVenueCoordinates}
+              onAddVenue={addVenue}
+              onUpdateVenue={updateVenue}
+              onDeleteVenue={deleteVenue}
+              onAddEvent={addEvent}
+              onUpdateEvent={updateEvent}
+              onDeleteEvent={deleteEvent}
+              onImportData={importLocalData}
+              onImportFirestoreData={importFirestoreData}
+              onMoveCurrentDataToFirestore={moveCurrentDataToFirestore}
+              onRefreshData={refreshAdminData}
+              onResetData={restoreStarterData}
+              onClearData={restoreStarterData}
+              onStartVenueAdd={startAddingVenue}
+              onSetDraftVenueCoordinates={setDraftVenueFromGoogleMapsLink}
+              onAdjustTemporaryPin={adjustDraftVenuePin}
+              onStartPinMove={startMovingVenue}
+              onCancelMapMode={cancelMapMode}
+              onDisableAdminMode={disableAdminMode}
+              onClose={closeAdminDrawer}
+            />
+          </Suspense>
         )}
 
         {isAccountPanelOpen && (
-          <AccountPanel
-            venues={venues}
-            events={events}
-            onVenueSelect={selectVenue}
-            onEventSelect={selectEvent}
-            onClose={() => setIsAccountPanelOpen(false)}
-          />
+          <Suspense fallback={null}>
+            <AccountPanel
+              venues={venues}
+              events={events}
+              onVenueSelect={selectVenue}
+              onEventSelect={selectEvent}
+              onClose={() => setIsAccountPanelOpen(false)}
+            />
+          </Suspense>
         )}
 
         <AnimatePresence initial={false} mode="sync">
