@@ -25,6 +25,9 @@ EVENT_TIMES_SPEC.md
 EVENT_TIMES_UI_RULES.md
 docs/design-references/
 
+# Local Claude Code settings (machine-specific permissions)
+.claude/settings.local.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
