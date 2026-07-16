@@ -44,7 +44,7 @@ Force-push, `git reset --hard`, delete a working feature, restructure the core a
 - `docs/ROADMAP.md` — staged plan for what's next.
 - `graphify-out/` — queryable knowledge graph of the codebase (`graphify query "<question>"`).
 
-`CODEX_INSTRUCTIONS.md` / `EVENT_TIMES_SPEC.md` / `docs/EVENT_TIMES_UI_RULES.md` are older, more verbose local-only notes (gitignored, not always present on every machine). Where they conflict with `docs/`, `docs/` wins — it's the maintained source of truth.
+`docs/design-references/` (local-only, gitignored) holds visual reference images for the brand direction; `docs/UI_RULES.md` §1 summarizes them for machines without the folder. The older local-only planning notes (`CODEX_INSTRUCTIONS.md`, `EVENT_TIMES_SPEC.md`, `docs/EVENT_TIMES_UI_RULES.md`) were consolidated into `docs/` and removed on 2026-07-16 — if a stray copy of one of them appears on some machine, ignore it; `docs/` is the only source of truth.
 
 ## graphify
 

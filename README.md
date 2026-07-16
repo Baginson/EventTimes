@@ -2,6 +2,15 @@
 
 Event Times to mapowa aplikacja webowa do odkrywania miejsc eventowych i wydarzeń.
 
+## Dokumentacja
+
+- `docs/ARCHITECTURE.md` — stack, model danych, warstwa usług, Firebase.
+- `docs/UI_RULES.md` — system designu (kolory, typografia, panele, animacje, dostępność).
+- `docs/PROJECT_STATE.md` — co działa, co jest częściowe, znane problemy, priorytety.
+- `docs/DECISIONS.md` — rejestr decyzji technicznych.
+- `docs/ROADMAP.md` — plan etapów.
+- `AGENTS.md` — zasady dla agentów AI pracujących w repo.
+
 ## Stack
 
 - React + Vite + TypeScript
@@ -25,6 +34,14 @@ VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 ```
+
+Opcjonalnie — import wydarzeń z Ticketmaster w panelu admina (funkcja jest ukryta, gdy klucz nie jest ustawiony):
+
+```env
+VITE_TICKETMASTER_API_KEY=your_ticketmaster_api_key
+```
+
+Klucz trzymaj wyłącznie w `.env.local` (lokalnie) i w GitHub Actions Secrets (produkcja). Nigdy w kodzie ani w repozytorium.
 
 3. Uruchom:
 

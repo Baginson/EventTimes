@@ -1,10 +1,14 @@
 # Event Times — UI / UX Rules
 
-Committed source of truth for design rules (previously only in the gitignored `docs/EVENT_TIMES_UI_RULES.md` — that file still exists locally as a legacy note, this is the maintained version).
+Committed source of truth for design rules. (The original `docs/EVENT_TIMES_UI_RULES.md` was consolidated into this file and removed on 2026-07-16 — recoverable from git history.)
 
 ## 1. Visual direction
 
 Editorial map app + event poster. Bold but readable, distinctive, local premium product — not a generic SaaS template, not glassmorphism, not heavy gradients, not stock dashboard look.
+
+**Brand essence** (from the product poster in `docs/design-references/`, local-only folder): "Mapa wydarzeń. Miejsca. Ludzie. Wszystko w jednym." / "Odkrywaj. Przeżywaj. Wracaj." Short imperative slogans, big blocky electric-blue wordmark on cream or paper texture, cutout/sticker product elements, repeated text as a graphic pattern, blue tape accents. The poster's UI mockups (floating right venue panel with Nadchodzące/Minione groups, mobile bottom sheet, search as the top entry point) match the implemented app — treat that poster as the reference for how Event Times should *feel*, never as a layout to copy 1:1.
+
+`docs/design-references/README.md` (local-only, gitignored — reference images include third-party brand work) explains what to take from each image and what not to copy. If working on a machine without that folder, this section is the summary.
 
 ## 2. Colors
 
@@ -64,7 +68,7 @@ Status computed dynamically (`ongoing`/`upcoming`/`past`), never stored. Upcomin
 
 ## 11. Search
 
-Never shows the whole database on open — results appear only once the user types, picks a place/event type, or picks a date. Events tab groups results into Trwa teraz / Nadchodzące / Minione, no redundant per-card status badge. Places tab never shows everything unfiltered. Dropdown looks like a designed panel, not a raw list, with real empty states and a working expand arrow.
+Two modes — Miejsca and Wydarzenia — that never mix results. Never shows the whole database on open: results appear only once the user types (min. 2 characters), picks a place/event type, or picks a date. The events date filter offers: Wszystkie, Dzisiaj, Jutro, Weekend, Wybierz datę (single day or an od–do range). Events tab groups results into Trwa teraz / Nadchodzące / Minione, no redundant per-card status badge. Places tab never shows everything unfiltered. Dropdown looks like a designed panel, not a raw list, with real empty states and a working expand arrow.
 
 ## 12. Forms
 

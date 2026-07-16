@@ -1,6 +1,10 @@
 # Event Times — Architecture
 
-Committed source of truth for stack and data model. Supersedes the older, gitignored `EVENT_TIMES_SPEC.md` where the two disagree (this file is kept current; that one is not).
+Committed source of truth for stack and data model. (The original planning spec, `EVENT_TIMES_SPEC.md`, was consolidated into this file and removed on 2026-07-16 — recoverable from git history at `4edf906` if ever needed.)
+
+## Product vision
+
+Event Times is an interactive map of events: discover interesting places and events, plan attendance, and return to what you've been to — the user's own event history ("Byłem", activity feed) is a core product pillar, not an afterthought. Brand essence: **"Odkrywaj. Przeżywaj. Wracaj."** Long-term the product aims at three audiences — participants (find/plan/remember), organizers (promote events), and venues (visibility) — but the current MVP serves participants, with organizers/venues represented only through admin-managed data.
 
 ## Stack
 
@@ -13,7 +17,7 @@ Committed source of truth for stack and data model. Supersedes the older, gitign
 
 ## Project scope
 
-First version covers Leszno and the surrounding area. The data model is city-agnostic (`city` field on `Venue`), but city selection in the UI is currently a single hardcoded option (`src/components/CityFilter.tsx`) pending multi-city support.
+First version covers Leszno and the surrounding area — typical venues: MOK Leszno, Hala Trapez, Stadion im. Alfreda Smoczyka, Rynek, Lotnisko Leszno, plus generic types (aula, sala koncertowa, plener, teatr, klub). The data model is city-agnostic (`city` field on `Venue`), and the long-term direction is multi-city ("cały świat na mapie" per the brand poster), but city selection in the UI is currently a single hardcoded option (`src/components/CityFilter.tsx`) pending multi-city support.
 
 ## Data model (as implemented — see `docs/DECISIONS.md` for the spec-vs-code drift this corrects)
 
@@ -70,7 +74,7 @@ type EventTimesEvent = {
 
 Coordinates are always `{ lat, lng }`. Leaflet's `[lat, lng]` array order conversion is isolated inside `src/components/EventMap.tsx` only — never in services/utils/models. This keeps the data model swappable to a different map provider later without touching venue/event data.
 
-Event status (`upcoming` / `ongoing` / `past`) is always computed at render time via `getEventStatus()` (`src/utils/eventStatus.ts`), never stored as a literal. Missing `startTime`/`endTime` means the UI shows a date only, never a fake `00:00`.
+Event status (`upcoming` / `ongoing` / `past`) is always computed at render time via `getEventStatus()` (`src/utils/eventStatus.ts`), never stored as a literal. Edge rules: an event with no `endDate` is judged by `startDate` alone; a date-range event is judged by range overlap with "now"; a past event stays valid data (archive, still shown under "Minione"). Missing `startTime`/`endTime` means the UI shows a date only, never a fake `00:00`.
 
 ## Firestore
 

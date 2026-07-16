@@ -44,6 +44,12 @@ Chronological record of decisions that shape the project, with the reasoning beh
 **Why**: These are foundational — building more features on top of an app that can white-screen from any bug, or deploying without running the existing test suite, compounds risk rather than reducing it.
 **Status**: Implemented and verified (`npm run test`/`lint`/`build` all pass). See `src/components/ErrorBoundary.tsx`, the retry button in `App.tsx`'s data-error banner, and `.github/workflows/deploy.yml`.
 
+## 2026-07-16 — Legacy planning docs consolidated and removed
+
+**Decision**: `CODEX_INSTRUCTIONS.md`, `EVENT_TIMES_SPEC.md`, and `docs/EVENT_TIMES_UI_RULES.md` (local-only, gitignored planning notes) were deleted after their remaining unique content was merged into the committed `docs/` set: venue examples, product vision, and event-status edge rules into `docs/ARCHITECTURE.md`; brand essence (from `docs/design-references/`), the search date-filter enumeration, and the two-mode search rule into `docs/UI_RULES.md`. Their `.gitignore` entries were deliberately kept so a stale copy on another machine can never be accidentally committed. Last tracked versions remain recoverable from git history (deleted from tracking in `37205a2`; content at `4edf906`).
+**Why**: Three overlapping, drifting rulebooks meant agents could receive conflicting instructions depending on which file they read (the spec's data model was ~7 fields behind the code). One maintained source of truth (`docs/`) removes that failure mode.
+**Status**: In effect. `docs/design-references/` (images + its README) stays as local-only visual reference; `docs/UI_RULES.md` §1 carries its summary for machines without the folder.
+
 ## 2026-07-16 — AI agent workflow formalized (AGENTS.md, docs/, subagents, hooks)
 
 **Decision**: Claude Code is the architect/coordinator; Codex (via the `codex` MCP server) implements narrowly-scoped tasks under review; ChatGPT is the product/UX sounding board outside this session. Formalized via `AGENTS.md` (shared short rules), `CLAUDE.md` (role + graphify usage), `CLAUDE.local.md` (private/local notes, gitignored), `docs/` (this set), `tasks/NOW.md` + `tasks/archive/`, three review subagents (`code-reviewer`, `ui-reviewer`, `security-reviewer`), three workflow skills (`eventtimes-feature`, `eventtimes-ui-qa`, `eventtimes-release`), and safety hooks in `.claude/settings.json`.
