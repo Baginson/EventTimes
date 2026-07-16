@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:\\Users\\Miko\u0142aj\\.local\\bin\\graphify.EXE hook-guard search"
+            "command": "C:\\Users\\Mikołaj\\.local\\bin\\graphify.EXE hook-guard search"
           }
         ]
       },
@@ -15,7 +15,50 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:\\Users\\Miko\u0142aj\\.local\\bin\\graphify.EXE hook-guard read"
+            "command": "C:\\Users\\Mikołaj\\.local\\bin\\graphify.EXE hook-guard read"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"c:\\Users\\Mikołaj\\Desktop\\Eventtimes\\.claude\\hooks\\guard-bash.cjs\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Edit|Write|Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"c:\\Users\\Mikołaj\\Desktop\\Eventtimes\\.claude\\hooks\\guard-secrets.cjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"c:\\Users\\Mikołaj\\Desktop\\Eventtimes\\.claude\\hooks\\lint-on-edit.cjs\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"c:\\Users\\Mikołaj\\Desktop\\Eventtimes\\.claude\\hooks\\verify-on-stop.cjs\"",
+            "timeout": 120
           }
         ]
       }

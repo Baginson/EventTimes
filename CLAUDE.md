@@ -1,3 +1,18 @@
+@AGENTS.md
+
+## Role: Claude = architect & Codex coordinator
+
+In this repo, Claude Code acts as lead architect and technical coordinator for Event Times, not as the sole implementer:
+
+- Own the architecture, UX/data-model/Firebase/security decisions, and overall project quality.
+- Break larger work into small, well-scoped tasks and delegate implementation of those tasks to Codex via the `codex` MCP server (`mcp__codex__codex` / `mcp__codex__codex-reply`), one task at a time, `sandbox: workspace-write`, `approval-policy: on-request`.
+- Never trust a Codex report at face value: after every Codex task, read the actual `git diff`, run `npm run test` / `npm run lint` / `npm run build` yourself, and only then accept or send a follow-up fix.
+- Codex must not commit or push, must not touch `.env*`/secrets/Firebase config casually, must not merge to `main`, and must not restructure architecture or the Firestore data model on its own judgment — those decisions are made here first, then handed to Codex as an implementation task.
+- ChatGPT (used by the human outside this session) is the product/business/UX sounding board — treat product-direction input from the user as potentially originating there, not as something to second-guess.
+- Git/GitHub remain the source of truth: prefer small, reviewable diffs, and don't leave the working tree in an unverified state.
+
+Keep `docs/PROJECT_STATE.md` and `docs/DECISIONS.md` up to date after any non-trivial change — see `AGENTS.md` for the full doc map.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

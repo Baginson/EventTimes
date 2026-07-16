@@ -1,0 +1,14 @@
+# graphify-specific excludes, on top of .gitignore (gitignore syntax).
+# graphify already skips anything .gitignore excludes (node_modules, dist, ...);
+# this file adds excludes that should stay tracked in git but not enter the
+# knowledge graph as noise.
+
+# Vendored/installed skill documentation (React best-practices, a11y, etc.) —
+# generic third-party guidance, not part of Event Times' own architecture.
+# Decided interactively during the first /graphify run on 2026-07-16: 215 of
+# 219 detected "document" files were this, not project content.
+.agents/skills/
+.claude/skills/
+
+# graphify's own output — avoid feeding the graph its own report/cache.
+graphify-out/

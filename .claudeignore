@@ -1,0 +1,19 @@
+# Keep Claude's file search/context focused on the actual Event Times app,
+# not vendored skill docs or generated/binary output.
+
+node_modules/
+dist/
+dist-ssr/
+package-lock.json
+
+# Vendored/installed third-party skill documentation — generic guidance
+# (React best practices, a11y, etc.), not project content. Same rationale as
+# .graphifyignore.
+.agents/skills/
+.claude/skills/*/references/
+.claude/skills/*/rules/
+
+# Generated graph output and its cache — query it via `graphify query`, not
+# by reading the raw files.
+graphify-out/cache/
+graphify-out/*.log

@@ -27,6 +27,10 @@ docs/design-references/
 
 # Local Claude Code settings (machine-specific permissions)
 .claude/settings.local.json
+CLAUDE.local.md
+
+# Local knowledge graph (rebuilt per-machine by the graphify post-commit hook)
+graphify-out/
 
 # Editor directories and files
 .vscode/*
