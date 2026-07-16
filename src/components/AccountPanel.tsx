@@ -771,7 +771,7 @@ export function AccountPanel({
 
             <section className="account-clear-data" aria-labelledby="clear-data-title">
               <h2 id="clear-data-title">Wyczyść aktywność</h2>
-              <p>Usuwa polubione i aktywności. Konto oraz profil pozostaną bez zmian.</p>
+              <p>Usuwa polubione miejsca, polubione wydarzenia i aktywności. Konto oraz profil pozostaną bez zmian.</p>
               <button type="button" disabled={clearingData} onClick={() => void clearUserData()}>
                 <Trash2 className="ui-icon" aria-hidden="true" />
                 {clearingData ? 'Czyszczenie…' : 'Wyczyść aktywności'}
