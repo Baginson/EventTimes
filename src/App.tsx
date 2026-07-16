@@ -524,6 +524,15 @@ function App() {
         {dataError && (
           <div className="map-move-notice map-error-notice" role="alert">
             <span>{dataError}</span>
+            <button
+              className="map-error-retry-button"
+              type="button"
+              onClick={() => {
+                void refreshPublicData(true).catch(() => undefined)
+              }}
+            >
+              Spróbuj ponownie
+            </button>
           </div>
         )}
         {!dataLoading && !dataError && isAdmin && venues.length === 0 && events.length === 0 && (

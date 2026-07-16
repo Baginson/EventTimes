@@ -1047,6 +1047,20 @@
   border-color: rgba(239, 68, 68, 0.28);
 }
 
+.map-error-retry-button {
+  flex: 0 0 auto;
+}
+
+.map-error-retry-button:hover {
+  color: var(--color-white);
+  background: var(--color-primary);
+}
+
+.map-error-retry-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .venue-panel,
 .admin-panel {
   position: fixed;
@@ -4108,4 +4122,66 @@
   .account-recent-list button {
     transform: none !important;
   }
+}
+
+.error-boundary-shell {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: var(--space-6);
+  background:
+    radial-gradient(circle at top left, rgba(6, 75, 255, 0.12), transparent 34rem),
+    var(--color-cream-soft);
+  color: var(--color-navy);
+  font-family: var(--font-ui);
+}
+
+.error-boundary-card {
+  width: min(100%, 440px);
+  padding: var(--space-8);
+  border: var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-white);
+  box-shadow: var(--shadow-panel);
+}
+
+.error-boundary-kicker {
+  margin: 0 0 var(--space-3);
+  color: var(--color-primary);
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.error-boundary-title {
+  margin: 0;
+  color: var(--color-navy);
+  font-family: var(--font-display);
+  font-size: clamp(28px, 6vw, 40px);
+  line-height: 1.08;
+}
+
+.error-boundary-message {
+  margin: var(--space-4) 0 var(--space-6);
+  color: var(--color-muted);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.error-boundary-button {
+  min-height: 44px;
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-white);
+  box-shadow: var(--shadow-button);
+  cursor: pointer;
+  font-family: var(--font-control);
+  font-weight: 700;
+}
+
+.error-boundary-button:hover {
+  background: var(--color-primary-hover);
 }
