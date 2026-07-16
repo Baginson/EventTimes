@@ -19,11 +19,13 @@ export type EventAction = {
   going: boolean
   visited: boolean
   saved: boolean
+  updatedAt?: unknown
 }
 
 export type VenueAction = {
   venueId: string
   saved: boolean
+  updatedAt?: unknown
 }
 
 const emptyEventAction = (event: EventTimesEvent): EventAction => ({

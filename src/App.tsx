@@ -44,7 +44,7 @@ type AppToast = {
 }
 
 function App() {
-  const { isAdmin, openAuthModal, user } = useAuth()
+  const { isAdmin, isAuthModalOpen, openAuthModal, user } = useAuth()
   const [venues, setVenues] = useState<Venue[]>([])
   const [events, setEvents] = useState<EventTimesEvent[]>([])
   const [dataLoading, setDataLoading] = useState(true)
@@ -185,6 +185,7 @@ function App() {
     setIsAdminOpen(false)
     setIsAccountPanelOpen(false)
     cancelMapMode()
+    setSelectedCity(venue.city)
     setSelectedVenue(venue)
     setSelectedEvent(null)
   }
@@ -193,6 +194,7 @@ function App() {
     setIsAdminOpen(false)
     setIsAccountPanelOpen(false)
     cancelMapMode()
+    setSelectedCity(venue.city)
     setSelectedVenue(venue)
     setSelectedEvent(event)
   }
@@ -630,6 +632,7 @@ function App() {
             selectedVenue ||
               isAdminOpen ||
               isAccountPanelOpen ||
+              isAuthModalOpen ||
               isSearchOpen ||
               mapMode.type !== 'normal',
           )}

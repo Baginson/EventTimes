@@ -79,7 +79,9 @@ export function SearchBar({
     }
 
     setIsOpen(true)
-    searchInputRef.current?.focus()
+    window.requestAnimationFrame(() => {
+      searchInputRef.current?.focus()
+    })
   }, [focusRequest])
 
   useEffect(() => {

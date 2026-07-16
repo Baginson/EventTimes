@@ -18,10 +18,10 @@ export function usePanelMotion() {
 
   if (isMobilePanel) {
     return {
-      initial: { opacity: 0, transform: 'translateY(100%)' },
+      initial: { opacity: 0, transform: 'translateY(12px)' },
       animate: { opacity: 1, transform: 'translateY(0)' },
-      exit: { opacity: 0, transform: 'translateY(100%)' },
-      transition: { type: 'spring' as const, stiffness: 420, damping: 42, mass: 0.9 },
+      exit: { opacity: 0, transform: 'translateY(12px)' },
+      transition: { duration: 0.22, ease: easeOut },
     }
   }
 

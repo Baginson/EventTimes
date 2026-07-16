@@ -5,6 +5,56 @@ import { db } from '../lib/firebase'
 
 export type UserProvider = 'google' | 'password'
 
+export type UserPreferences = {
+  defaultCity: string
+  eventTypes: string[]
+}
+
+export type UserProfileSettings = {
+  profileSetupCompleted: boolean
+  userPreferences: UserPreferences
+}
+
+export const defaultUserPreferences: UserPreferences = {
+  defaultCity: 'Leszno',
+  eventTypes: [],
+}
+
+function requireDb() {
+  if (!db) {
+    throw new Error('Firebase nie jest skonfigurowany.')
+  }
+
+  return db
+}
+
+function normalizeStringArray(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    : []
+}
+
+function normalizeUserProfileSettings(data: Record<string, unknown> | undefined): UserProfileSettings {
+  const rawPreferences = data?.userPreferences
+  const preferences = rawPreferences && typeof rawPreferences === 'object'
+    ? rawPreferences as Record<string, unknown>
+    : {}
+  const defaultCity =
+    typeof preferences.defaultCity === 'string' && preferences.defaultCity.trim()
+      ? preferences.defaultCity.trim()
+      : typeof data?.defaultCity === 'string' && data.defaultCity.trim()
+        ? data.defaultCity.trim()
+        : defaultUserPreferences.defaultCity
+
+  return {
+    profileSetupCompleted: data?.profileSetupCompleted === true,
+    userPreferences: {
+      defaultCity,
+      eventTypes: Array.from(new Set(normalizeStringArray(preferences.eventTypes))),
+    },
+  }
+}
+
 export async function syncUserProfile(user: User, provider: UserProvider) {
   if (!db) {
     return
@@ -33,13 +83,11 @@ export async function updateUserProfile(
   displayName: string,
   photoURL: string | null,
 ) {
-  if (!db) {
-    throw new Error('Firebase nie jest skonfigurowany.')
-  }
+  const database = requireDb()
 
   await updateProfile(user, { displayName, photoURL })
   await setDoc(
-    doc(db, 'users', user.uid),
+    doc(database, 'users', user.uid),
     {
       displayName,
       photoURL,
@@ -47,4 +95,41 @@ export async function updateUserProfile(
     },
     { merge: true },
   )
+}
+
+export async function getUserProfileSettings(uid: string) {
+  const profileSnapshot = await getDoc(doc(requireDb(), 'users', uid))
+
+  return normalizeUserProfileSettings(
+    profileSnapshot.exists()
+      ? profileSnapshot.data()
+      : undefined,
+  )
+}
+
+export async function saveUserProfileSettings(
+  uid: string,
+  userPreferences: UserPreferences,
+  profileSetupCompleted = true,
+) {
+  const normalizedPreferences = {
+    defaultCity: userPreferences.defaultCity.trim() || defaultUserPreferences.defaultCity,
+    eventTypes: Array.from(new Set(userPreferences.eventTypes.filter(Boolean))),
+  }
+
+  await setDoc(
+    doc(requireDb(), 'users', uid),
+    {
+      defaultCity: normalizedPreferences.defaultCity,
+      profileSetupCompleted,
+      userPreferences: normalizedPreferences,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  )
+
+  return {
+    profileSetupCompleted,
+    userPreferences: normalizedPreferences,
+  } satisfies UserProfileSettings
 }
