@@ -4208,3 +4208,45 @@
   background: var(--color-primary-hover);
 }
 
+.event-image-upload-section {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: var(--space-3);
+}
+
+.event-image-upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.event-image-upload-button {
+  position: relative;
+  font-family: var(--font-control);
+}
+
+.event-image-upload-button.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.event-image-upload-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.event-image-upload-preview {
+  width: min(100%, 280px);
+  max-height: 120px;
+  object-fit: cover;
+  border: var(--border-subtle);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+}
+

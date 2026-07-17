@@ -3,6 +3,10 @@ import type { FormEvent } from 'react'
 import { EVENT_TYPES } from '../data/searchFilters'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import {
+  CLOUDINARY_UPLOADS_ENABLED,
+  uploadImageToCloudinary,
+} from '../services/cloudinaryService'
 import { hasExplicitEventTime } from '../utils/eventStatus'
 import { getVenueDisplayName } from '../utils/venueDisplay'
 
@@ -135,6 +139,8 @@ export function EventForm({
     createFormState(venues, initialEvent, lockedVenueId),
   )
   const [formError, setFormError] = useState('')
+  const [imageUploadError, setImageUploadError] = useState('')
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const lockedVenue = lockedVenueId
     ? venues.find((venue) => venue.id === lockedVenueId)
@@ -143,10 +149,37 @@ export function EventForm({
   function updateField(field: keyof EventFormState, value: string) {
     setForm((current) => ({ ...current, [field]: value }))
     setFormError('')
+    if (field === 'imageUrl') {
+      setImageUploadError('')
+    }
   }
 
   function clearTimeField(field: 'startTime' | 'endTime') {
     updateField(field, '')
+  }
+
+  async function handleImageUpload(fileInput: HTMLInputElement) {
+    const file = fileInput.files?.[0]
+
+    if (!file) {
+      return
+    }
+
+    try {
+      setIsUploadingImage(true)
+      setImageUploadError('')
+      const { url } = await uploadImageToCloudinary(file)
+      updateField('imageUrl', url)
+      fileInput.value = ''
+    } catch (error) {
+      setImageUploadError(
+        error instanceof Error
+          ? error.message
+          : 'Nie udało się przesłać zdjęcia. Spróbuj ponownie.',
+      )
+    } finally {
+      setIsUploadingImage(false)
+    }
   }
 
   async function handleSubmit(submitEvent: FormEvent<HTMLFormElement>) {
@@ -364,6 +397,53 @@ export function EventForm({
           onChange={(event) => updateField('imageUrl', event.target.value)}
         />
       </label>
+
+      {CLOUDINARY_UPLOADS_ENABLED && (
+        <div className="event-image-upload-section">
+          <div className="event-image-upload-actions">
+            <label
+              className={`button button-secondary event-image-upload-button${
+                isUploadingImage ? ' is-disabled' : ''
+              }`}
+              aria-disabled={isUploadingImage}
+            >
+              <span>{isUploadingImage ? 'Przesyłanie...' : 'Prześlij zdjęcie'}</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="event-image-upload-input"
+                disabled={isUploadingImage}
+                onChange={(event) => handleImageUpload(event.currentTarget)}
+              />
+            </label>
+
+            {form.imageUrl && (
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={() => updateField('imageUrl', '')}
+                disabled={isUploadingImage}
+              >
+                Usuń zdjęcie
+              </button>
+            )}
+          </div>
+
+          {imageUploadError && (
+            <p className="admin-form-message admin-form-error" role="alert">
+              {imageUploadError}
+            </p>
+          )}
+
+          {form.imageUrl && (
+            <img
+              className="event-image-upload-preview"
+              src={form.imageUrl}
+              alt="Podgląd zdjęcia wydarzenia"
+            />
+          )}
+        </div>
+      )}
 
       {formError && (
         <p className="admin-form-message admin-form-error" role="alert">
