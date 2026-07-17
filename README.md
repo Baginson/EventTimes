@@ -41,7 +41,16 @@ Opcjonalnie — import wydarzeń z Ticketmaster w panelu admina (funkcja jest uk
 VITE_TICKETMASTER_API_KEY=your_ticketmaster_api_key
 ```
 
-Klucz trzymaj wyłącznie w `.env.local` (lokalnie) i w GitHub Actions Secrets (produkcja). Nigdy w kodzie ani w repozytorium.
+Opcjonalnie — przesyłanie zdjęć (okładki wydarzeń, zdjęcia wspomnień) przez Cloudinary (funkcje uploadu są ukryte, gdy zmienne nie są ustawione):
+
+```env
+VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+VITE_CLOUDINARY_UPLOAD_PRESET=your_unsigned_upload_preset
+```
+
+W panelu Cloudinary utwórz **unsigned upload preset** (Settings → Upload → Upload presets → Add, Signing Mode: Unsigned) i ogranicz go (folder, formaty graficzne, maks. rozmiar). Nazwa chmury i presetu są jawne (trafiają do bundla) — to zamierzony model unsigned; sekretów API nigdy nie umieszczaj w kodzie.
+
+Klucze trzymaj wyłącznie w `.env.local` (lokalnie) i w GitHub Actions Secrets (produkcja). Nigdy w kodzie ani w repozytorium.
 
 3. Uruchom:
 
@@ -73,7 +82,7 @@ Publiczne dane aplikacji są przechowywane w kolekcjach:
 
 Każdy może je czytać. Tworzenie, edycja i usuwanie są dozwolone tylko dla admina według reguł Firestore.
 
-Reguły znajdują się w pliku `firestore.rules`.
+Reguły znajdują się w pliku `firestore.rules`. Po każdej zmianie tego pliku wklej jego treść w Firebase Console → Firestore Database → Rules i opublikuj — reguły nie wdrażają się same. Dane prywatne użytkownika (akcje, wspomnienia z wydarzeń) żyją w podkolekcjach `users/{uid}/...` dostępnych wyłącznie dla właściciela.
 
 ## GitHub Pages
 

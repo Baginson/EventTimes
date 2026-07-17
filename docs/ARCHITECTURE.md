@@ -78,7 +78,17 @@ Event status (`upcoming` / `ongoing` / `past`) is always computed at render time
 
 ## Firestore
 
-Collections: `venues`, `events` (public read, admin-only write), `users/{uid}` + `users/{uid}/eventActions/{eventId}` + `users/{uid}/venueActions/{venueId}` (owner-only), `admins/{uid}` (get-only for the current user, never listable). Rules in `firestore.rules` match this exactly — reviewed and confirmed correct.
+Collections: `venues`, `events` (public read, admin-only write), `users/{uid}` + `users/{uid}/eventActions/{eventId}` + `users/{uid}/venueActions/{venueId}` + `users/{uid}/eventMemories/{eventId}` (all owner-only), `admins/{uid}` (get-only for the current user, never listable). Rules in `firestore.rules` match this exactly — reviewed and confirmed correct. Rules changes must be deployed manually in the Firebase Console (no CI deploy for rules).
+
+`eventMemories/{eventId}` is the private per-user memory of a past event: `{ eventId, venueId, note (≤2000 chars), photos: MemoryPhoto[] (≤6: { id, url, publicId?, createdAt }), createdAt, updatedAt }` — service layer in `src/services/memoryService.ts`. Strictly private: no collection-group queries, owner-only rules, other users can never read them.
+
+## Image uploads (Cloudinary)
+
+Free-first means no Firebase Storage and no Cloud Functions, so user/admin image uploads go browser→Cloudinary via an **unsigned upload preset** (`src/services/cloudinaryService.ts`): gated by `VITE_CLOUDINARY_CLOUD_NAME` + `VITE_CLOUDINARY_UPLOAD_PRESET` (both safe-to-expose identifiers; no API secret in the client — deletes are therefore impossible from the app, replaced images simply remain in Cloudinary). Used by: EventForm cover-photo upload (writes `secure_url` into the existing `imageUrl` field) and event-memory photos. Uploaded URLs are public-by-obscurity (anyone holding the URL can view the image) — Firestore protects the listing, not the CDN asset. Restrict the preset in the Cloudinary dashboard (folder, formats, max size) as defense-in-depth.
+
+## Deep links & sharing
+
+No router — `src/App.tsx` reads `?venue=<id>` / `?event=<id>` once after the initial data load and opens the matching panel; panel open/close mirrors state back into the URL via `history.replaceState` (no back-stack management). `src/utils/shareLinks.ts` builds absolute share URLs on top of `BASE_URL` and wraps `navigator.share` with a clipboard fallback; both panels expose a share icon action (visible logged-out too).
 
 Admin status is Firestore-doc-based only (`admins/{uid}` existence), never email- or client-side-password-based.
 

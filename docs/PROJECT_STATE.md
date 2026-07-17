@@ -1,6 +1,6 @@
 # Event Times — Project State
 
-Last updated: 2026-07-17, after the UI/UX audit + first polish pass (visual tokens, panel a11y, touch targets). Keep this current after every non-trivial change — this is the single place to check "what actually works right now."
+Last updated: 2026-07-17, after the features wave: Cloudinary uploads, share deep links, private event memories. Keep this current after every non-trivial change — this is the single place to check "what actually works right now."
 
 ## Working (verified: `npm run test` 64/64, `npm run lint` clean, `npm run build` clean)
 
@@ -12,6 +12,9 @@ Last updated: 2026-07-17, after the UI/UX audit + first polish pass (visual toke
 - Mobile: real bottom-sheet treatment for panels (not just squeezed desktop CSS), `prefers-reduced-motion` handled in CSS and JS.
 - CI: GitHub Pages deploy now gated on `npm run test` + `npm run lint` before build (added in Etap A).
 - Global React error boundary + retry button on data-load failure (added in Etap A).
+- Cloudinary cover-photo upload in EventForm (unsigned preset, env-gated; QA'd code paths locally — real upload needs the user's Cloudinary account configured).
+- Shareable deep links (`?venue=`/`?event=`) + share buttons in both panels (Playwright-verified: auto-open on fresh load, URL sync, clipboard fallback, unknown ids harmless).
+- Private event memories: note + up to 6 photos per past "Byłem" event, editable from EventPanel, listed as a collection in AccountPanel. **Requires deploying the updated `firestore.rules` in the Firebase Console** (adds owner-only `eventMemories`) — until deployed, memory reads/writes will be denied in any environment pointing at real Firestore.
 
 ## Partially working / known drift
 
