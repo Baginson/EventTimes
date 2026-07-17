@@ -21,6 +21,7 @@
   --color-white: #ffffff;
   --color-border: #e3e8f2;
   --color-muted: #64748b;
+  --color-ink-soft: #344159; /* secondary text, stronger than --color-muted */
   --color-danger: #ef4444;
   --color-yellow: #ffe15a;
 
@@ -28,16 +29,19 @@
   --font-control: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-display: 'Bungee', sans-serif;
 
+  --radius-xs: 12px;
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
-  --radius-xl: 32px;
+  --radius-xl: 28px;
   --radius-pill: 999px;
 
   --shadow-float: 0 10px 28px rgba(7, 20, 47, 0.11);
   --shadow-panel: 0 22px 58px rgba(7, 20, 47, 0.16);
   --shadow-soft: 0 10px 28px rgba(7, 20, 47, 0.08);
   --shadow-button: 0 4px 12px rgba(6, 75, 255, 0.18);
+  --shadow-button-soft: 0 8px 18px rgba(6, 75, 255, 0.1);
+  --shadow-cta: 0 14px 28px rgba(6, 75, 255, 0.24);
   --border-subtle: 1px solid var(--color-border);
   --border-strong: 1px solid rgba(7, 20, 47, 0.16);
 

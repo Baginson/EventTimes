@@ -32,6 +32,9 @@ CLAUDE.local.md
 # Local knowledge graph (rebuilt per-machine by the graphify post-commit hook)
 graphify-out/
 
+# Playwright CLI session output (screenshots, traces from UI QA runs)
+.playwright-cli/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
