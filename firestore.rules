@@ -35,6 +35,10 @@ service cloud.firestore {
       match /venueActions/{venueId} {
         allow read, write: if isOwner(userId);
       }
+
+      match /eventMemories/{eventId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     match /admins/{adminId} {

@@ -10,6 +10,7 @@ import {
   Copy,
   ExternalLink,
   Heart,
+  ImagePlus,
   Navigation,
   Pencil,
   Share2,
@@ -26,6 +27,16 @@ import {
   toggleEventAction,
 } from '../services/userActionService'
 import type { EventAction, EventActionKey } from '../services/userActionService'
+import {
+  CLOUDINARY_UPLOADS_ENABLED,
+  uploadImageToCloudinary,
+} from '../services/cloudinaryService'
+import {
+  getEventMemory,
+  MAX_MEMORY_PHOTOS,
+  saveEventMemory,
+} from '../services/memoryService'
+import type { EventMemory, MemoryPhoto } from '../services/memoryService'
 import {
   formatEventDate,
   getEventStatus,
@@ -88,13 +99,25 @@ export function EventPanel({
   const [pendingAction, setPendingAction] = useState<EventActionKey | null>(null)
   const [eventHeartAnimationId, setEventHeartAnimationId] = useState(0)
   const [userActionError, setUserActionError] = useState('')
+  const [memoryNote, setMemoryNote] = useState('')
+  const [memoryPhotos, setMemoryPhotos] = useState<MemoryPhoto[]>([])
+  const [memoryError, setMemoryError] = useState('')
+  const [memoryFeedback, setMemoryFeedback] = useState('')
+  const [isMemoryLoading, setIsMemoryLoading] = useState(false)
+  const [isMemorySaving, setIsMemorySaving] = useState(false)
+  const [isMemoryUploading, setIsMemoryUploading] = useState(false)
   const [shareFeedback, setShareFeedback] = useState('')
   const hasValidEventDate = isEventDateValid(event)
   const eventStatus = getEventStatus(event)
   const shouldShowTicketAction = Boolean(event.ticketUrl && eventStatus !== 'past')
+  const shouldShowEventMemory = Boolean(
+    user && hasValidEventDate && eventStatus === 'past' && eventAction.visited,
+  )
   const panelMotion = usePanelMotion()
   const panelElementRef = useRef<HTMLElement | null>(null)
+  const memoryFileInputRef = useRef<HTMLInputElement | null>(null)
   const shareFeedbackTimeoutRef = useRef<number | null>(null)
+  const memoryFeedbackTimeoutRef = useRef<number | null>(null)
 
   function setPanelElement(node: HTMLElement | null) {
     panelElementRef.current = node
@@ -115,6 +138,10 @@ export function EventPanel({
     setIsDescriptionExpanded(false)
     setEventHeartAnimationId(0)
     setShareFeedback('')
+    setMemoryNote('')
+    setMemoryPhotos([])
+    setMemoryError('')
+    setMemoryFeedback('')
   }, [event.id])
 
   useEffect(() => {
@@ -139,6 +166,10 @@ export function EventPanel({
     return () => {
       if (shareFeedbackTimeoutRef.current !== null) {
         window.clearTimeout(shareFeedbackTimeoutRef.current)
+      }
+
+      if (memoryFeedbackTimeoutRef.current !== null) {
+        window.clearTimeout(memoryFeedbackTimeoutRef.current)
       }
     }
   }, [])
@@ -178,6 +209,52 @@ export function EventPanel({
       active = false
     }
   }, [event, user])
+
+  useEffect(() => {
+    let active = true
+
+    setMemoryError('')
+    setMemoryFeedback('')
+
+    if (!user || !shouldShowEventMemory) {
+      setMemoryNote('')
+      setMemoryPhotos([])
+      setIsMemoryLoading(false)
+      return () => {
+        active = false
+      }
+    }
+
+    setIsMemoryLoading(true)
+
+    void getEventMemory(user.uid, event.id)
+      .then((memory) => {
+        if (!active) {
+          return
+        }
+
+        setMemoryNote(memory?.note ?? '')
+        setMemoryPhotos(memory?.photos ?? [])
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setMemoryError(
+            error instanceof Error
+              ? error.message
+              : 'Nie udało się pobrać wspomnienia.',
+          )
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setIsMemoryLoading(false)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [event.id, shouldShowEventMemory, user])
 
   async function saveEvent(updatedEvent: EventTimesEvent) {
     await onUpdateEvent(updatedEvent)
@@ -224,6 +301,84 @@ export function EventPanel({
       setShareFeedback('')
       shareFeedbackTimeoutRef.current = null
     }, 2500)
+  }
+
+  function showMemoryFeedback(message: string) {
+    setMemoryFeedback(message)
+
+    if (memoryFeedbackTimeoutRef.current !== null) {
+      window.clearTimeout(memoryFeedbackTimeoutRef.current)
+    }
+
+    memoryFeedbackTimeoutRef.current = window.setTimeout(() => {
+      setMemoryFeedback('')
+      memoryFeedbackTimeoutRef.current = null
+    }, 2500)
+  }
+
+  async function handleMemoryPhotoUpload(file: File) {
+    setMemoryError('')
+
+    if (memoryPhotos.length >= MAX_MEMORY_PHOTOS) {
+      setMemoryError('Możesz dodać maksymalnie 6 zdjęć.')
+      return
+    }
+
+    try {
+      setIsMemoryUploading(true)
+      const { url, publicId } = await uploadImageToCloudinary(file)
+      setMemoryPhotos((currentPhotos) => {
+        if (currentPhotos.length >= MAX_MEMORY_PHOTOS) {
+          return currentPhotos
+        }
+
+        return [
+          ...currentPhotos,
+          {
+            id: crypto.randomUUID(),
+            url,
+            publicId,
+            createdAt: new Date().toISOString(),
+          },
+        ]
+      })
+    } catch (error) {
+      setMemoryError(
+        error instanceof Error ? error.message : 'Nie udało się dodać zdjęcia.',
+      )
+    } finally {
+      setIsMemoryUploading(false)
+      if (memoryFileInputRef.current) {
+        memoryFileInputRef.current.value = ''
+      }
+    }
+  }
+
+  async function handleSaveMemory() {
+    if (!user) {
+      return
+    }
+
+    const memory: Omit<EventMemory, 'createdAt' | 'updatedAt'> = {
+      eventId: event.id,
+      venueId: event.venueId,
+      note: memoryNote,
+      photos: memoryPhotos,
+    }
+
+    setMemoryError('')
+
+    try {
+      setIsMemorySaving(true)
+      await saveEventMemory(user.uid, memory)
+      showMemoryFeedback('Zapisano')
+    } catch (error) {
+      setMemoryError(
+        error instanceof Error ? error.message : 'Nie udało się zapisać wspomnienia.',
+      )
+    } finally {
+      setIsMemorySaving(false)
+    }
   }
 
   async function handleShareEvent() {
@@ -407,6 +562,102 @@ export function EventPanel({
                 )}
 
                 {userActionError && <p className="user-action-error" role="alert">{userActionError}</p>}
+              </section>
+            )}
+
+            {shouldShowEventMemory && (
+              <section className="event-memory" aria-labelledby="event-memory-title">
+                <div className="event-memory-header">
+                  <h2 id="event-memory-title">
+                    Moje wspomnienie <span>(prywatne)</span>
+                  </h2>
+                  {isMemoryLoading && <span role="status">Ładowanie...</span>}
+                </div>
+
+                <label className="event-memory-field" htmlFor={`event-memory-note-${event.id}`}>
+                  <span>Prywatna notatka</span>
+                  <textarea
+                    id={`event-memory-note-${event.id}`}
+                    value={memoryNote}
+                    placeholder="Jak było? Zapisz dla siebie..."
+                    maxLength={2000}
+                    disabled={isMemoryLoading || isMemorySaving}
+                    onChange={(changeEvent) => setMemoryNote(changeEvent.target.value)}
+                  />
+                </label>
+
+                {memoryPhotos.length > 0 && (
+                  <div className="event-memory-photo-grid" aria-label="Zdjęcia wspomnienia">
+                    {memoryPhotos.map((photo) => (
+                      <div className="event-memory-photo" key={photo.id}>
+                        <img src={photo.url} alt="" />
+                        <button
+                          type="button"
+                          aria-label="Usuń zdjęcie"
+                          disabled={isMemorySaving}
+                          onClick={() =>
+                            setMemoryPhotos((currentPhotos) =>
+                              currentPhotos.filter((item) => item.id !== photo.id),
+                            )
+                          }
+                        >
+                          <X className="ui-icon" aria-hidden="true" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="event-memory-actions">
+                  {CLOUDINARY_UPLOADS_ENABLED && memoryPhotos.length < MAX_MEMORY_PHOTOS && (
+                    <>
+                      <input
+                        ref={memoryFileInputRef}
+                        className="event-memory-file-input"
+                        type="file"
+                        accept="image/*"
+                        aria-label="Dodaj zdjęcie do wspomnienia"
+                        disabled={isMemoryUploading || isMemorySaving}
+                        onChange={(changeEvent) => {
+                          const file = changeEvent.target.files?.[0]
+
+                          if (file) {
+                            void handleMemoryPhotoUpload(file)
+                          }
+                        }}
+                      />
+                      <button
+                        className="event-memory-secondary-action"
+                        type="button"
+                        disabled={isMemoryUploading || isMemorySaving}
+                        onClick={() => memoryFileInputRef.current?.click()}
+                      >
+                        <ImagePlus className="ui-icon" aria-hidden="true" />
+                        {isMemoryUploading ? 'Dodawanie...' : 'Dodaj zdjęcie'}
+                      </button>
+                    </>
+                  )}
+
+                  <button
+                    className="event-memory-primary-action"
+                    type="button"
+                    disabled={isMemoryLoading || isMemorySaving || isMemoryUploading}
+                    onClick={() => void handleSaveMemory()}
+                  >
+                    {isMemorySaving ? 'Zapisywanie...' : 'Zapisz wspomnienie'}
+                  </button>
+                </div>
+
+                {memoryFeedback && (
+                  <p className="event-memory-feedback" role="status">
+                    {memoryFeedback}
+                  </p>
+                )}
+                {memoryError && (
+                  <p className="event-memory-error" role="alert">
+                    {memoryError}
+                  </p>
+                )}
               </section>
             )}
 
