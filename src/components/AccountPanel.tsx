@@ -5,6 +5,7 @@ import {
   CalendarPlus,
   Clock,
   Heart,
+  Image,
   LogOut,
   MapPin,
   Pencil,
@@ -27,6 +28,10 @@ import {
   saveUserProfileSettings,
 } from '../services/userProfileService'
 import type { UserProfileSettings } from '../services/userProfileService'
+import {
+  getAllEventMemories,
+} from '../services/memoryService'
+import type { EventMemory } from '../services/memoryService'
 import { formatEventDate } from '../utils/eventStatus'
 import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
 
@@ -55,6 +60,7 @@ type RecentActivityItem = {
 }
 
 const activityPreviewLimit = 3
+const memoriesPreviewLimit = 4
 const recentActivityLimit = 3
 const eventPreferenceOptions = EVENT_TYPES.filter((eventType) => eventType !== 'Wszystkie')
 const cityOptions = ['Leszno']
@@ -161,6 +167,28 @@ function getEventActivityLabel(activity: NonNullable<ReturnType<typeof getPrimar
   }
 }
 
+function formatPhotoCount(count: number) {
+  if (count === 1) {
+    return '1 zdjęcie'
+  }
+
+  if (count >= 2 && count <= 4) {
+    return `${count} zdjęcia`
+  }
+
+  return `${count} zdjęć`
+}
+
+function getMemoryNotePreview(note: string) {
+  const normalizedNote = note.trim().replace(/\s+/g, ' ')
+
+  if (normalizedNote.length <= 80) {
+    return normalizedNote
+  }
+
+  return `${normalizedNote.slice(0, 77)}...`
+}
+
 export function AccountPanel({
   venues,
   events,
@@ -186,6 +214,8 @@ export function AccountPanel({
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingSetup, setSavingSetup] = useState(false)
   const [clearingData, setClearingData] = useState(false)
+  const [memories, setMemories] = useState<EventMemory[]>([])
+  const [areAllMemoriesVisible, setAreAllMemoriesVisible] = useState(false)
   const eventById = useMemo(
     () => new Map(events.map((event) => [event.id, event])),
     [events],
@@ -207,12 +237,14 @@ export function AccountPanel({
     void Promise.all([
       getAllUserActions(user.uid),
       getUserProfileSettings(user.uid),
+      getAllEventMemories(user.uid),
     ])
-      .then(([actions, settings]) => {
+      .then(([actions, settings, loadedMemories]) => {
         if (active) {
           setEventActions(actions.eventActions)
           setVenueActions(actions.venueActions)
           setProfileSettings(settings)
+          setMemories(loadedMemories)
           setProfileDefaultCity(settings.userPreferences.defaultCity)
           setSelectedEventTypes(settings.userPreferences.eventTypes)
           setSetupDefaultCity(settings.userPreferences.defaultCity)
@@ -502,6 +534,99 @@ export function AccountPanel({
       .slice(0, recentActivityLimit)
   }
 
+  function getSortedMemories() {
+    return [...memories].sort((first, second) => {
+      const firstUpdatedAt = getActionUpdatedAtMs(first.updatedAt) ?? getActionUpdatedAtMs(first.createdAt) ?? 0
+      const secondUpdatedAt = getActionUpdatedAtMs(second.updatedAt) ?? getActionUpdatedAtMs(second.createdAt) ?? 0
+
+      return secondUpdatedAt - firstUpdatedAt
+    })
+  }
+
+  function renderMemoriesSection(sortedMemories: EventMemory[]) {
+    const visibleMemories = areAllMemoriesVisible
+      ? sortedMemories
+      : sortedMemories.slice(0, memoriesPreviewLimit)
+    const hasHiddenMemories = sortedMemories.length > memoriesPreviewLimit
+
+    return (
+      <section className="account-memories-section" aria-labelledby="account-memories-title">
+        <header className="account-memories-header">
+          <div>
+            <span>Wspomnienia <small>(prywatne)</small></span>
+            <h3 id="account-memories-title">Minione wydarzenia</h3>
+          </div>
+          <strong>{sortedMemories.length}</strong>
+        </header>
+
+        {visibleMemories.length ? (
+          <>
+            <ul className="account-memories-list">
+              {visibleMemories.map((memory) => {
+                const event = eventById.get(memory.eventId)
+                const venue = event ? venueById.get(event.venueId) : undefined
+                const firstPhoto = memory.photos[0]
+                const notePreview = getMemoryNotePreview(memory.note)
+                const meta = event
+                  ? `${formatEventDate(event.startDate)} · ${formatPhotoCount(memory.photos.length)}`
+                  : formatPhotoCount(memory.photos.length)
+                const content = (
+                  <>
+                    <span className="account-memories-thumb" aria-hidden="true">
+                      {firstPhoto ? (
+                        <img src={firstPhoto.url} alt="" />
+                      ) : (
+                        <Image className="ui-icon" aria-hidden="true" />
+                      )}
+                    </span>
+                    <span className="account-memories-content">
+                      <strong className={event ? undefined : 'is-muted'}>
+                        {event ? event.name : 'Wydarzenie usunięte'}
+                      </strong>
+                      <small>{meta}</small>
+                      {notePreview && <span>{notePreview}</span>}
+                    </span>
+                  </>
+                )
+
+                return (
+                  <li key={memory.eventId}>
+                    {event && venue ? (
+                      <button
+                        className="account-memories-item"
+                        type="button"
+                        onClick={() => onEventSelect(event, venue)}
+                      >
+                        {content}
+                      </button>
+                    ) : (
+                      <div className="account-memories-item is-disabled" aria-disabled="true">
+                        {content}
+                      </div>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+            {hasHiddenMemories && (
+              <button
+                className="account-memories-toggle"
+                type="button"
+                onClick={() => setAreAllMemoriesVisible((isVisible) => !isVisible)}
+              >
+                {areAllMemoriesVisible ? 'Zwiń' : `Pokaż wszystkie (${sortedMemories.length})`}
+              </button>
+            )}
+          </>
+        ) : (
+          <p className="account-empty">
+            Zaznacz Byłem na minionym wydarzeniu i dodaj zdjęcia lub notatkę.
+          </p>
+        )}
+      </section>
+    )
+  }
+
   function renderPreferenceControls(
     idPrefix: string,
     selectedTypes: string[],
@@ -632,6 +757,7 @@ export function AccountPanel({
   const visitedEventItems = getEventActivityItems(visitedEvents)
   const savedVenueItems = getVenueActivityItems(savedVenues)
   const recentActivityItems = getRecentActivityItems()
+  const sortedMemories = getSortedMemories()
   const activityCount =
     savedEventItems.length + goingEventItems.length + visitedEventItems.length + savedVenueItems.length
 
@@ -806,6 +932,7 @@ export function AccountPanel({
                     <Heart className="ui-icon" aria-hidden="true" />
                   ))}
                 </div>
+                {renderMemoriesSection(sortedMemories)}
                 {renderRecentActivity(recentActivityItems)}
               </>
             )}
