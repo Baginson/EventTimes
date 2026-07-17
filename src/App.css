@@ -1204,6 +1204,20 @@
   background: rgba(7, 20, 47, 0.12);
 }
 
+.share-feedback {
+  max-width: 180px;
+  padding: 6px 9px;
+  color: var(--color-navy);
+  font-family: var(--font-control);
+  font-size: 12px;
+  line-height: 1.25;
+  white-space: nowrap;
+  background: var(--color-white);
+  border: 1px solid rgba(7, 20, 47, 0.12);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-soft);
+}
+
 .venue-panel-handle {
   display: none;
 }

@@ -12,6 +12,7 @@ import {
   Heart,
   Navigation,
   Pencil,
+  Share2,
   Ticket,
   Trash2,
   X,
@@ -36,6 +37,7 @@ import {
   getVenueGoogleMapsUrl,
   hasValidVenueCoordinates,
 } from '../utils/googleMaps'
+import { buildShareUrl, shareUrl } from '../utils/shareLinks'
 import { getVenueDisplayName } from '../utils/venueDisplay'
 import { EventForm } from './EventForm'
 
@@ -86,11 +88,13 @@ export function EventPanel({
   const [pendingAction, setPendingAction] = useState<EventActionKey | null>(null)
   const [eventHeartAnimationId, setEventHeartAnimationId] = useState(0)
   const [userActionError, setUserActionError] = useState('')
+  const [shareFeedback, setShareFeedback] = useState('')
   const hasValidEventDate = isEventDateValid(event)
   const eventStatus = getEventStatus(event)
   const shouldShowTicketAction = Boolean(event.ticketUrl && eventStatus !== 'past')
   const panelMotion = usePanelMotion()
   const panelElementRef = useRef<HTMLElement | null>(null)
+  const shareFeedbackTimeoutRef = useRef<number | null>(null)
 
   function setPanelElement(node: HTMLElement | null) {
     panelElementRef.current = node
@@ -110,6 +114,7 @@ export function EventPanel({
     setIsDuplicatingEvent(false)
     setIsDescriptionExpanded(false)
     setEventHeartAnimationId(0)
+    setShareFeedback('')
   }, [event.id])
 
   useEffect(() => {
@@ -129,6 +134,14 @@ export function EventPanel({
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [onClose])
+
+  useEffect(() => {
+    return () => {
+      if (shareFeedbackTimeoutRef.current !== null) {
+        window.clearTimeout(shareFeedbackTimeoutRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -200,6 +213,37 @@ export function EventPanel({
     }
   }
 
+  function showShareFeedback(message: string) {
+    setShareFeedback(message)
+
+    if (shareFeedbackTimeoutRef.current !== null) {
+      window.clearTimeout(shareFeedbackTimeoutRef.current)
+    }
+
+    shareFeedbackTimeoutRef.current = window.setTimeout(() => {
+      setShareFeedback('')
+      shareFeedbackTimeoutRef.current = null
+    }, 2500)
+  }
+
+  async function handleShareEvent() {
+    const url = buildShareUrl({ eventId: event.id })
+
+    try {
+      const result = await shareUrl(url, event.name)
+
+      if (result === 'copied') {
+        showShareFeedback('Skopiowano link')
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message === 'share-cancelled') {
+        return
+      }
+
+      showShareFeedback('Nie udało się udostępnić.')
+    }
+  }
+
   return (
     <motion.aside
       ref={setPanelElement}
@@ -233,6 +277,19 @@ export function EventPanel({
               aria-hidden="true"
             />
           </button>
+        )}
+        <button
+          className="venue-panel-icon-action"
+          type="button"
+          onClick={() => void handleShareEvent()}
+          aria-label="Udostępnij wydarzenie"
+        >
+          <Share2 className="ui-icon" aria-hidden="true" />
+        </button>
+        {shareFeedback && (
+          <span className="share-feedback" role="status">
+            {shareFeedback}
+          </span>
         )}
         <button
           className="venue-panel-close"

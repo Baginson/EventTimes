@@ -11,6 +11,7 @@ import {
   Navigation,
   Pencil,
   Plus,
+  Share2,
   Ticket,
   Trash2,
   X,
@@ -31,6 +32,7 @@ import {
   getVenueGoogleMapsUrl,
   hasValidVenueCoordinates,
 } from '../utils/googleMaps'
+import { buildShareUrl, shareUrl } from '../utils/shareLinks'
 import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
 import { EventForm } from './EventForm'
 import { VenueForm } from './VenueForm'
@@ -107,9 +109,11 @@ export function VenuePanel({
   const [isVenueSaved, setIsVenueSaved] = useState(false)
   const [venueHeartAnimationId, setVenueHeartAnimationId] = useState(0)
   const [userActionError, setUserActionError] = useState('')
+  const [shareFeedback, setShareFeedback] = useState('')
   const panelMotion = usePanelMotion()
   const shouldReduceMotion = useReducedMotion()
   const panelElementRef = useRef<HTMLElement | null>(null)
+  const shareFeedbackTimeoutRef = useRef<number | null>(null)
 
   function setPanelElement(node: HTMLElement | null) {
     panelElementRef.current = node
@@ -129,6 +133,7 @@ export function VenuePanel({
     setIsAddingEvent(false)
     setDuplicatedEvent(null)
     setIsDescriptionExpanded(false)
+    setShareFeedback('')
     setExpandedEventSections({
       ongoing: true,
       upcoming: true,
@@ -153,6 +158,14 @@ export function VenuePanel({
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [onClose])
+
+  useEffect(() => {
+    return () => {
+      if (shareFeedbackTimeoutRef.current !== null) {
+        window.clearTimeout(shareFeedbackTimeoutRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -337,6 +350,37 @@ export function VenuePanel({
     )
   }
 
+  function showShareFeedback(message: string) {
+    setShareFeedback(message)
+
+    if (shareFeedbackTimeoutRef.current !== null) {
+      window.clearTimeout(shareFeedbackTimeoutRef.current)
+    }
+
+    shareFeedbackTimeoutRef.current = window.setTimeout(() => {
+      setShareFeedback('')
+      shareFeedbackTimeoutRef.current = null
+    }, 2500)
+  }
+
+  async function handleShareVenue() {
+    const url = buildShareUrl({ venueId: venue.id })
+
+    try {
+      const result = await shareUrl(url, venueDisplayName)
+
+      if (result === 'copied') {
+        showShareFeedback('Skopiowano link')
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message === 'share-cancelled') {
+        return
+      }
+
+      showShareFeedback('Nie udało się udostępnić.')
+    }
+  }
+
   const statusEventSections = [
     {
       title: 'Trwa teraz',
@@ -387,6 +431,19 @@ export function VenuePanel({
               aria-hidden="true"
             />
           </button>
+        )}
+        <button
+          className="venue-panel-icon-action"
+          type="button"
+          onClick={() => void handleShareVenue()}
+          aria-label="Udostępnij miejsce"
+        >
+          <Share2 className="ui-icon" aria-hidden="true" />
+        </button>
+        {shareFeedback && (
+          <span className="share-feedback" role="status">
+            {shareFeedback}
+          </span>
         )}
         <button
           className="venue-panel-close"

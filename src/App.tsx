@@ -67,6 +67,7 @@ function App() {
   const [mobileSearchFocusRequest, setMobileSearchFocusRequest] = useState(0)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const rightPanelRef = useRef<HTMLElement>(null)
+  const hasConsumedShareParamsRef = useRef(false)
   const movingVenueId = mapMode.type === 'movingVenue' ? mapMode.venueId : null
   const isAddingVenue = mapMode.type === 'addingVenue'
   const isRightPanelOpen = Boolean(
@@ -108,6 +109,55 @@ function App() {
   useEffect(() => {
     void refreshPublicData(true).catch(() => undefined)
   }, [refreshPublicData])
+
+  useEffect(() => {
+    if (!hasConsumedShareParamsRef.current) {
+      return
+    }
+
+    const nextUrl = new URL(window.location.pathname, window.location.origin)
+
+    if (selectedEvent) {
+      nextUrl.searchParams.set('event', selectedEvent.id)
+    } else if (selectedVenue) {
+      nextUrl.searchParams.set('venue', selectedVenue.id)
+    }
+
+    window.history.replaceState(null, '', `${nextUrl.pathname}${nextUrl.search}`)
+  }, [selectedEvent, selectedVenue])
+
+  useEffect(() => {
+    if (dataLoading || hasConsumedShareParamsRef.current) {
+      return
+    }
+
+    const params = new URLSearchParams(window.location.search)
+    const eventId = params.get('event')
+    const venueId = params.get('venue')
+
+    hasConsumedShareParamsRef.current = true
+
+    if (eventId) {
+      const event = events.find((candidate) => candidate.id === eventId)
+      const venue = event
+        ? venues.find((candidate) => candidate.id === event.venueId)
+        : null
+
+      if (event && venue) {
+        selectEvent(event, venue)
+      }
+
+      return
+    }
+
+    if (venueId) {
+      const venue = venues.find((candidate) => candidate.id === venueId)
+
+      if (venue) {
+        selectVenue(venue)
+      }
+    }
+  }, [dataLoading, events, venues])
 
   useEffect(() => {
     if (!toast) {
