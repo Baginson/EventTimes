@@ -8,4 +8,6 @@ Nothing in progress. **Etap B — Public-launch readiness** is next per `docs/RO
 
 ## Recently completed
 
-**AI workflow configuration** (2026-07-16) — `AGENTS.md`, `CLAUDE.md`/`CLAUDE.local.md`, `docs/` (ARCHITECTURE/UI_RULES/PROJECT_STATE/DECISIONS/ROADMAP), `tasks/`, three review subagents, three workflow skills, safety hooks, `.graphifyignore`/`.claudeignore`, graphify post-commit hook. See `docs/DECISIONS.md` for the full rationale.
+**UI polish pass 1** (2026-07-17) — full Playwright-driven UI/UX audit (17 before/after screenshot pairs in `.playwright-cli/ui-audit-{before,after}/`), then three verified Codex tasks: design-token normalization (radii/shadows/grays), VenuePanel truncation + non-modal dialog semantics + pin a11y names, touch-target/text-size floors + group chevrons + title balance. Commits `085dc5b`, `493534a`, `115bc0b`. See `tasks/archive/2026-07-17-ui-polish-pass-1.md`.
+
+**AI workflow configuration** (2026-07-16) — `AGENTS.md`, `CLAUDE.md`/`CLAUDE.local.md`, `docs/`, `tasks/`, three review subagents, three workflow skills, safety hooks, graphify integration. See `docs/DECISIONS.md`.

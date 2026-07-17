@@ -16,9 +16,11 @@ Editorial map app + event poster. Bold but readable, distinctive, local premium 
 - Deep Navy `#07142F` — text, default pins, icons, base elements.
 - Cream `#FFF1C7` / Soft Cream `#FFF8E6` — card/panel backgrounds, empty states, poster-inspired elements.
 - White `#FFFFFF` — clean cards/panels.
-- Light Border `#E3E8F2`, Muted Text `#64748B`, Accent Yellow `#FFE15A`.
+- Light Border `#E3E8F2`, Muted Text `#64748B`, Ink Soft `#344159` (secondary text, stronger than muted), Accent Yellow `#FFE15A`.
 - Danger Red `#EF4444` — destructive actions only.
 - Don't add new colors without a strong reason.
+
+**Tokens are mandatory**: colors, radii (`--radius-sm/xs/md/lg/xl/pill`), and shadows (`--shadow-soft/float/panel/button/button-soft/cta`) come from `src/index.css` `:root`. Never hardcode a new px radius, one-off shadow, or hex gray in `App.css` — extend the token set deliberately instead (as of 2026-07-17 the stylesheet is fully tokenized; keep it that way). `--shadow-cta` is reserved for the single primary CTA glow; don't dilute it across secondary buttons.
 
 ## 3. Typography
 
@@ -29,7 +31,7 @@ Editorial map app + event poster. Bold but readable, distinctive, local premium 
 
 ## 4. Long text
 
-Long descriptions truncate with "Czytaj więcej" / "Zwiń opis" (currently implemented in `EventPanel`, missing in `VenuePanel` — see `docs/PROJECT_STATE.md`). Preserve paragraphs, line-height ~1.55–1.7. No empty description section when there's no description. Long titles wrap (`overflow-wrap`), never truncate or overflow the panel.
+Long descriptions truncate with "Czytaj więcej" / "Zwiń opis" (implemented in both `EventPanel` [>650 chars or >3 paragraphs] and `VenuePanel` [>450 chars]). Preserve paragraphs, line-height ~1.55–1.7. No empty description section when there's no description. Long titles wrap (`overflow-wrap` + `text-wrap: balance` on panel headings — no single-word orphans), never truncate or overflow the panel.
 
 ## 5. UI hierarchy
 
