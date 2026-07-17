@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import type { Ref } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { MutableRefObject, Ref } from 'react'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft,
@@ -90,6 +90,20 @@ export function EventPanel({
   const eventStatus = getEventStatus(event)
   const shouldShowTicketAction = Boolean(event.ticketUrl && eventStatus !== 'past')
   const panelMotion = usePanelMotion()
+  const panelElementRef = useRef<HTMLElement | null>(null)
+
+  function setPanelElement(node: HTMLElement | null) {
+    panelElementRef.current = node
+
+    if (typeof panelRef === 'function') {
+      panelRef(node)
+      return
+    }
+
+    if (panelRef) {
+      ;(panelRef as MutableRefObject<HTMLElement | null>).current = node
+    }
+  }
 
   useEffect(() => {
     setIsEditingEvent(false)
@@ -97,6 +111,24 @@ export function EventPanel({
     setIsDescriptionExpanded(false)
     setEventHeartAnimationId(0)
   }, [event.id])
+
+  useEffect(() => {
+    panelElementRef.current?.focus({ preventScroll: true })
+  }, [event.id])
+
+  useEffect(() => {
+    function handleKeyDown(keyboardEvent: KeyboardEvent) {
+      if (keyboardEvent.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onClose])
 
   useEffect(() => {
     let active = true
@@ -170,9 +202,11 @@ export function EventPanel({
 
   return (
     <motion.aside
-      ref={panelRef}
+      ref={setPanelElement}
       className="venue-panel event-panel"
+      role="dialog"
       aria-label={`Szczegóły wydarzenia: ${event.name}`}
+      tabIndex={-1}
       {...panelMotion}
       onPointerDown={(event) => event.stopPropagation()}
     >

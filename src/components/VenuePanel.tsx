@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
-import type { Ref } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { MutableRefObject, Ref } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   Copy,
+  ChevronDown,
+  ChevronUp,
   ExternalLink,
   Heart,
   MapPinPlus,
@@ -77,6 +79,8 @@ export function VenuePanel({
   const { user } = useAuth()
   const venueDisplayName = getVenueDisplayName(venue)
   const venueAddress = formatVenueAddress(venue)
+  const venueDescription = venue.description.trim()
+  const isLongDescription = venueDescription.length > 450
   const groupedEvents = {
     ongoing: events
       .filter((event) => isEventDateValid(event) && getEventStatus(event) === 'ongoing')
@@ -99,22 +103,56 @@ export function VenuePanel({
     upcoming: true,
     past: false,
   })
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
   const [isVenueSaved, setIsVenueSaved] = useState(false)
   const [venueHeartAnimationId, setVenueHeartAnimationId] = useState(0)
   const [userActionError, setUserActionError] = useState('')
   const panelMotion = usePanelMotion()
   const shouldReduceMotion = useReducedMotion()
+  const panelElementRef = useRef<HTMLElement | null>(null)
+
+  function setPanelElement(node: HTMLElement | null) {
+    panelElementRef.current = node
+
+    if (typeof panelRef === 'function') {
+      panelRef(node)
+      return
+    }
+
+    if (panelRef) {
+      ;(panelRef as MutableRefObject<HTMLElement | null>).current = node
+    }
+  }
 
   useEffect(() => {
     setIsEditingVenue(false)
     setIsAddingEvent(false)
     setDuplicatedEvent(null)
+    setIsDescriptionExpanded(false)
     setExpandedEventSections({
       ongoing: true,
       upcoming: true,
       past: false,
     })
   }, [venue.id])
+
+  useEffect(() => {
+    panelElementRef.current?.focus({ preventScroll: true })
+  }, [venue.id])
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onClose])
 
   useEffect(() => {
     let active = true
@@ -320,9 +358,11 @@ export function VenuePanel({
 
   return (
     <motion.aside
-      ref={panelRef}
+      ref={setPanelElement}
       className="venue-panel"
+      role="dialog"
       aria-label={`Informacje o miejscu: ${venueDisplayName}`}
+      tabIndex={-1}
       {...panelMotion}
       onPointerDown={(event) => event.stopPropagation()}
     >
@@ -399,10 +439,33 @@ export function VenuePanel({
               </a>
             </section>
             {userActionError && <p className="user-action-error" role="alert">{userActionError}</p>}
-            {venue.description.trim() ? (
+            {venueDescription ? (
               <section className="venue-story">
                 <span>O miejscu</span>
-                <p className="venue-description">{venue.description}</p>
+                <p
+                  className={`venue-description${
+                    isLongDescription && !isDescriptionExpanded ? ' is-collapsed' : ''
+                  }`}
+                >
+                  {venueDescription}
+                </p>
+                {isLongDescription && (
+                  <button
+                    className="event-description-toggle"
+                    type="button"
+                    aria-expanded={isDescriptionExpanded}
+                    onClick={() =>
+                      setIsDescriptionExpanded((currentValue) => !currentValue)
+                    }
+                  >
+                    {isDescriptionExpanded ? (
+                      <ChevronUp className="ui-icon" aria-hidden="true" />
+                    ) : (
+                      <ChevronDown className="ui-icon" aria-hidden="true" />
+                    )}
+                    {isDescriptionExpanded ? 'Zwiń opis' : 'Czytaj więcej'}
+                  </button>
+                )}
               </section>
             ) : isAdminMode ? (
               <p className="venue-description venue-description-empty">Brak opisu miejsca</p>

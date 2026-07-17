@@ -17,10 +17,29 @@ type EventMapProps = {
 
 const LESZNO_CENTER: [number, number] = [51.8419, 16.5748]
 
-function createVenueIcon(isSelected: boolean, isTemporary = false) {
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => {
+    switch (character) {
+      case '&':
+        return '&amp;'
+      case '<':
+        return '&lt;'
+      case '>':
+        return '&gt;'
+      case '"':
+        return '&quot;'
+      case "'":
+        return '&#39;'
+      default:
+        return character
+    }
+  })
+}
+
+function createVenueIcon(label: string, isSelected: boolean, isTemporary = false) {
   return divIcon({
     className: 'venue-marker-wrapper',
-    html: `<span class="venue-marker${isSelected ? ' venue-marker-active' : ''}${isTemporary ? ' venue-marker-temporary' : ''}"><span></span></span>`,
+    html: `<span class="venue-marker${isSelected ? ' venue-marker-active' : ''}${isTemporary ? ' venue-marker-temporary' : ''}" role="img" aria-label="${escapeHtml(label)}"><span></span></span>`,
     iconAnchor: [18, 42],
     iconSize: [36, 42],
     tooltipAnchor: [0, -36],
@@ -90,7 +109,7 @@ export function EventMap({
       {temporaryVenueCoordinates && (
         <Marker
           position={[temporaryVenueCoordinates.lat, temporaryVenueCoordinates.lng]}
-          icon={createVenueIcon(false, true)}
+          icon={createVenueIcon('Nowe miejsce', false, true)}
         >
           <Tooltip direction="top">Nowe miejsce</Tooltip>
         </Marker>
@@ -107,7 +126,7 @@ export function EventMap({
           <Marker
             key={venue.id}
             position={position}
-            icon={createVenueIcon(venue.id === selectedVenueId)}
+            icon={createVenueIcon(getVenueDisplayName(venue), venue.id === selectedVenueId)}
             eventHandlers={{
               click: () => {
                 if (!isMapClickActive) {

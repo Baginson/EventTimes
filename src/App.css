@@ -1357,6 +1357,12 @@
   line-height: 1.62;
 }
 
+.venue-description.is-collapsed {
+  max-height: 132px;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, #000 68%, transparent);
+}
+
 .venue-description-empty,
 .event-description-empty {
   color: var(--color-muted);
