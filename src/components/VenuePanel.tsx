@@ -310,6 +310,7 @@ export function VenuePanel({
           >
             <span className="event-status-title">{title}</span>
             <span className="event-status-count">{sectionEvents.length}</span>
+            <ChevronDown className="ui-icon event-status-chevron" aria-hidden="true" />
           </button>
         ) : (
           <div className="event-status-heading">
