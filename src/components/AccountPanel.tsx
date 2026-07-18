@@ -1,13 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
 import {
-  BadgeCheck,
-  CalendarPlus,
   Clock,
-  Heart,
   Image,
   LogOut,
-  MapPin,
   Pencil,
   SlidersHorizontal,
   Trash2,
@@ -59,9 +54,9 @@ type RecentActivityItem = {
   onClick?: () => void
 }
 
-const activityPreviewLimit = 3
-const memoriesPreviewLimit = 4
-const recentActivityLimit = 3
+type CollectionKey = 'visited' | 'going' | 'savedEvents' | 'savedVenues'
+
+const recentActivityLimit = 5
 const eventPreferenceOptions = EVENT_TYPES.filter((eventType) => eventType !== 'Wszystkie')
 const cityOptions = ['Leszno']
 
@@ -179,16 +174,6 @@ function formatPhotoCount(count: number) {
   return `${count} zdjęć`
 }
 
-function getMemoryNotePreview(note: string) {
-  const normalizedNote = note.trim().replace(/\s+/g, ' ')
-
-  if (normalizedNote.length <= 80) {
-    return normalizedNote
-  }
-
-  return `${normalizedNote.slice(0, 77)}...`
-}
-
 export function AccountPanel({
   venues,
   events,
@@ -215,7 +200,7 @@ export function AccountPanel({
   const [savingSetup, setSavingSetup] = useState(false)
   const [clearingData, setClearingData] = useState(false)
   const [memories, setMemories] = useState<EventMemory[]>([])
-  const [areAllMemoriesVisible, setAreAllMemoriesVisible] = useState(false)
+  const [activeCollection, setActiveCollection] = useState<CollectionKey>('visited')
   const eventById = useMemo(
     () => new Map(events.map((event) => [event.id, event])),
     [events],
@@ -544,83 +529,61 @@ export function AccountPanel({
   }
 
   function renderMemoriesSection(sortedMemories: EventMemory[]) {
-    const visibleMemories = areAllMemoriesVisible
-      ? sortedMemories
-      : sortedMemories.slice(0, memoriesPreviewLimit)
-    const hasHiddenMemories = sortedMemories.length > memoriesPreviewLimit
-
     return (
-      <section className="account-memories-section" aria-labelledby="account-memories-title">
-        <header className="account-memories-header">
-          <div>
-            <span>Wspomnienia <small>(prywatne)</small></span>
-            <h3 id="account-memories-title">Minione wydarzenia</h3>
-          </div>
-          <strong>{sortedMemories.length}</strong>
+      <section className="account-shelf" aria-labelledby="account-memories-title">
+        <header className="account-shelf-header">
+          <h3 id="account-memories-title">Wspomnienia</h3>
+          <span className="account-private-sticker">prywatne</span>
+          <strong className="account-shelf-count">{sortedMemories.length}</strong>
         </header>
 
-        {visibleMemories.length ? (
-          <>
-            <ul className="account-memories-list">
-              {visibleMemories.map((memory) => {
-                const event = eventById.get(memory.eventId)
-                const venue = event ? venueById.get(event.venueId) : undefined
-                const firstPhoto = memory.photos[0]
-                const notePreview = getMemoryNotePreview(memory.note)
-                const meta = event
-                  ? `${formatEventDate(event.startDate)} · ${formatPhotoCount(memory.photos.length)}`
-                  : formatPhotoCount(memory.photos.length)
-                const content = (
-                  <>
-                    <span className="account-memories-thumb" aria-hidden="true">
-                      {firstPhoto ? (
-                        <img src={firstPhoto.url} alt="" />
-                      ) : (
-                        <Image className="ui-icon" aria-hidden="true" />
-                      )}
-                    </span>
-                    <span className="account-memories-content">
-                      <strong className={event ? undefined : 'is-muted'}>
-                        {event ? event.name : 'Wydarzenie usunięte'}
-                      </strong>
-                      <small>{meta}</small>
-                      {notePreview && <span>{notePreview}</span>}
-                    </span>
-                  </>
-                )
-
-                return (
-                  <li key={memory.eventId}>
-                    {event && venue ? (
-                      <button
-                        className="account-memories-item"
-                        type="button"
-                        onClick={() => onEventSelect(event, venue)}
-                      >
-                        {content}
-                      </button>
+        {sortedMemories.length ? (
+          <ul className="account-polaroid-strip">
+            {sortedMemories.map((memory) => {
+              const event = eventById.get(memory.eventId)
+              const venue = event ? venueById.get(event.venueId) : undefined
+              const firstPhoto = memory.photos[0]
+              const meta = event
+                ? `${formatEventDate(event.startDate)} · ${formatPhotoCount(memory.photos.length)}`
+                : formatPhotoCount(memory.photos.length)
+              const content = (
+                <>
+                  <span className="account-polaroid-photo" aria-hidden="true">
+                    {firstPhoto ? (
+                      <img src={firstPhoto.url} alt="" />
                     ) : (
-                      <div className="account-memories-item is-disabled" aria-disabled="true">
-                        {content}
-                      </div>
+                      <Image className="ui-icon" aria-hidden="true" />
                     )}
-                  </li>
-                )
-              })}
-            </ul>
-            {hasHiddenMemories && (
-              <button
-                className="account-memories-toggle"
-                type="button"
-                onClick={() => setAreAllMemoriesVisible((isVisible) => !isVisible)}
-              >
-                {areAllMemoriesVisible ? 'Zwiń' : `Pokaż wszystkie (${sortedMemories.length})`}
-              </button>
-            )}
-          </>
+                  </span>
+                  <span className="account-polaroid-caption">
+                    {event ? event.name : 'Wydarzenie usunięte'}
+                  </span>
+                  <span className="account-polaroid-meta">{meta}</span>
+                </>
+              )
+
+              return (
+                <li key={memory.eventId}>
+                  {event && venue ? (
+                    <button
+                      className="account-polaroid"
+                      type="button"
+                      onClick={() => onEventSelect(event, venue)}
+                    >
+                      {content}
+                    </button>
+                  ) : (
+                    <div className="account-polaroid is-disabled" aria-disabled="true">
+                      {content}
+                    </div>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
         ) : (
           <p className="account-empty">
-            Zaznacz Byłem na minionym wydarzeniu i dodaj zdjęcia lub notatkę.
+            Zaznacz Byłem na minionym wydarzeniu i dodaj zdjęcia lub notatkę — pojawią się tutaj jak odbitki z wydarzeń.
           </p>
         )}
       </section>
@@ -671,23 +634,18 @@ export function AccountPanel({
 
   function renderRecentActivity(items: RecentActivityItem[]) {
     return (
-      <section className="account-recent-activity" aria-labelledby="account-recent-activity-title">
-        <header className="account-recent-header">
-          <span className="account-recent-icon" aria-hidden="true">
-            <Clock className="ui-icon" aria-hidden="true" />
-          </span>
-          <div>
-            <span>Ostatnia aktywność</span>
-            <h3 id="account-recent-activity-title">Co ostatnio zrobiłeś</h3>
-          </div>
+      <section className="account-shelf" aria-labelledby="account-recent-activity-title">
+        <header className="account-shelf-header">
+          <h3 id="account-recent-activity-title">Ostatnia aktywność</h3>
+          <Clock className="ui-icon account-shelf-icon" aria-hidden="true" />
         </header>
 
         {items.length ? (
-          <ol className="account-recent-list">
+          <ol className="account-receipt">
             {items.map((item) => (
               <li key={item.id}>
                 <button type="button" onClick={item.onClick}>
-                  <span>{item.label}</span>
+                  <span className="account-receipt-label">{item.label}</span>
                   <strong>{item.title}</strong>
                   <small>{item.meta}</small>
                 </button>
@@ -701,54 +659,29 @@ export function AccountPanel({
     )
   }
 
-  function renderActivityCard(
-    id: string,
-    title: string,
-    items: AccountActivityItem[],
-    icon: ReactNode,
-  ) {
-    const visibleItems = items.slice(0, activityPreviewLimit)
-    const hiddenCount = Math.max(0, items.length - visibleItems.length)
+  function renderCollectionList(items: AccountActivityItem[], emptyCopy: string) {
+    if (!items.length) {
+      return <p className="account-empty">{emptyCopy}</p>
+    }
 
     return (
-      <article className="account-activity-card" aria-labelledby={`account-activity-${id}`}>
-        <header className="account-activity-card-header">
-          <span className="account-activity-card-icon" aria-hidden="true">
-            {icon}
-          </span>
-          <div>
-            <h3 id={`account-activity-${id}`}>{title}</h3>
-            <strong>{items.length}</strong>
-          </div>
-        </header>
-
-        {visibleItems.length ? (
-          <>
-            <ul className="account-list">
-              {visibleItems.map((item) => (
-                <li key={item.id}>
-                  {item.onClick ? (
-                    <button className="account-activity-item" type="button" onClick={item.onClick}>
-                      <strong>{item.title}</strong>
-                      <span>{item.meta}</span>
-                    </button>
-                  ) : (
-                    <div className="account-activity-item is-disabled" aria-disabled="true">
-                      <strong>{item.title}</strong>
-                      <span>{item.meta}</span>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-            {hiddenCount > 0 && (
-              <p className="account-more-count">+ {hiddenCount} więcej</p>
+      <ul className="account-collection-list">
+        {items.map((item) => (
+          <li key={item.id}>
+            {item.onClick ? (
+              <button className="account-collection-item" type="button" onClick={item.onClick}>
+                <strong>{item.title}</strong>
+                <span>{item.meta}</span>
+              </button>
+            ) : (
+              <div className="account-collection-item is-disabled" aria-disabled="true">
+                <strong>{item.title}</strong>
+                <span>{item.meta}</span>
+              </div>
             )}
-          </>
-        ) : (
-          <p className="account-empty">Brak elementów.</p>
-        )}
-      </article>
+          </li>
+        ))}
+      </ul>
     )
   }
 
@@ -758,8 +691,40 @@ export function AccountPanel({
   const savedVenueItems = getVenueActivityItems(savedVenues)
   const recentActivityItems = getRecentActivityItems()
   const sortedMemories = getSortedMemories()
-  const activityCount =
-    savedEventItems.length + goingEventItems.length + visitedEventItems.length + savedVenueItems.length
+  const collections: Array<{
+    key: CollectionKey
+    label: string
+    items: AccountActivityItem[]
+    emptyCopy: string
+  }> = [
+    {
+      key: 'visited',
+      label: 'Byłem',
+      items: visitedEventItems,
+      emptyCopy: 'Oznacz „Byłem” na minionym wydarzeniu, a trafi do tej kolekcji.',
+    },
+    {
+      key: 'going',
+      label: 'Chcę iść',
+      items: goingEventItems,
+      emptyCopy: 'Zaznacz „Chcę iść” przy nadchodzącym wydarzeniu — zbudujesz tu swój plan.',
+    },
+    {
+      key: 'savedEvents',
+      label: 'Wydarzenia',
+      items: savedEventItems,
+      emptyCopy: 'Polub wydarzenie serduszkiem, żeby je tu zapisać.',
+    },
+    {
+      key: 'savedVenues',
+      label: 'Miejsca',
+      items: savedVenueItems,
+      emptyCopy: 'Polub miejsce, żeby mieć je zawsze pod ręką.',
+    },
+  ]
+  const activeCollectionConfig =
+    collections.find((collection) => collection.key === activeCollection) ?? collections[0]
+  const passYear = new Date().getFullYear()
 
   return (
     <div className="account-modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -810,22 +775,27 @@ export function AccountPanel({
             </section>
           )}
 
-          <section className="account-profile-card" aria-labelledby="account-panel-title">
-            <div className="account-profile">
-              {avatarURL ? (
-                <img src={avatarURL} alt="" referrerPolicy="no-referrer" />
-              ) : (
-                <span className="account-profile-initial" aria-hidden="true">{initial}</span>
-              )}
-              <span>Profil użytkownika</span>
-              <h1 id="account-panel-title">
-                {currentUser.displayName ?? currentUser.email ?? 'Użytkownik Event Times'}
-              </h1>
-              <p>{currentUser.email}</p>
-              <div className="account-role-row">
-                <span className="account-role-pill">{isAdmin ? 'Administrator' : 'Użytkownik'}</span>
-                {isAdmin && <span className="account-admin-badge">Panel admina</span>}
+          <section className="account-pass" aria-labelledby="account-panel-title">
+            <span className="account-pass-brand" aria-hidden="true">Event Times</span>
+            <div className="account-pass-head">
+              <div className="account-pass-photo" aria-hidden="true">
+                {avatarURL ? (
+                  <img src={avatarURL} alt="" referrerPolicy="no-referrer" />
+                ) : (
+                  <span className="account-pass-initial">{initial}</span>
+                )}
               </div>
+              <div className="account-pass-identity">
+                <span className="account-pass-kicker">Karnet uczestnika</span>
+                <h1 id="account-panel-title">
+                  {currentUser.displayName ?? currentUser.email ?? 'Użytkownik Event Times'}
+                </h1>
+                <p className="account-pass-email">{currentUser.email}</p>
+              </div>
+            </div>
+            <div className="account-role-row">
+              <span className="account-role-pill">{isAdmin ? 'Administrator' : 'Użytkownik'}</span>
+              {isAdmin && <span className="account-admin-badge">Panel admina</span>}
             </div>
 
             <div className="account-quick-actions" aria-label="Szybkie akcje profilu">
@@ -895,6 +865,11 @@ export function AccountPanel({
             {error && <p className="account-error" role="alert">{error}</p>}
             {successMessage && <p className="account-success" role="status">{successMessage}</p>}
 
+            <div className="account-pass-footer" aria-hidden="true">
+              <span className="account-pass-barcode" />
+              <span className="account-pass-serial">Event Times · {passYear}</span>
+            </div>
+
             <section className="account-clear-data" aria-labelledby="clear-data-title">
               <h2 id="clear-data-title">Wyczyść aktywność</h2>
               <p>Usuwa polubione i aktywności. Konto oraz profil pozostaną bez zmian.</p>
@@ -905,33 +880,33 @@ export function AccountPanel({
             </section>
           </section>
 
-          <section className="account-activity-dashboard" aria-labelledby="account-activity-title">
-            <header className="account-dashboard-header">
-              <div>
-                <span>Moje aktywności</span>
-                <h2 id="account-activity-title">Zapisane i oznaczone</h2>
-              </div>
-              <strong>{activityCount}</strong>
+          <section className="account-collection" aria-labelledby="account-collection-title">
+            <header className="account-collection-header">
+              <span>Moja kolekcja</span>
+              <h2 id="account-collection-title">Twoje wydarzenia</h2>
             </header>
 
             {loading ? (
               <p className="account-loading" role="status">Ładowanie aktywności…</p>
             ) : (
               <>
-                <div className="account-activity-grid">
-                  {renderActivityCard('visited-events', 'Byłem', visitedEventItems, (
-                    <BadgeCheck className="ui-icon" aria-hidden="true" />
-                  ))}
-                  {renderActivityCard('going-events', 'Chcę iść', goingEventItems, (
-                    <CalendarPlus className="ui-icon" aria-hidden="true" />
-                  ))}
-                  {renderActivityCard('saved-venues', 'Polubione miejsca', savedVenueItems, (
-                    <MapPin className="ui-icon" aria-hidden="true" />
-                  ))}
-                  {renderActivityCard('saved-events', 'Polubione wydarzenia', savedEventItems, (
-                    <Heart className="ui-icon" aria-hidden="true" />
+                <div className="account-stat-strip" role="group" aria-label="Kolekcje aktywności">
+                  {collections.map((collection) => (
+                    <button
+                      key={collection.key}
+                      className={`account-stat${
+                        activeCollection === collection.key ? ' is-active' : ''
+                      }`}
+                      type="button"
+                      aria-pressed={activeCollection === collection.key}
+                      onClick={() => setActiveCollection(collection.key)}
+                    >
+                      <strong>{collection.items.length}</strong>
+                      <span>{collection.label}</span>
+                    </button>
                   ))}
                 </div>
+                {renderCollectionList(activeCollectionConfig.items, activeCollectionConfig.emptyCopy)}
                 {renderMemoriesSection(sortedMemories)}
                 {renderRecentActivity(recentActivityItems)}
               </>
