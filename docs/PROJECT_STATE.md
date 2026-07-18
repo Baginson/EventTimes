@@ -14,7 +14,8 @@ Last updated: 2026-07-17, after the features wave: Cloudinary uploads, share dee
 - Global React error boundary + retry button on data-load failure (added in Etap A).
 - Cloudinary cover-photo upload in EventForm (unsigned preset, env-gated; QA'd code paths locally — real upload needs the user's Cloudinary account configured).
 - Shareable deep links (`?venue=`/`?event=`) + share buttons in both panels (Playwright-verified: auto-open on fresh load, URL sync, clipboard fallback, unknown ids harmless).
-- Private event memories: note + up to 6 photos per past "Byłem" event, editable from EventPanel, listed as a collection in AccountPanel. **Requires deploying the updated `firestore.rules` in the Firebase Console** (adds owner-only `eventMemories`) — until deployed, memory reads/writes will be denied in any environment pointing at real Firestore.
+- Private event memories: note + up to 6 photos per past "Byłem" event, editable from EventPanel, listed in the profile. Rules deployed and verified E2E on 2026-07-18 (note saved and re-read through real Firestore); Cloudinary env configured locally, so uploads are active in dev.
+- Profile = "Karnet Event Times" (2026-07-18 redesign): navy pass card + cream collection with stat-strip tabs, polaroid memories, receipt-style activity. The old tile-overlap layout bug is structurally fixed (see DECISIONS).
 
 ## Partially working / known drift
 
