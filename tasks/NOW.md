@@ -2,10 +2,10 @@
 
 Jedno aktywne zadanie/etap. Po ukończeniu przenieś podsumowanie do `tasks/archive/<data>-<slug>.md`.
 
-## Aktywne: powrót z panelu eventu — automatyczne wykrywanie źródła (follow-up, nie rozpoczęte)
+## Aktywne: brak — następny w kolejce: Etap B (Public-launch readiness)
 
-Wymaganie użytkownika (dopisane 2026-07-19): przycisk powrotu w panelu eventu ma **automatycznie czytać, skąd przyszliśmy** — profil, panel miejsca albo inne miejsce — i pokazywać właściwy pojedynczy powrót. Obecny stan po iteracji Karnetu: event otwarty z profilu pokazuje jednocześnie „Wróć do miejsca” i „Wróć do profilu” (flaga `wasEventOpenedFromProfile` w `src/App.tsx`, prop `onReturnToProfile` w `src/components/EventPanel.tsx`). Do zaprojektowania: jedna spójna historia nawigacji zamiast dwóch przycisków naraz.
+Zgodnie z `docs/ROADMAP.md`: SEO/OG/theme-color meta tagi w `index.html`, decyzja o `VITE_TICKETMASTER_API_KEY` w CI, porządki w repo (zbędne logi, nieużywany favicon). Nie rozpoczęte — czeka na decyzję użytkownika.
 
 ## Ostatnio ukończone
 
-**Iteracja profilu (Karnet): paleta, wspomnienia, powrót, tilt** (2026-07-19) — `tasks/archive/2026-07-19-profil-karnet-iteracja.md`. **Karnet — przebudowa profilu** (2026-07-18) — commity `47df5cd` + `6a9fcf6`. **Fala funkcji** (2026-07-17) — Cloudinary, deep-linki, wspomnienia (`7c55749`…`9482beb`). **UI polish 1** (2026-07-17) — `085dc5b`…`7b68189`.
+**Powrót z eventu — wykrywanie źródła** (2026-07-19) — `tasks/archive/2026-07-19-powrot-z-eventu-origin.md`. **Iteracja profilu (Karnet): paleta, wspomnienia, powrót, tilt** (2026-07-19) — `tasks/archive/2026-07-19-profil-karnet-iteracja.md`, commity `67920e6`…`1ff3413` (w tym fix strefy czasowej w CI). **Karnet — przebudowa profilu** (2026-07-18) — `47df5cd` + `6a9fcf6`.

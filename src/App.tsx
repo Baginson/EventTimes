@@ -38,6 +38,8 @@ const AccountPanel = lazy(() =>
   import('./components/AccountPanel').then((module) => ({ default: module.AccountPanel })),
 )
 
+type EventOrigin = 'venue' | 'profile' | 'direct'
+
 type MapMode =
   | { type: 'normal' }
   | { type: 'addingVenue' }
@@ -64,7 +66,7 @@ function App() {
   const [draftVenueCoordinates, setDraftVenueCoordinates] =
     useState<Venue['coordinates'] | null>(null)
   const [isAccountPanelOpen, setIsAccountPanelOpen] = useState(false)
-  const [wasEventOpenedFromProfile, setWasEventOpenedFromProfile] = useState(false)
+  const [eventOrigin, setEventOrigin] = useState<EventOrigin>('direct')
   const [mobileSearchFocusRequest, setMobileSearchFocusRequest] = useState(0)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const rightPanelRef = useRef<HTMLElement>(null)
@@ -240,7 +242,7 @@ function App() {
   function selectVenue(venue: Venue) {
     setIsAdminOpen(false)
     setIsAccountPanelOpen(false)
-    setWasEventOpenedFromProfile(false)
+    setEventOrigin('direct')
     cancelMapMode()
     setSelectedCity(venue.city)
     setSelectedVenue(venue)
@@ -250,22 +252,27 @@ function App() {
   function selectEvent(event: EventTimesEvent, venue: Venue) {
     setIsAdminOpen(false)
     setIsAccountPanelOpen(false)
-    setWasEventOpenedFromProfile(false)
+    setEventOrigin('direct')
     cancelMapMode()
     setSelectedCity(venue.city)
     setSelectedVenue(venue)
     setSelectedEvent(event)
   }
 
+  function selectEventFromVenue(event: EventTimesEvent, venue: Venue) {
+    selectEvent(event, venue)
+    setEventOrigin('venue')
+  }
+
   function selectEventFromProfile(event: EventTimesEvent, venue: Venue) {
     selectEvent(event, venue)
-    setWasEventOpenedFromProfile(true)
+    setEventOrigin('profile')
   }
 
   function returnToProfileFromEvent() {
     setSelectedVenue(null)
     setSelectedEvent(null)
-    setWasEventOpenedFromProfile(false)
+    setEventOrigin('direct')
     setIsAccountPanelOpen(true)
   }
 
@@ -687,8 +694,9 @@ function App() {
               onUpdateEvent={updateEvent}
               onDeleteEvent={() => deleteEvent(selectedEvent.id)}
               onClose={closePanel}
+              origin={eventOrigin}
               onReturnToProfile={
-                wasEventOpenedFromProfile ? returnToProfileFromEvent : undefined
+                eventOrigin === 'profile' ? returnToProfileFromEvent : undefined
               }
               panelRef={rightPanelRef}
             />
@@ -699,7 +707,7 @@ function App() {
               events={selectedVenueEvents}
               isAdminMode={isAdmin && isAdminMode}
               isPinMoveActive={movingVenueId === selectedVenue.id}
-              onEventSelect={(event) => selectEvent(event, selectedVenue)}
+              onEventSelect={(event) => selectEventFromVenue(event, selectedVenue)}
               venues={venues}
               onAddEvent={addEvent}
               onUpdateVenue={updateVenue}

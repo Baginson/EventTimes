@@ -62,6 +62,7 @@ type EventPanelProps = {
   onUpdateEvent: (event: EventTimesEvent) => void | Promise<void>
   onDeleteEvent: () => void
   onClose: () => void
+  origin?: 'venue' | 'profile' | 'direct'
   onReturnToProfile?: () => void
   panelRef?: Ref<HTMLElement>
 }
@@ -76,6 +77,7 @@ export function EventPanel({
   onUpdateEvent,
   onDeleteEvent,
   onClose,
+  origin = 'direct',
   onReturnToProfile,
   panelRef,
 }: EventPanelProps) {
@@ -491,11 +493,7 @@ export function EventPanel({
         ) : (
           <>
             <div className="event-back-row">
-              <button className="event-back-button" type="button" onClick={onBack}>
-                <ArrowLeft className="ui-icon" aria-hidden="true" />
-                Wróć do miejsca
-              </button>
-              {onReturnToProfile && (
+              {origin === 'profile' && onReturnToProfile ? (
                 <button
                   className="event-back-button"
                   type="button"
@@ -503,6 +501,11 @@ export function EventPanel({
                 >
                   <ArrowLeft className="ui-icon" aria-hidden="true" />
                   Wróć do profilu
+                </button>
+              ) : (
+                <button className="event-back-button" type="button" onClick={onBack}>
+                  <ArrowLeft className="ui-icon" aria-hidden="true" />
+                  {origin === 'venue' ? 'Wróć do miejsca' : 'Pokaż miejsce'}
                 </button>
               )}
             </div>
