@@ -9,5 +9,8 @@ export default defineConfig({
     environment: 'node',
     globals: false,
     include: ['src/**/*.test.ts'],
+    // Date-formatting assertions are written for Polish local time; pin the
+    // timezone so the suite passes on UTC CI runners and any dev machine.
+    env: { TZ: 'Europe/Warsaw' },
   },
 })
