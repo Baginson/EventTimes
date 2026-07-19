@@ -22,3 +22,24 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Obsidian i dokumentacja projektu
+
+Folder `docs/` jest jednocześnie vaultem Obsidiana i główną bazą wiedzy projektu. Obsidian służy wyłącznie jako interfejs do edycji istniejących plików Markdown — nie twórz duplikatów dokumentacji.
+
+Przed rozpoczęciem zadania:
+1. Przeczytaj `docs/PROJECT_STATE.md`.
+2. Przeczytaj tylko dokument bezpośrednio związany z zadaniem:
+   - architektura i dane: `docs/ARCHITECTURE.md`
+   - UI/UX: `docs/UI_RULES.md`
+   - plan pracy: `docs/ROADMAP.md`
+   - wcześniejsze decyzje: `docs/DECISIONS.md`
+
+Nie czytaj automatycznie całego folderu `docs` ani całego repozytorium.
+
+Po istotnych zmianach aktualizuj odpowiednie dokumenty:
+- aktualny stan: `PROJECT_STATE.md`
+- wykonany lub zmieniony etap: `ROADMAP.md`
+- trwała decyzja: dopisz wpis na końcu `DECISIONS.md`
+- zmiana architektury: `ARCHITECTURE.md`
+- zmiana obowiązujących zasad interfejsu: `UI_RULES.md`
