@@ -62,6 +62,7 @@ type EventPanelProps = {
   onUpdateEvent: (event: EventTimesEvent) => void | Promise<void>
   onDeleteEvent: () => void
   onClose: () => void
+  onReturnToProfile?: () => void
   panelRef?: Ref<HTMLElement>
 }
 
@@ -75,6 +76,7 @@ export function EventPanel({
   onUpdateEvent,
   onDeleteEvent,
   onClose,
+  onReturnToProfile,
   panelRef,
 }: EventPanelProps) {
   const { user } = useAuth()
@@ -101,6 +103,8 @@ export function EventPanel({
   const [userActionError, setUserActionError] = useState('')
   const [memoryNote, setMemoryNote] = useState('')
   const [memoryPhotos, setMemoryPhotos] = useState<MemoryPhoto[]>([])
+  const [savedMemory, setSavedMemory] = useState<EventMemory | null>(null)
+  const [isMemoryEditing, setIsMemoryEditing] = useState(false)
   const [memoryError, setMemoryError] = useState('')
   const [memoryFeedback, setMemoryFeedback] = useState('')
   const [isMemoryLoading, setIsMemoryLoading] = useState(false)
@@ -219,6 +223,8 @@ export function EventPanel({
     if (!user || !shouldShowEventMemory) {
       setMemoryNote('')
       setMemoryPhotos([])
+      setSavedMemory(null)
+      setIsMemoryEditing(false)
       setIsMemoryLoading(false)
       return () => {
         active = false
@@ -235,6 +241,8 @@ export function EventPanel({
 
         setMemoryNote(memory?.note ?? '')
         setMemoryPhotos(memory?.photos ?? [])
+        setSavedMemory(memory ?? null)
+        setIsMemoryEditing(!memory)
       })
       .catch((error: unknown) => {
         if (active) {
@@ -371,6 +379,8 @@ export function EventPanel({
     try {
       setIsMemorySaving(true)
       await saveEventMemory(user.uid, memory)
+      setSavedMemory({ ...memory })
+      setIsMemoryEditing(false)
       showMemoryFeedback('Zapisano')
     } catch (error) {
       setMemoryError(
@@ -480,10 +490,22 @@ export function EventPanel({
           </div>
         ) : (
           <>
-            <button className="event-back-button" type="button" onClick={onBack}>
-              <ArrowLeft className="ui-icon" aria-hidden="true" />
-              Wróć do miejsca
-            </button>
+            <div className="event-back-row">
+              <button className="event-back-button" type="button" onClick={onBack}>
+                <ArrowLeft className="ui-icon" aria-hidden="true" />
+                Wróć do miejsca
+              </button>
+              {onReturnToProfile && (
+                <button
+                  className="event-back-button"
+                  type="button"
+                  onClick={onReturnToProfile}
+                >
+                  <ArrowLeft className="ui-icon" aria-hidden="true" />
+                  Wróć do profilu
+                </button>
+              )}
+            </div>
 
             <header className="event-panel-header event-pass-hero">
               <div className="event-pass-kicker">
@@ -572,81 +594,130 @@ export function EventPanel({
                     Moje wspomnienie <span>(prywatne)</span>
                   </h2>
                   {isMemoryLoading && <span role="status">Ładowanie...</span>}
-                </div>
-
-                <label className="event-memory-field" htmlFor={`event-memory-note-${event.id}`}>
-                  <span>Prywatna notatka</span>
-                  <textarea
-                    id={`event-memory-note-${event.id}`}
-                    value={memoryNote}
-                    placeholder="Jak było? Zapisz dla siebie..."
-                    maxLength={2000}
-                    disabled={isMemoryLoading || isMemorySaving}
-                    onChange={(changeEvent) => setMemoryNote(changeEvent.target.value)}
-                  />
-                </label>
-
-                {memoryPhotos.length > 0 && (
-                  <div className="event-memory-photo-grid" aria-label="Zdjęcia wspomnienia">
-                    {memoryPhotos.map((photo) => (
-                      <div className="event-memory-photo" key={photo.id}>
-                        <img src={photo.url} alt="" />
-                        <button
-                          type="button"
-                          aria-label="Usuń zdjęcie"
-                          disabled={isMemorySaving}
-                          onClick={() =>
-                            setMemoryPhotos((currentPhotos) =>
-                              currentPhotos.filter((item) => item.id !== photo.id),
-                            )
-                          }
-                        >
-                          <X className="ui-icon" aria-hidden="true" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="event-memory-actions">
-                  {CLOUDINARY_UPLOADS_ENABLED && memoryPhotos.length < MAX_MEMORY_PHOTOS && (
-                    <>
-                      <input
-                        ref={memoryFileInputRef}
-                        className="event-memory-file-input"
-                        type="file"
-                        accept="image/*"
-                        aria-label="Dodaj zdjęcie do wspomnienia"
-                        disabled={isMemoryUploading || isMemorySaving}
-                        onChange={(changeEvent) => {
-                          const file = changeEvent.target.files?.[0]
-
-                          if (file) {
-                            void handleMemoryPhotoUpload(file)
-                          }
-                        }}
-                      />
-                      <button
-                        className="event-memory-secondary-action"
-                        type="button"
-                        disabled={isMemoryUploading || isMemorySaving}
-                        onClick={() => memoryFileInputRef.current?.click()}
-                      >
-                        <ImagePlus className="ui-icon" aria-hidden="true" />
-                        {isMemoryUploading ? 'Dodawanie...' : 'Dodaj zdjęcie'}
-                      </button>
-                    </>
+                  {!isMemoryLoading && savedMemory && !isMemoryEditing && (
+                    <button
+                      className="event-memory-secondary-action"
+                      type="button"
+                      onClick={() => setIsMemoryEditing(true)}
+                    >
+                      <Pencil className="ui-icon" aria-hidden="true" />
+                      Edytuj
+                    </button>
                   )}
-
-                  <button
-                    className="event-memory-primary-action"
-                    type="button"
-                    disabled={isMemoryLoading || isMemorySaving || isMemoryUploading}
-                    onClick={() => void handleSaveMemory()}
-                  >
-                    {isMemorySaving ? 'Zapisywanie...' : 'Zapisz wspomnienie'}
-                  </button>
                 </div>
+
+                {!isMemoryLoading && !isMemoryEditing && savedMemory ? (
+                  <div className="event-memory-view">
+                    {savedMemory.note.trim() ? (
+                      <p className="event-memory-note">{savedMemory.note}</p>
+                    ) : (
+                      <p className="event-memory-note event-memory-note-empty">
+                        Brak notatki — samo wspomnienie w zdjęciach.
+                      </p>
+                    )}
+                    {savedMemory.photos.length > 0 && (
+                      <div className="event-memory-photo-grid" aria-label="Zdjęcia wspomnienia">
+                        {savedMemory.photos.map((photo) => (
+                          <div className="event-memory-photo" key={photo.id}>
+                            <img src={photo.url} alt="" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <label className="event-memory-field" htmlFor={`event-memory-note-${event.id}`}>
+                      <span>Prywatna notatka</span>
+                      <textarea
+                        id={`event-memory-note-${event.id}`}
+                        value={memoryNote}
+                        placeholder="Jak było? Zapisz dla siebie..."
+                        maxLength={2000}
+                        disabled={isMemoryLoading || isMemorySaving}
+                        onChange={(changeEvent) => setMemoryNote(changeEvent.target.value)}
+                      />
+                    </label>
+
+                    {memoryPhotos.length > 0 && (
+                      <div className="event-memory-photo-grid" aria-label="Zdjęcia wspomnienia">
+                        {memoryPhotos.map((photo) => (
+                          <div className="event-memory-photo" key={photo.id}>
+                            <img src={photo.url} alt="" />
+                            <button
+                              type="button"
+                              aria-label="Usuń zdjęcie"
+                              disabled={isMemorySaving}
+                              onClick={() =>
+                                setMemoryPhotos((currentPhotos) =>
+                                  currentPhotos.filter((item) => item.id !== photo.id),
+                                )
+                              }
+                            >
+                              <X className="ui-icon" aria-hidden="true" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="event-memory-actions">
+                      {CLOUDINARY_UPLOADS_ENABLED && memoryPhotos.length < MAX_MEMORY_PHOTOS && (
+                        <>
+                          <input
+                            ref={memoryFileInputRef}
+                            className="event-memory-file-input"
+                            type="file"
+                            accept="image/*"
+                            aria-label="Dodaj zdjęcie do wspomnienia"
+                            disabled={isMemoryUploading || isMemorySaving}
+                            onChange={(changeEvent) => {
+                              const file = changeEvent.target.files?.[0]
+
+                              if (file) {
+                                void handleMemoryPhotoUpload(file)
+                              }
+                            }}
+                          />
+                          <button
+                            className="event-memory-secondary-action"
+                            type="button"
+                            disabled={isMemoryUploading || isMemorySaving}
+                            onClick={() => memoryFileInputRef.current?.click()}
+                          >
+                            <ImagePlus className="ui-icon" aria-hidden="true" />
+                            {isMemoryUploading ? 'Dodawanie...' : 'Dodaj zdjęcie'}
+                          </button>
+                        </>
+                      )}
+
+                      <button
+                        className="event-memory-primary-action"
+                        type="button"
+                        disabled={isMemoryLoading || isMemorySaving || isMemoryUploading}
+                        onClick={() => void handleSaveMemory()}
+                      >
+                        {isMemorySaving ? 'Zapisywanie...' : 'Zapisz wspomnienie'}
+                      </button>
+
+                      {savedMemory && (
+                        <button
+                          className="event-memory-secondary-action"
+                          type="button"
+                          disabled={isMemorySaving || isMemoryUploading}
+                          onClick={() => {
+                            setMemoryNote(savedMemory.note)
+                            setMemoryPhotos(savedMemory.photos)
+                            setMemoryError('')
+                            setIsMemoryEditing(false)
+                          }}
+                        >
+                          Anuluj
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
 
                 {memoryFeedback && (
                   <p className="event-memory-feedback" role="status">

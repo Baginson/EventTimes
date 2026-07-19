@@ -1,13 +1,11 @@
 # Now
 
-The single active task/stage. Keep this short — one thing at a time. When it's done, move a summary to `tasks/archive/<date>-<slug>.md` and replace this file's content with the next stage.
+Jedno aktywne zadanie/etap. Po ukończeniu przenieś podsumowanie do `tasks/archive/<data>-<slug>.md`.
 
-## Active
+## Aktywne: powrót z panelu eventu — automatyczne wykrywanie źródła (follow-up, nie rozpoczęte)
 
-Nothing in progress. Immediate follow-ups from the features wave: (1) user deploys updated `firestore.rules` in Firebase Console (eventMemories block), (2) user creates the Cloudinary account + unsigned preset and fills `.env.local` to activate uploads. Then **Etap B — Public-launch readiness** per `docs/ROADMAP.md` (SEO/OG meta, Ticketmaster CI secret decision, stray-file cleanup) — note the new share deep links make the missing OG tags more visible (shared links have no preview cards yet).
+Wymaganie użytkownika (dopisane 2026-07-19): przycisk powrotu w panelu eventu ma **automatycznie czytać, skąd przyszliśmy** — profil, panel miejsca albo inne miejsce — i pokazywać właściwy pojedynczy powrót. Obecny stan po iteracji Karnetu: event otwarty z profilu pokazuje jednocześnie „Wróć do miejsca” i „Wróć do profilu” (flaga `wasEventOpenedFromProfile` w `src/App.tsx`, prop `onReturnToProfile` w `src/components/EventPanel.tsx`). Do zaprojektowania: jedna spójna historia nawigacji zamiast dwóch przycisków naraz.
 
-## Recently completed
+## Ostatnio ukończone
 
-**Features wave** (2026-07-17) — Cloudinary unsigned uploads for event covers, `?venue=`/`?event=` share deep links with share buttons, private per-user event memories (note + up to 6 photos, EventPanel editing + AccountPanel collection). Commits `7c55749`, `377eed6`, `a4396b2`, `91daf09`. Security-reviewed + Playwright-QA'd. See `docs/DECISIONS.md`.
-
-**UI polish pass 1** (2026-07-17) — token normalization, panel a11y, touch targets. Commits `085dc5b`, `493534a`, `115bc0b`.
+**Iteracja profilu (Karnet): paleta, wspomnienia, powrót, tilt** (2026-07-19) — `tasks/archive/2026-07-19-profil-karnet-iteracja.md`. **Karnet — przebudowa profilu** (2026-07-18) — commity `47df5cd` + `6a9fcf6`. **Fala funkcji** (2026-07-17) — Cloudinary, deep-linki, wspomnienia (`7c55749`…`9482beb`). **UI polish 1** (2026-07-17) — `085dc5b`…`7b68189`.

@@ -2519,7 +2519,7 @@
   gap: 14px;
   align-items: center;
   padding: 15px 58px 15px 15px;
-  background: var(--color-cream);
+  background: var(--color-white);
   border: 1px dashed rgba(6, 75, 255, 0.45);
   border-radius: var(--radius-lg);
 }
@@ -4086,26 +4086,45 @@
   padding: var(--space-5);
   overflow-y: auto;
   overscroll-behavior: contain;
-  color: var(--color-cream-soft);
+}
+
+.account-pass-card {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  color: var(--color-white);
   background:
-    radial-gradient(circle at 85% -10%, rgba(6, 75, 255, 0.4), transparent 42%),
-    var(--color-navy);
+    radial-gradient(circle at 85% -10%, rgba(255, 255, 255, 0.16), transparent 46%),
+    var(--color-primary);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-panel);
 }
 
-.account-pass > * {
+.tilt-card {
+  width: 100%;
+  margin: calc(var(--space-2) * -1);
+  padding: var(--space-2);
+}
+
+.tilt-card-inner {
+  width: 100%;
+}
+
+.account-pass > *,
+.account-pass-card > * {
   flex-shrink: 0;
 }
 
 .account-pass-brand {
   align-self: flex-start;
   padding: 3px 10px 2px;
-  color: var(--color-navy);
+  color: var(--color-primary);
   font-family: var(--font-display);
   font-size: 12px;
   letter-spacing: 0.04em;
-  background: var(--color-yellow);
+  background: var(--color-white);
   border-radius: 3px;
   transform: rotate(-1.6deg);
 }
@@ -4122,8 +4141,8 @@
   width: 72px;
   height: 72px;
   overflow: hidden;
-  background: rgba(255, 248, 230, 0.12);
-  border: 2px solid rgba(255, 248, 230, 0.4);
+  background: rgba(255, 255, 255, 0.14);
+  border: 2px solid rgba(255, 255, 255, 0.55);
   border-radius: var(--radius-sm);
   transform: rotate(-2deg);
 }
@@ -4136,7 +4155,7 @@
   width: 40px;
   height: 12px;
   content: '';
-  background: rgba(6, 75, 255, 0.55);
+  background: rgba(255, 255, 255, 0.45);
   transform: translateX(-50%) rotate(-3deg);
 }
 
@@ -4151,13 +4170,13 @@
   width: 100%;
   height: 100%;
   place-items: center;
-  color: var(--color-cream);
+  color: var(--color-white);
   font-family: var(--font-display);
   font-size: 30px;
 }
 
 .account-pass-kicker {
-  color: var(--color-yellow);
+  color: rgba(255, 255, 255, 0.82);
   font-family: var(--font-control);
   font-size: 11px;
   font-weight: 850;
@@ -4165,10 +4184,10 @@
   text-transform: uppercase;
 }
 
-.account-pass h1 {
+.account-pass-card h1 {
   margin: 2px 0 0;
   overflow-wrap: anywhere;
-  color: var(--color-cream-soft);
+  color: var(--color-white);
   font-family: var(--font-display);
   font-size: clamp(20px, 2vw, 26px);
   font-weight: 400;
@@ -4179,35 +4198,35 @@
 .account-pass-email {
   margin: 4px 0 0;
   overflow-wrap: anywhere;
-  color: rgba(255, 248, 230, 0.62);
+  color: rgba(255, 255, 255, 0.78);
   font-family: var(--font-control);
   font-size: 12px;
 }
 
-.account-pass .account-role-row {
+.account-pass-card .account-role-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.account-pass .account-role-pill,
-.account-pass .account-admin-badge {
+.account-pass-card .account-role-pill,
+.account-pass-card .account-admin-badge {
   padding: 4px 12px;
-  color: var(--color-cream-soft);
+  color: var(--color-white);
   font-family: var(--font-control);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  background: rgba(255, 248, 230, 0.1);
-  border: 1px dashed rgba(255, 248, 230, 0.4);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px dashed rgba(255, 255, 255, 0.55);
   border-radius: var(--radius-pill);
 }
 
-.account-pass .account-admin-badge {
-  color: var(--color-navy);
-  background: var(--color-yellow);
-  border-color: var(--color-yellow);
+.account-pass-card .account-admin-badge {
+  color: var(--color-primary);
+  background: var(--color-white);
+  border-color: var(--color-white);
 }
 
 .account-pass .account-quick-actions {
@@ -4219,30 +4238,30 @@
 .account-pass .account-quick-actions button {
   min-height: 40px;
   justify-content: center;
-  color: var(--color-cream-soft);
-  background: rgba(255, 248, 230, 0.08);
-  border: 1px solid rgba(255, 248, 230, 0.3);
+  color: var(--color-primary);
+  background: var(--color-white);
+  border: var(--border-subtle);
   border-radius: var(--radius-sm);
 }
 
 .account-pass .account-quick-actions button:hover {
-  color: var(--color-navy);
-  background: var(--color-cream-soft);
+  color: var(--color-white);
+  background: var(--color-primary);
 }
 
 .account-pass .account-profile-edit {
   padding: var(--space-4);
-  color: var(--color-navy);
-  background: var(--color-cream-soft);
+  color: var(--color-ink);
+  background: var(--color-white);
   border-radius: var(--radius-md);
 }
 
 .account-pass .account-error {
-  color: #ffc9c9;
+  color: var(--color-danger);
 }
 
 .account-pass .account-success {
-  color: #b7f5c6;
+  color: var(--color-primary);
 }
 
 .account-pass-footer {
@@ -4250,25 +4269,25 @@
   gap: 6px;
   margin-top: auto;
   padding-top: var(--space-4);
-  border-top: 1px dashed rgba(255, 248, 230, 0.35);
+  border-top: 1px dashed rgba(255, 255, 255, 0.45);
 }
 
 .account-pass-barcode {
   height: 38px;
   background: repeating-linear-gradient(
     90deg,
-    var(--color-cream-soft) 0 2px,
+    var(--color-white) 0 2px,
     transparent 2px 5px,
-    var(--color-cream-soft) 5px 6px,
+    var(--color-white) 5px 6px,
     transparent 6px 11px,
-    var(--color-cream-soft) 11px 14px,
+    var(--color-white) 11px 14px,
     transparent 14px 17px
   );
   opacity: 0.85;
 }
 
 .account-pass-serial {
-  color: rgba(255, 248, 230, 0.55);
+  color: rgba(255, 255, 255, 0.68);
   font-family: var(--font-control);
   font-size: 10.5px;
   font-weight: 800;
@@ -4284,7 +4303,7 @@
 
 .account-pass .account-clear-data h2 {
   margin: 0 0 2px;
-  color: rgba(255, 248, 230, 0.85);
+  color: var(--color-ink);
   font-family: var(--font-control);
   font-size: 13px;
   font-weight: 850;
@@ -4292,21 +4311,22 @@
 
 .account-pass .account-clear-data p {
   margin: 0 0 8px;
-  color: rgba(255, 248, 230, 0.55);
+  color: var(--color-muted);
   font-size: 12px;
   line-height: 1.5;
 }
 
 .account-pass .account-clear-data button {
   min-height: 40px;
-  color: #ffb4b4;
-  background: rgba(239, 68, 68, 0.14);
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: var(--color-danger);
+  background: var(--color-white);
+  border: var(--border-subtle);
   border-radius: var(--radius-sm);
 }
 
 .account-pass .account-clear-data button:hover {
-  background: rgba(239, 68, 68, 0.26);
+  background: rgba(239, 68, 68, 0.85);
+  color: var(--color-white);
 }
 
 /* --- prawa kolumna: kolekcja ---------------------------------------------- */
@@ -4320,10 +4340,8 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
-  background:
-    radial-gradient(circle at 12% 0%, rgba(6, 75, 255, 0.07), transparent 34%),
-    var(--color-cream-soft);
-  border: 1px solid rgba(7, 20, 47, 0.1);
+  background: var(--color-surface);
+  border: 1px solid rgba(16, 19, 26, 0.08);
   border-radius: var(--radius-lg);
 }
 
@@ -4348,7 +4366,7 @@
 
 .account-collection-header h2 {
   margin: 2px 0 0;
-  color: var(--color-navy);
+  color: var(--color-ink);
   font-family: var(--font-display);
   font-size: clamp(22px, 2.2vw, 28px);
   font-weight: 400;
@@ -4370,7 +4388,7 @@
   align-content: center;
   gap: 2px;
   padding: 10px 6px;
-  color: var(--color-navy);
+  color: var(--color-ink);
   text-align: center;
   background: transparent;
   border: 0;
@@ -4436,10 +4454,10 @@
   min-height: 48px;
   gap: 2px;
   padding: 9px 12px;
-  color: var(--color-navy);
+  color: var(--color-ink);
   text-align: left;
   background: var(--color-white);
-  border: 1px solid rgba(7, 20, 47, 0.1);
+  border: 1px solid rgba(16, 19, 26, 0.1);
   border-radius: var(--radius-xs);
   cursor: pointer;
 }
@@ -4483,7 +4501,7 @@
 
 .account-shelf-header h3 {
   margin: 0;
-  color: var(--color-navy);
+  color: var(--color-ink);
   font-family: var(--font-display);
   font-size: 17px;
   font-weight: 400;
@@ -4503,13 +4521,13 @@
 
 .account-private-sticker {
   padding: 2px 9px 1px;
-  color: var(--color-navy);
+  color: var(--color-white);
   font-family: var(--font-control);
   font-size: 10.5px;
   font-weight: 850;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: var(--color-yellow);
+  background: var(--color-primary);
   border-radius: 3px;
   transform: rotate(-2deg);
 }
@@ -4532,7 +4550,7 @@
   width: 136px;
   gap: 6px;
   padding: 8px 8px 10px;
-  color: var(--color-navy);
+  color: var(--color-ink);
   text-align: left;
   background: var(--color-white);
   border: 1px solid rgba(7, 20, 47, 0.1);
@@ -4562,7 +4580,7 @@
   place-items: center;
   overflow: hidden;
   color: var(--color-muted);
-  background: var(--color-cream);
+  background: var(--color-surface);
   border-radius: 3px;
 }
 
@@ -4616,7 +4634,7 @@
   min-height: 52px;
   gap: 1px;
   padding: 9px 0;
-  color: var(--color-navy);
+  color: var(--color-ink);
   text-align: left;
   background: transparent;
   border: 0;
@@ -4673,4 +4691,33 @@
     width: 60px;
     height: 60px;
   }
+}
+
+.event-back-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-right: 48px;
+}
+
+.event-back-row .event-back-button {
+  margin: 0 0 16px;
+}
+
+.event-memory-view {
+  display: grid;
+  gap: 10px;
+}
+
+.event-memory-note {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.event-memory-note-empty {
+  color: var(--color-muted);
+  font-style: italic;
 }

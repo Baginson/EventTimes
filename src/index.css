@@ -21,7 +21,9 @@
   --color-white: #ffffff;
   --color-border: #e3e8f2;
   --color-muted: #64748b;
+  --color-ink: #10131a; /* near-black primary text on light surfaces */
   --color-ink-soft: #344159; /* secondary text, stronger than --color-muted */
+  --color-surface: #f4f6f9; /* light gray surface, replaces cream on new UI */
   --color-danger: #ef4444;
   --color-yellow: #ffe15a;
 

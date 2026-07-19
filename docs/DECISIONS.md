@@ -73,3 +73,15 @@ Chronological record of decisions that shape the project, with the reasoning beh
 **Decision**: Claude Code is the architect/coordinator; Codex (via the `codex` MCP server) implements narrowly-scoped tasks under review; ChatGPT is the product/UX sounding board outside this session. Formalized via `AGENTS.md` (shared short rules), `CLAUDE.md` (role + graphify usage), `CLAUDE.local.md` (private/local notes, gitignored), `docs/` (this set), `tasks/NOW.md` + `tasks/archive/`, three review subagents (`code-reviewer`, `ui-reviewer`, `security-reviewer`), three workflow skills (`eventtimes-feature`, `eventtimes-ui-qa`, `eventtimes-release`), and safety hooks in `.claude/settings.json`.
 **Why**: The project had no shared, written contract for how agents should collaborate on it, no committed project-state/decision record, and no automated guardrails against destructive commands or secret leakage.
 **Status**: In effect as of this entry.
+
+## 2026-07-18 — Nowa paleta UI (decyzja użytkownika)
+
+**Decision**: Bazową paletą UI są niebieski, biały, czarny i szarości. Krem (`#FFF1C7`, `#FFF8E6`) i żółty (`#FFE15A`) są wycofane dla nowych powierzchni; pozostają tylko jako legacy i będą migrowane oportunistycznie. Czerwień jest zarezerwowana dla akcji destrukcyjnych. Profil "Karnet Event Times" jest implementacją referencyjną nowej palety: niebieska karta + biel, szara kolumna kolekcji.
+**Why**: Użytkownik wybrał czystszy, bardziej spójny kierunek wizualny dla dalszego rozwoju aplikacji, bez kremowo-żółtej dominacji z wcześniejszego profilu.
+**Status**: In effect. Szczegóły zapisane w `docs/UI_RULES.md` §2.
+
+## 2026-07-19 — Efekt 3D tilt na karcie Karnetu
+
+**Decision**: Wzorzec `tilt-effect` z 21st.dev/bundui został zaadaptowany jako `src/components/TiltCard.tsx` na już obecnym `framer-motion`. Nie dodano nowej zależności; pakiet `motion` z oryginalnego prompta został odrzucony jako duplikat. Tilt działa tylko przy `pointer: fine` i bez `prefers-reduced-motion: reduce`; na dotyku i przy ograniczonym ruchu renderowany jest statyczny `div`.
+**Why**: Efekt ma wzmacniać fizyczny charakter Karnetu, ale bez pogarszania dostępności, obsługi dotykowej ani grafu zależności.
+**Status**: In effect. Pochyla się wyłącznie statyczna wizytówka (brand, zdjęcie, tożsamość, rola, kod kreskowy); elementy interaktywne (`Edytuj profil`, `Wyloguj`, formularz) są pod kartą, poza obszarem tiltu.

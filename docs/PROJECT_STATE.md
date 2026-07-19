@@ -1,6 +1,6 @@
 # Event Times — Project State
 
-Last updated: 2026-07-17, after the features wave: Cloudinary uploads, share deep links, private event memories. Keep this current after every non-trivial change — this is the single place to check "what actually works right now."
+Last updated: 2026-07-19, after the Karnet profile iteration: blue/white/gray palette, memory preview mode, return-to-profile, 3D tilt card. Keep this current after every non-trivial change — this is the single place to check "what actually works right now."
 
 ## Working (verified: `npm run test` 64/64, `npm run lint` clean, `npm run build` clean)
 
@@ -14,8 +14,8 @@ Last updated: 2026-07-17, after the features wave: Cloudinary uploads, share dee
 - Global React error boundary + retry button on data-load failure (added in Etap A).
 - Cloudinary cover-photo upload in EventForm (unsigned preset, env-gated; QA'd code paths locally — real upload needs the user's Cloudinary account configured).
 - Shareable deep links (`?venue=`/`?event=`) + share buttons in both panels (Playwright-verified: auto-open on fresh load, URL sync, clipboard fallback, unknown ids harmless).
-- Private event memories: note + up to 6 photos per past "Byłem" event, editable from EventPanel, listed in the profile. Rules deployed and verified E2E on 2026-07-18 (note saved and re-read through real Firestore); Cloudinary env configured locally, so uploads are active in dev.
-- Profile = "Karnet Event Times" (2026-07-18 redesign): navy pass card + cream collection with stat-strip tabs, polaroid memories, receipt-style activity. The old tile-overlap layout bug is structurally fixed (see DECISIONS).
+- Private event memories: note + up to 6 photos per past "Byłem" event, editable from EventPanel, listed in the profile. Saved memories open in a read-only preview with an "Edytuj" toggle (2026-07-19); an event opened from the profile shows a "Wróć do profilu" button. Rules deployed and verified E2E on 2026-07-18 (note saved and re-read through real Firestore); Cloudinary env configured locally, so uploads are active in dev.
+- Profile = "Karnet Event Times" (2026-07-18 redesign, repainted + tilt 2026-07-19): electric-blue pass card (white text, barcode, 3D tilt via `TiltCard` on fine pointers only) + light-gray collection with stat-strip tabs, polaroid memories, receipt-style activity. Reference implementation of the blue/white/gray palette (UI_RULES §2). Playwright-verified on desktop and 375px on 2026-07-19. The old tile-overlap layout bug is structurally fixed (see DECISIONS).
 
 ## Partially working / known drift
 
@@ -30,7 +30,6 @@ Last updated: 2026-07-17, after the features wave: Cloudinary uploads, share dee
 
 - Password reset (Firebase Auth flow not implemented anywhere).
 - Account deletion / personal data export (only "clear activity" exists).
-- Deep-linking / routing — no way to share or reload a link to a specific venue/event.
 - SEO/Open Graph/theme-color meta tags in `index.html` (zero currently).
 - Empty-Firestore messaging for non-admin users (currently admin-only).
 

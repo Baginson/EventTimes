@@ -64,6 +64,7 @@ function App() {
   const [draftVenueCoordinates, setDraftVenueCoordinates] =
     useState<Venue['coordinates'] | null>(null)
   const [isAccountPanelOpen, setIsAccountPanelOpen] = useState(false)
+  const [wasEventOpenedFromProfile, setWasEventOpenedFromProfile] = useState(false)
   const [mobileSearchFocusRequest, setMobileSearchFocusRequest] = useState(0)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const rightPanelRef = useRef<HTMLElement>(null)
@@ -239,6 +240,7 @@ function App() {
   function selectVenue(venue: Venue) {
     setIsAdminOpen(false)
     setIsAccountPanelOpen(false)
+    setWasEventOpenedFromProfile(false)
     cancelMapMode()
     setSelectedCity(venue.city)
     setSelectedVenue(venue)
@@ -248,10 +250,23 @@ function App() {
   function selectEvent(event: EventTimesEvent, venue: Venue) {
     setIsAdminOpen(false)
     setIsAccountPanelOpen(false)
+    setWasEventOpenedFromProfile(false)
     cancelMapMode()
     setSelectedCity(venue.city)
     setSelectedVenue(venue)
     setSelectedEvent(event)
+  }
+
+  function selectEventFromProfile(event: EventTimesEvent, venue: Venue) {
+    selectEvent(event, venue)
+    setWasEventOpenedFromProfile(true)
+  }
+
+  function returnToProfileFromEvent() {
+    setSelectedVenue(null)
+    setSelectedEvent(null)
+    setWasEventOpenedFromProfile(false)
+    setIsAccountPanelOpen(true)
   }
 
   function closePanel() {
@@ -653,7 +668,7 @@ function App() {
               venues={venues}
               events={events}
               onVenueSelect={selectVenue}
-              onEventSelect={selectEvent}
+              onEventSelect={selectEventFromProfile}
               onClose={() => setIsAccountPanelOpen(false)}
             />
           </Suspense>
@@ -672,6 +687,9 @@ function App() {
               onUpdateEvent={updateEvent}
               onDeleteEvent={() => deleteEvent(selectedEvent.id)}
               onClose={closePanel}
+              onReturnToProfile={
+                wasEventOpenedFromProfile ? returnToProfileFromEvent : undefined
+              }
               panelRef={rightPanelRef}
             />
           ) : !isAdminOpen && !isAccountPanelOpen && selectedVenue ? (

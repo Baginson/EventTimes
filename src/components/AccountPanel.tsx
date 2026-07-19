@@ -29,6 +29,7 @@ import {
 import type { EventMemory } from '../services/memoryService'
 import { formatEventDate } from '../utils/eventStatus'
 import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
+import { TiltCard } from './TiltCard'
 
 type AccountPanelProps = {
   venues: Venue[]
@@ -776,27 +777,36 @@ export function AccountPanel({
           )}
 
           <section className="account-pass" aria-labelledby="account-panel-title">
-            <span className="account-pass-brand" aria-hidden="true">Event Times</span>
-            <div className="account-pass-head">
-              <div className="account-pass-photo" aria-hidden="true">
-                {avatarURL ? (
-                  <img src={avatarURL} alt="" referrerPolicy="no-referrer" />
-                ) : (
-                  <span className="account-pass-initial">{initial}</span>
-                )}
+            <TiltCard>
+              <div className="account-pass-card">
+                <span className="account-pass-brand" aria-hidden="true">Event Times</span>
+                <div className="account-pass-head">
+                  <div className="account-pass-photo" aria-hidden="true">
+                    {avatarURL ? (
+                      <img src={avatarURL} alt="" referrerPolicy="no-referrer" />
+                    ) : (
+                      <span className="account-pass-initial">{initial}</span>
+                    )}
+                  </div>
+                  <div className="account-pass-identity">
+                    <span className="account-pass-kicker">Karnet uczestnika</span>
+                    <h1 id="account-panel-title">
+                      {currentUser.displayName ?? currentUser.email ?? 'Użytkownik Event Times'}
+                    </h1>
+                    <p className="account-pass-email">{currentUser.email}</p>
+                  </div>
+                </div>
+                <div className="account-role-row">
+                  <span className="account-role-pill">{isAdmin ? 'Administrator' : 'Użytkownik'}</span>
+                  {isAdmin && <span className="account-admin-badge">Panel admina</span>}
+                </div>
+
+                <div className="account-pass-footer" aria-hidden="true">
+                  <span className="account-pass-barcode" />
+                  <span className="account-pass-serial">Event Times &middot; {passYear}</span>
+                </div>
               </div>
-              <div className="account-pass-identity">
-                <span className="account-pass-kicker">Karnet uczestnika</span>
-                <h1 id="account-panel-title">
-                  {currentUser.displayName ?? currentUser.email ?? 'Użytkownik Event Times'}
-                </h1>
-                <p className="account-pass-email">{currentUser.email}</p>
-              </div>
-            </div>
-            <div className="account-role-row">
-              <span className="account-role-pill">{isAdmin ? 'Administrator' : 'Użytkownik'}</span>
-              {isAdmin && <span className="account-admin-badge">Panel admina</span>}
-            </div>
+            </TiltCard>
 
             <div className="account-quick-actions" aria-label="Szybkie akcje profilu">
               <button type="button" onClick={startEditing} disabled={isEditing}>
@@ -864,11 +874,6 @@ export function AccountPanel({
 
             {error && <p className="account-error" role="alert">{error}</p>}
             {successMessage && <p className="account-success" role="status">{successMessage}</p>}
-
-            <div className="account-pass-footer" aria-hidden="true">
-              <span className="account-pass-barcode" />
-              <span className="account-pass-serial">Event Times · {passYear}</span>
-            </div>
 
             <section className="account-clear-data" aria-labelledby="clear-data-title">
               <h2 id="clear-data-title">Wyczyść aktywność</h2>

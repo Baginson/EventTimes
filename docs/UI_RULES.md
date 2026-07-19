@@ -12,13 +12,18 @@ Editorial map app + event poster. Bold but readable, distinctive, local premium 
 
 ## 2. Colors
 
-- Electric Blue `#064BFF` — active elements, CTAs, selected pins, badges, key accents.
-- Deep Navy `#07142F` — text, default pins, icons, base elements.
-- Cream `#FFF1C7` / Soft Cream `#FFF8E6` — card/panel backgrounds, empty states, poster-inspired elements.
-- White `#FFFFFF` — clean cards/panels.
-- Light Border `#E3E8F2`, Muted Text `#64748B`, Ink Soft `#344159` (secondary text, stronger than muted), Accent Yellow `#FFE15A`.
+**Primary palette (decision 2026-07-18 — user-directed):** blue, white, black, and grays are the core UI colors. Cream and yellow are **deprecated for new surfaces** — do not use them in new or redesigned UI. Red stays destructive-only.
+
+- Electric Blue `#064BFF` (`--color-primary`) — active elements, CTAs, selected pins, badges, brand surfaces (e.g. the profile pass card), stickers/labels.
+- White `#FFFFFF` (`--color-white`) — cards, panels, content surfaces, text on blue.
+- Ink `#10131A` (`--color-ink`) — near-black primary text/numerals on light surfaces.
+- Grays: Surface `#F4F6F9` (`--color-surface`, light section background), Light Border `#E3E8F2`, Muted Text `#64748B`, Ink Soft `#344159` (secondary text).
+- Deep Navy `#07142F` (`--color-navy`) — legacy base color, still used on the map pins/panels; prefer Ink for new text on light surfaces.
 - Danger Red `#EF4444` — destructive actions only.
+- **Legacy, do not use in new work:** Cream `#FFF1C7`, Soft Cream `#FFF8E6`, Accent Yellow `#FFE15A`. Existing map/venue/event surfaces still using cream will migrate opportunistically (tracked in ROADMAP), not in one big pass.
 - Don't add new colors without a strong reason.
+
+The profile ("Karnet Event Times") is the reference implementation of the new palette: electric-blue pass card with white text/elements, light-gray collection column with white cards, ink headings, blue stickers/labels.
 
 **Tokens are mandatory**: colors, radii (`--radius-sm/xs/md/lg/xl/pill`), and shadows (`--shadow-soft/float/panel/button/button-soft/cta`) come from `src/index.css` `:root`. Never hardcode a new px radius, one-off shadow, or hex gray in `App.css` — extend the token set deliberately instead (as of 2026-07-17 the stylesheet is fully tokenized; keep it that way). `--shadow-cta` is reserved for the single primary CTA glow; don't dilute it across secondary buttons.
 

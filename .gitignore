@@ -35,6 +35,13 @@ graphify-out/
 # Playwright CLI session output (screenshots, traces from UI QA runs)
 .playwright-cli/
 
+# Obsidian vault artifacts inside docs/ (user-local editor state and plugins)
+docs/.obsidian/
+docs/.smart-env/
+
+# Local working briefs pasted from external tools (third-party prompts/code)
+tasks/references/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
