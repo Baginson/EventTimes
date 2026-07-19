@@ -1,63 +1,64 @@
-# Event Times — Project State
+# Event Times — Stan projektu
 
-Last updated: 2026-07-19, after the Karnet profile iteration: blue/white/gray palette, memory preview mode, return-to-profile, 3D tilt card. Keep this current after every non-trivial change — this is the single place to check "what actually works right now."
+Ostatnia aktualizacja: 2026-07-19, po iteracji profilu Karnet (paleta blue/white/gray, tryb podglądu wspomnień, karta z 3D tilt) i nawigacji powrotu w panelu eventu zależnej od źródła. Utrzymuj ten plik po każdej nietrywialnej zmianie — to jedno miejsce do sprawdzenia, "co naprawdę działa teraz".
 
-## Working (verified: `npm run test` 64/64, `npm run lint` clean, `npm run build` clean)
+## Działa (zweryfikowane: `npm run test` 64/64, `npm run lint` czysto, `npm run build` czysto)
 
-- Map + venue pins (Leaflet), venue panel, event panel, search (Places/Events modes), city/type/date filters, event grouping (Trwa teraz/Nadchodzące/Minione).
-- Firebase Auth (email/password + Google), Firestore-backed `venues`/`events`/user actions, `admins/{uid}` gating, Firestore rules — reviewed, correct.
-- Admin CRUD (venue/event add/edit/delete/duplicate, pin move by map click, JSON import/export, Firestore refresh) — all implemented with confirmations and loading states.
-- Ticketmaster search-and-import admin flow (built, but see "Blocked before public launch" — not wired into production CI secrets).
-- Account panel: real Firestore-backed activity feed + preferences (not mocked).
-- Mobile: real bottom-sheet treatment for panels (not just squeezed desktop CSS), `prefers-reduced-motion` handled in CSS and JS.
-- CI: GitHub Pages deploy now gated on `npm run test` + `npm run lint` before build (added in Etap A).
-- Global React error boundary + retry button on data-load failure (added in Etap A).
-- Cloudinary cover-photo upload in EventForm (unsigned preset, env-gated; QA'd code paths locally — real upload needs the user's Cloudinary account configured).
-- Shareable deep links (`?venue=`/`?event=`) + share buttons in both panels (Playwright-verified: auto-open on fresh load, URL sync, clipboard fallback, unknown ids harmless).
-- Private event memories: note + up to 6 photos per past "Byłem" event, editable from EventPanel, listed in the profile. Saved memories open in a read-only preview with an "Edytuj" toggle (2026-07-19); an event opened from the profile shows a "Wróć do profilu" button. Rules deployed and verified E2E on 2026-07-18 (note saved and re-read through real Firestore); Cloudinary env configured locally, so uploads are active in dev.
-- Profile = "Karnet Event Times" (2026-07-18 redesign, repainted + tilt 2026-07-19): electric-blue pass card (white text, barcode, 3D tilt via `TiltCard` on fine pointers only) + light-gray collection with stat-strip tabs, polaroid memories, receipt-style activity. Reference implementation of the blue/white/gray palette (UI_RULES §2). Playwright-verified on desktop and 375px on 2026-07-19. The old tile-overlap layout bug is structurally fixed (see DECISIONS).
+- Mapa + pinezki venues (Leaflet), panel venue, panel eventu, search (tryby Places/Events), filtry miasta/typu/daty, grupowanie eventów (Trwa teraz/Nadchodzące/Minione).
+- Firebase Auth (email/password + Google), `venues`/`events`/akcje użytkownika oparte o Firestore, bramkowanie `admins/{uid}`, reguły Firestore — przejrzane, poprawne.
+- Admin CRUD (dodawanie/edycja/usuwanie/duplikowanie venue/eventu, przesuwanie pinezki kliknięciem w mapę, import/export JSON, odświeżenie Firestore) — wszystko zaimplementowane z confirmami i stanami ładowania.
+- Admin flow wyszukiwania i importu z Ticketmaster (zbudowany, ale zobacz "Zablokowane przed publicznym launchem" — niepodłączony do sekretów CI produkcji).
+- Panel konta: prawdziwy activity feed + preferencje oparte o Firestore (bez mocków).
+- Mobile: prawdziwe bottom-sheet treatment dla paneli (nie tylko ściśnięty desktopowy CSS), `prefers-reduced-motion` obsłużone w CSS i JS.
+- CI: deploy GitHub Pages jest teraz bramkowany przez `npm run test` + `npm run lint` przed buildem (dodane w Etap A).
+- Globalny React error boundary + przycisk retry przy błędzie ładowania danych (dodane w Etap A).
+- Upload zdjęcia okładkowego do Cloudinary w EventForm (unsigned preset, bramkowany env; ścieżki kodu QA'd lokalnie — prawdziwy upload wymaga skonfigurowania konta Cloudinary użytkownika).
+- Panel eventu pokazuje dokładnie jeden przycisk powrotu zależny od źródła (`eventOrigin: 'venue' | 'profile' | 'direct'` w `App.tsx`): "Wróć do miejsca" / "Wróć do profilu" / "Pokaż miejsce". Zweryfikowane Playwrightem dla wszystkich trzech źródeł 2026-07-19.
+- Udostępnialne deep linki (`?venue=`/`?event=`) + przyciski share w obu panelach (zweryfikowane Playwrightem: auto-open po świeżym załadowaniu, sync URL, fallback schowka, nieznane ids bez szkód).
+- Prywatne event memories: notatka + do 6 zdjęć per przeszły event "Byłem", edytowalne z EventPanel, listowane w profilu. Zapisane memories otwierają się w podglądzie read-only z przełącznikiem "Edytuj" (2026-07-19). Reguły wdrożone i zweryfikowane E2E 2026-07-18 (notatka zapisana i odczytana przez prawdziwy Firestore); env Cloudinary skonfigurowany lokalnie, więc uploady są aktywne w dev.
+- Profil = "Karnet Event Times" (redesign 2026-07-18, przemalowany + tilt 2026-07-19): electric-blue pass card (biały tekst, barcode, 3D tilt przez `TiltCard` tylko na fine pointers) + jasnoszara kolekcja ze stat-strip tabs, polaroid memories, aktywnością w stylu paragonu. Implementacja referencyjna palety blue/white/gray (UI_RULES §2). Zweryfikowane Playwrightem na desktopie i 375px 2026-07-19. Stary bug overlapu kafelków jest strukturalnie naprawiony (zobacz DECISIONS).
 
-## Partially working / known drift
+## Częściowo działa / znany drift
 
-- **`status` field** (`published/draft/cancelled` on events, `active/draft/archived` on venues) is written by forms/services but never read anywhere in the UI — dead, undocumented field. Needs a decision: wire it up as a real publish workflow, or remove it.
-- **Mobile admin panel** is visually a bottom sheet but functionally identical to desktop — full multi-tab CRUD + Ticketmaster + data tools on a phone screen, no real simplification.
-- **Breakpoints diverge from `docs/UI_RULES.md`**: code uses 820px/1100px; the written rule says 767/768 and 1023/1024. No real tablet layout currently exists.
-- **Two parallel feedback systems**: global `AppToast` vs. per-component inline error/success blocks (Admin/Account/Event/Venue panels, AuthModal) — not unified.
-- Coordinate validation is inconsistent between `venueService.isVenue` (no lat/lng range check) and `googleMaps.isValidCoordinates` (range-checked).
-- Escape-to-close with search dropdown open over a panel closes both at once (document-level listeners stack — same pre-existing pattern as AccountPanel; minor, tracked).
+- **Pole `status`** (`published/draft/cancelled` na eventach, `active/draft/archived` na venues) jest zapisywane przez formularze/services, ale nigdzie nieczytane w UI — martwe, nieudokumentowane pole. Wymaga decyzji: podłączyć jako prawdziwy publish workflow albo usunąć.
+- **Mobilny panel admina** wizualnie jest bottom sheetem, ale funkcjonalnie identyczny z desktopem — pełny wielozakładkowy CRUD + Ticketmaster + narzędzia danych na ekranie telefonu, bez prawdziwego uproszczenia.
+- **Breakpointy rozjeżdżają się z `docs/UI_RULES.md`**: kod używa 820px/1100px; pisemna zasada mówi 767/768 i 1023/1024. Obecnie nie ma prawdziwego layoutu tabletowego.
+- **Dwa równoległe systemy feedbacku**: globalny `AppToast` vs. per-component inline bloki error/success (Admin/Account/Event/Venue panels, AuthModal) — nieujednolicone.
+- Walidacja współrzędnych jest niespójna między `venueService.isVenue` (brak sprawdzenia zakresu lat/lng) i `googleMaps.isValidCoordinates` (sprawdza zakres).
+- Escape-to-close przy otwartym search dropdownie nad panelem zamyka oba naraz (nakładają się listenery na poziomie document — ten sam istniejący wcześniej wzorzec co AccountPanel; drobne, śledzone).
 
-## Missing entirely
+## Brakuje całkowicie
 
-- Password reset (Firebase Auth flow not implemented anywhere).
-- Account deletion / personal data export (only "clear activity" exists).
-- SEO/Open Graph/theme-color meta tags in `index.html` (zero currently).
-- Empty-Firestore messaging for non-admin users (currently admin-only).
+- Reset hasła (flow Firebase Auth niezaimplementowany nigdzie).
+- Usunięcie konta / eksport danych osobowych (istnieje tylko "clear activity").
+- SEO/Open Graph/theme-color meta tags w `index.html` (obecnie zero).
+- Komunikat empty-Firestore dla użytkowników niebędących adminami (obecnie tylko admin-only).
 
-## Blocked before public launch (P1)
+## Zablokowane przed publicznym launchem (P1)
 
 1. Error boundary — **done** (Etap A).
-2. Retry on data-load failure — **done** (Etap A).
-3. `VITE_TICKETMASTER_API_KEY` is not passed as a secret in `.github/workflows/deploy.yml` — the Ticketmaster import feature is fully built but inert on the production GitHub Pages deploy. Needs either wiring into CI or an explicit documented decision to keep it dev/local-only.
-4. Password reset flow.
+2. Retry przy błędzie ładowania danych — **done** (Etap A).
+3. `VITE_TICKETMASTER_API_KEY` nie jest przekazywany jako sekret w `.github/workflows/deploy.yml` — feature importu z Ticketmaster jest w pełni zbudowany, ale nieaktywny w produkcyjnym deployu GitHub Pages. Wymaga podłączenia do CI albo jawnie udokumentowanej decyzji, że zostaje tylko dev/local.
+4. Flow resetu hasła.
 5. SEO/OG/theme-color meta tags.
-6. VenuePanel description truncation — **done** (UI polish pass, 2026-07-17): >450 chars truncates with Czytaj więcej/Zwiń opis, mirroring EventPanel.
-7. Escape-to-close / `role="dialog"` on VenuePanel and EventPanel — **done** (UI polish pass, 2026-07-17). Deliberately non-modal: no `aria-modal`, no focus trap (map must stay reachable); focus moves into the panel on open. Map pins also gained accessible names (`role="img"` + escaped `aria-label`).
-8. CI test/lint gate — **done** (Etap A).
-9. Account deletion / data export (GDPR-relevant for a PL-facing app with accounts).
+6. Skracanie opisu VenuePanel — **done** (UI polish pass, 2026-07-17): >450 znaków skraca się z Czytaj więcej/Zwiń opis, analogicznie do EventPanel.
+7. Escape-to-close / `role="dialog"` na VenuePanel i EventPanel — **done** (UI polish pass, 2026-07-17). Celowo non-modal: bez `aria-modal`, bez focus trap (mapa musi pozostać dostępna); focus przenosi się do panelu po otwarciu. Pinezki mapy dostały też dostępne nazwy (`role="img"` + escaped `aria-label`).
+8. Bramka test/lint w CI — **done** (Etap A).
+9. Usunięcie konta / eksport danych (istotne dla GDPR w aplikacji skierowanej do PL).
 
-## Useful later, not MVP-blocking (P3)
+## Przydatne później, nie blokuje MVP (P3)
 
 - Deep-linking/routing.
-- `App.css` modularization (currently 4100+ lines in one file).
-- Component/integration tests (only pure utils/model functions have tests today).
-- Real tablet breakpoint matching `docs/UI_RULES.md`.
-- Unify AppToast vs. inline component messaging.
-- Clean up stray `vite-*.log` files and the unused `public/favicon.svg`.
+- Modularyzacja `App.css` (obecnie 4100+ linii w jednym pliku).
+- Testy komponentowe/integracyjne (dziś testy mają tylko czyste utils/model functions).
+- Prawdziwy breakpoint tabletowy zgodny z `docs/UI_RULES.md`.
+- Ujednolicenie AppToast vs. inline component messaging.
+- Posprzątać zbędne pliki `vite-*.log` i nieużywany `public/favicon.svg`.
 
-## Current priorities
+## Obecne priorytety
 
-Working through the staged plan from the audit, one small Codex-delegated task at a time, verified before moving on. Completed: Etap A (stability), UI polish pass 1 (2026-07-17: design-token normalization — 22 ad-hoc radii/one-off shadows/stray grays collapsed onto tokens with two new ones preserving CTA shadow hierarchy; VenuePanel truncation parity; panel dialog semantics; pin a11y names; ≥40px touch targets; 14px card-text floor; group-header chevrons; `text-wrap: balance` on panel titles). Next per `docs/ROADMAP.md`: Etap B (public-launch readiness: SEO meta, Ticketmaster CI secret decision, repo cleanup).
+Praca idzie według etapowego planu z audytu, po jednym małym zadaniu delegowanym do Codex naraz, zweryfikowanym przed przejściem dalej. Ukończone: Etap A (stabilność), UI polish pass 1 (2026-07-17: normalizacja design tokens — 22 ad-hoc radii/one-off shadows/zbędne grays sprowadzone do tokenów z dwoma nowymi tokenami zachowującymi hierarchię cienia CTA; parytet skracania VenuePanel; semantyka dialogów paneli; nazwy a11y pinezek; touch targets ≥40px; minimum 14px dla tekstu kart; chevrons nagłówków grup; `text-wrap: balance` na tytułach paneli). Następnie według `docs/ROADMAP.md`: Etap B (gotowość do publicznego launchu: SEO meta, decyzja sekretu CI Ticketmaster, porządki w repo).
 
-## Architecture decisions in effect
+## Obowiązujące decyzje architektoniczne
 
-See `docs/DECISIONS.md` for the full log. Headlines: Firestore is the data source of truth (localStorage is fallback-only), admin is Firestore-doc-based only, coordinates are provider-agnostic `{lat,lng}`, event status is always computed dynamically, free-first (no paid Firebase/Maps services).
+Zobacz pełny log w `docs/DECISIONS.md`. Najważniejsze: Firestore jest źródłem prawdy dla danych (localStorage tylko jako fallback), admin opiera się wyłącznie na dokumencie Firestore, współrzędne są provider-agnostic `{lat,lng}`, status eventu jest zawsze liczony dynamicznie, free-first (bez płatnych usług Firebase/Maps).

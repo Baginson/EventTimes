@@ -25,11 +25,12 @@ Rules:
 
 ## Obsidian i dokumentacja projektu
 
-Folder `docs/` jest jednocześnie vaultem Obsidiana i główną bazą wiedzy projektu. Obsidian służy wyłącznie jako interfejs do edycji istniejących plików Markdown — nie twórz duplikatów dokumentacji.
+Folder `docs/` jest jednocześnie vaultem Obsidiana i główną bazą wiedzy projektu. Obsidian służy wyłącznie jako interfejs do edycji istniejących plików Markdown — nie twórz duplikatów dokumentacji ani równoległego systemu notatek. Dokumentacja w `docs/` jest prowadzona po polsku (nazwy plików, ścieżki, kod, nazwy technologii i dosłowne wartości techniczne zostają bez zmian).
 
 Przed rozpoczęciem zadania:
-1. Przeczytaj `docs/PROJECT_STATE.md`.
-2. Przeczytaj tylko dokument bezpośrednio związany z zadaniem:
+1. Przeczytaj `docs/00-START.md` (pulpit i mapa dokumentacji) oraz `docs/PROJECT_STATE.md`.
+2. Przy kontynuacji rozpoczętej pracy najpierw przeczytaj `tasks/NOW.md`.
+3. Dodatkowo przeczytaj tylko jeden lub dwa dokumenty bezpośrednio związane z zadaniem:
    - architektura i dane: `docs/ARCHITECTURE.md`
    - UI/UX: `docs/UI_RULES.md`
    - plan pracy: `docs/ROADMAP.md`
@@ -39,7 +40,12 @@ Nie czytaj automatycznie całego folderu `docs` ani całego repozytorium.
 
 Po istotnych zmianach aktualizuj odpowiednie dokumenty:
 - aktualny stan: `PROJECT_STATE.md`
-- wykonany lub zmieniony etap: `ROADMAP.md`
+- rozpoczęty/zakończony etap lub zmiana priorytetów: `ROADMAP.md`
 - trwała decyzja: dopisz wpis na końcu `DECISIONS.md`
-- zmiana architektury: `ARCHITECTURE.md`
-- zmiana obowiązujących zasad interfejsu: `UI_RULES.md`
+- `ARCHITECTURE.md` — tylko gdy architektura faktycznie się zmieniła
+- `UI_RULES.md` — tylko gdy zmienia się stała zasada interfejsu
+
+Zasady pracy nad dokumentacją:
+- Proste, mechaniczne zmiany w dokumentacji deleguj Codexowi (MCP) jako małe, jednoznaczne zadania.
+- Claude projektuje strukturę, pilnuje spójności i sprawdza diff — nie przepisuje samodzielnie długich dokumentów.
+- Przed zmianą tematu przygotuj krótki checkpoint w `tasks/NOW.md`.

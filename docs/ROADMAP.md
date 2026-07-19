@@ -1,25 +1,24 @@
-# Event Times — Roadmap
+# Event Times — Roadmapa
 
-Staged plan from the 2026-07-16 full audit. Each stage is delegated to Codex as small, single-purpose tasks and verified (`test`/`lint`/`build` + manual diff review) before moving to the next. Update status here as stages complete; move finished stage notes into `docs/DECISIONS.md` and `tasks/archive/`.
+Etapowy plan z pełnego audytu 2026-07-16. Każdy etap jest delegowany do Codex jako małe, jednozadaniowe prace i weryfikowany (`test`/`lint`/`build` + ręczny przegląd diffu) przed przejściem do następnego. Aktualizuj tutaj status wraz z domykaniem etapów; przenoś notatki z ukończonych etapów do `docs/DECISIONS.md` i `tasks/archive/`.
 
-| Stage | Goal | Status |
+| Etap | Cel | Status |
 |---|---|---|
-| **A — Stability** | Error boundary, data-load retry, CI test/lint gate | ✅ Done (2026-07-16) |
-| **B — Public-launch readiness** | SEO/OG/theme-color meta tags, `VITE_TICKETMASTER_API_KEY` CI decision, repo cleanup (stray logs, unused favicon) | Next |
-| **C — Account lifecycle** | Password reset, account deletion / data export | Planned |
-| **D — Panels & accessibility** | VenuePanel description truncation (parity with EventPanel), Escape/`role="dialog"`/focus trap on VenuePanel + EventPanel | Planned |
-| **E — Mobile consistency** | Reconcile breakpoints with `docs/UI_RULES.md`, fix undersized touch targets/text (`.search-chevron`, `.event-card-description`) | Planned |
-| **F — Technical cleanup** | Consolidate `requireDb()`, consistent coordinate validation, resolve the dead `status` field, reduce VenuePanel/EventPanel duplication | Planned |
-| **G — Documentation** | Keep `docs/` current after each stage (ongoing, not a one-time pass) | Ongoing |
+| **A — Stabilność** | Error boundary, retry ładowania danych, bramka test/lint w CI | ✅ Ukończone (2026-07-16) |
+| **B — Gotowość do publicznego launchu** | SEO/OG/theme-color meta tags, decyzja CI dla `VITE_TICKETMASTER_API_KEY`, porządki w repo (zbędne logi, nieużywany favicon) | Następne |
+| **C — Cykl życia konta** | Reset hasła, usunięcie konta / eksport danych | Planowane |
+| **D — Panele i dostępność** | Skracanie opisu VenuePanel (parytet z EventPanel), Escape/`role="dialog"`/focus trap w VenuePanel + EventPanel | Planowane |
+| **E — Spójność mobile** | Uzgodnić breakpointy z `docs/UI_RULES.md`, naprawić zbyt małe touch targets/tekst (`.search-chevron`, `.event-card-description`) | Planowane |
+| **F — Porządki techniczne** | Skonsolidować `requireDb()`, spójna walidacja współrzędnych, rozwiązać martwe pole `status`, zmniejszyć duplikację VenuePanel/EventPanel | Planowane |
+| **G — Dokumentacja** | Utrzymywać `docs/` jako aktualne po każdym etapie (ciągłe, nie jednorazowy pass) | W toku |
 
-## Deferred (not MVP-blocking)
+## Odłożone (nie blokują MVP)
 
-- Deep-linking/routing to a specific venue/event.
-- `App.css` modularization.
-- Component/integration test coverage (Playwright-driven UI checks via the `ui-reviewer` subagent can partially cover this in the meantime).
-- Real tablet layout.
-- Unifying `AppToast` with the per-component inline error/success messages.
+- Modularyzacja `App.css`.
+- Pokrycie testami komponentowymi/integracyjnymi (kontrole UI przez Playwright z subagentem `ui-reviewer` mogą częściowo to pokryć w międzyczasie).
+- Prawdziwy layout tabletowy.
+- Ujednolicenie `AppToast` z per-component inline error/success messages.
 
-## Explicitly out of scope unless the user asks
+## Jawnie poza zakresem, chyba że użytkownik poprosi
 
-Full redesign, framework migration, swapping Firebase or Leaflet, Firestore data-model rebuild, paid services, mass dependency installs — see `AGENTS.md`.
+Pełny redesign, migracja frameworka, zamiana Firebase albo Leaflet, przebudowa modelu danych Firestore, płatne usługi, masowe instalacje zależności — zobacz `AGENTS.md`.

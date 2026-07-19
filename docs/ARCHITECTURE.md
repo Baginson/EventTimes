@@ -1,27 +1,27 @@
-# Event Times — Architecture
+# Event Times — Architektura
 
-Committed source of truth for stack and data model. (The original planning spec, `EVENT_TIMES_SPEC.md`, was consolidated into this file and removed on 2026-07-16 — recoverable from git history at `4edf906` if ever needed.)
+Utrwalone źródło prawdy dla stacku i modelu danych. (Oryginalna specyfikacja planistyczna, `EVENT_TIMES_SPEC.md`, została scalona z tym plikiem i usunięta 2026-07-16 — w razie potrzeby da się ją odzyskać z historii git w `4edf906`.)
 
-## Product vision
+## Wizja produktu
 
-Event Times is an interactive map of events: discover interesting places and events, plan attendance, and return to what you've been to — the user's own event history ("Byłem", activity feed) is a core product pillar, not an afterthought. Brand essence: **"Odkrywaj. Przeżywaj. Wracaj."** Long-term the product aims at three audiences — participants (find/plan/remember), organizers (promote events), and venues (visibility) — but the current MVP serves participants, with organizers/venues represented only through admin-managed data.
+Event Times to interaktywna mapa wydarzeń: pozwala odkrywać ciekawe miejsca i eventy, planować udział oraz wracać do tego, gdzie użytkownik już był — własna historia eventów użytkownika ("Byłem", aktywność) jest jednym z głównych filarów produktu, a nie dodatkiem. Esencja marki: **"Odkrywaj. Przeżywaj. Wracaj."** Długoterminowo produkt jest skierowany do trzech grup — uczestników (znajdowanie/planowanie/pamiętanie), organizatorów (promocja eventów) i venues (widoczność) — ale obecne MVP obsługuje uczestników, a organizatorzy/venues są reprezentowani tylko przez dane zarządzane przez admina.
 
 ## Stack
 
-- React 19 + TypeScript + Vite 8, single-page app (no router — panel state lives in `App.tsx`, no deep-linking yet).
-- Leaflet / react-leaflet for the map.
-- Firebase Auth (email/password + Google) and Cloud Firestore for data.
-- GitHub Pages hosting, base path `/EventTimes/` (`vite.config.ts`).
-- Vitest for unit tests, oxlint for linting. No component-testing library installed.
-- Free-first: no Cloud Functions, no Firebase Storage, no paid Google Maps/Places API.
+- React 19 + TypeScript + Vite 8, aplikacja single-page (bez routera — stan paneli żyje w `App.tsx`, bez deep linków na poziomie routera).
+- Leaflet / react-leaflet do mapy.
+- Firebase Auth (email/password + Google) i Cloud Firestore dla danych.
+- Hosting na GitHub Pages, base path `/EventTimes/` (`vite.config.ts`).
+- Vitest do testów jednostkowych, oxlint do lintowania. Brak zainstalowanej biblioteki do testów komponentów.
+- Free-first: bez Cloud Functions, bez Firebase Storage, bez płatnego Google Maps/Places API.
 
-## Project scope
+## Zakres projektu
 
-First version covers Leszno and the surrounding area — typical venues: MOK Leszno, Hala Trapez, Stadion im. Alfreda Smoczyka, Rynek, Lotnisko Leszno, plus generic types (aula, sala koncertowa, plener, teatr, klub). The data model is city-agnostic (`city` field on `Venue`), and the long-term direction is multi-city ("cały świat na mapie" per the brand poster), but city selection in the UI is currently a single hardcoded option (`src/components/CityFilter.tsx`) pending multi-city support.
+Pierwsza wersja obejmuje Leszno i okolice — typowe miejsca: MOK Leszno, Hala Trapez, Stadion im. Alfreda Smoczyka, Rynek, Lotnisko Leszno, plus typy ogólne (aula, sala koncertowa, plener, teatr, klub). Model danych jest niezależny od miasta (pole `city` na `Venue`), a długoterminowy kierunek to wiele miast ("cały świat na mapie" zgodnie z posterem marki), ale wybór miasta w UI jest obecnie pojedynczą, zahardkodowaną opcją (`src/components/CityFilter.tsx`) do czasu wsparcia wielu miast.
 
-## Data model (as implemented — see `docs/DECISIONS.md` for the spec-vs-code drift this corrects)
+## Model danych (tak jak jest zaimplementowany — zobacz `docs/DECISIONS.md` dla rozjazdu spec-vs-code, który to prostuje)
 
-`Venue` and `EventTimesEvent` types live in `src/data/mockVenues.ts` / `src/data/mockEvents.ts` (also the fallback/seed data source — see below).
+Typy `Venue` i `EventTimesEvent` znajdują się w `src/data/mockVenues.ts` / `src/data/mockEvents.ts` (to także źródło danych fallback/seed — zobacz niżej).
 
 ```ts
 type Venue = {
@@ -72,42 +72,42 @@ type EventTimesEvent = {
 }
 ```
 
-Coordinates are always `{ lat, lng }`. Leaflet's `[lat, lng]` array order conversion is isolated inside `src/components/EventMap.tsx` only — never in services/utils/models. This keeps the data model swappable to a different map provider later without touching venue/event data.
+Współrzędne zawsze mają format `{ lat, lng }`. Konwersja na kolejność tablicy Leafleta `[lat, lng]` jest odizolowana wyłącznie w `src/components/EventMap.tsx` — nigdy w services/utils/models. Dzięki temu model danych można później przepiąć na innego providera mapy bez ruszania danych venue/eventów.
 
-Event status (`upcoming` / `ongoing` / `past`) is always computed at render time via `getEventStatus()` (`src/utils/eventStatus.ts`), never stored as a literal. Edge rules: an event with no `endDate` is judged by `startDate` alone; a date-range event is judged by range overlap with "now"; a past event stays valid data (archive, still shown under "Minione"). Missing `startTime`/`endTime` means the UI shows a date only, never a fake `00:00`.
+Status eventu (`upcoming` / `ongoing` / `past`) jest zawsze liczony w czasie renderowania przez `getEventStatus()` (`src/utils/eventStatus.ts`), nigdy zapisywany jako literal. Zasady brzegowe: event bez `endDate` jest oceniany tylko po `startDate`; event z zakresem dat jest oceniany po przecięciu zakresu z "teraz"; przeszły event pozostaje poprawnymi danymi (archiwum, nadal pokazywany pod "Minione"). Brak `startTime`/`endTime` oznacza, że UI pokazuje tylko datę, nigdy fałszywe `00:00`.
 
 ## Firestore
 
-Collections: `venues`, `events` (public read, admin-only write), `users/{uid}` + `users/{uid}/eventActions/{eventId}` + `users/{uid}/venueActions/{venueId}` + `users/{uid}/eventMemories/{eventId}` (all owner-only), `admins/{uid}` (get-only for the current user, never listable). Rules in `firestore.rules` match this exactly — reviewed and confirmed correct. Rules changes must be deployed manually in the Firebase Console (no CI deploy for rules).
+Kolekcje: `venues`, `events` (publiczny odczyt, zapis tylko dla admina), `users/{uid}` + `users/{uid}/eventActions/{eventId}` + `users/{uid}/venueActions/{venueId}` + `users/{uid}/eventMemories/{eventId}` (wszystkie tylko dla właściciela), `admins/{uid}` (tylko get dla bieżącego użytkownika, nigdy listowanie). Reguły w `firestore.rules` dokładnie temu odpowiadają — zostały przejrzane i potwierdzone jako poprawne. Zmiany reguł trzeba wdrażać ręcznie w Firebase Console (brak deployu reguł w CI).
 
-`eventMemories/{eventId}` is the private per-user memory of a past event: `{ eventId, venueId, note (≤2000 chars), photos: MemoryPhoto[] (≤6: { id, url, publicId?, createdAt }), createdAt, updatedAt }` — service layer in `src/services/memoryService.ts`. Strictly private: no collection-group queries, owner-only rules, other users can never read them.
+`eventMemories/{eventId}` to prywatna, per-user pamiątka z przeszłego eventu: `{ eventId, venueId, note (≤2000 chars), photos: MemoryPhoto[] (≤6: { id, url, publicId?, createdAt }), createdAt, updatedAt }` — service layer w `src/services/memoryService.ts`. Ściśle prywatne: bez collection-group queries, reguły tylko dla właściciela, inni użytkownicy nigdy nie mogą ich czytać.
 
-## Image uploads (Cloudinary)
+## Upload obrazów (Cloudinary)
 
-Free-first means no Firebase Storage and no Cloud Functions, so user/admin image uploads go browser→Cloudinary via an **unsigned upload preset** (`src/services/cloudinaryService.ts`): gated by `VITE_CLOUDINARY_CLOUD_NAME` + `VITE_CLOUDINARY_UPLOAD_PRESET` (both safe-to-expose identifiers; no API secret in the client — deletes are therefore impossible from the app, replaced images simply remain in Cloudinary). Used by: EventForm cover-photo upload (writes `secure_url` into the existing `imageUrl` field) and event-memory photos. Uploaded URLs are public-by-obscurity (anyone holding the URL can view the image) — Firestore protects the listing, not the CDN asset. Restrict the preset in the Cloudinary dashboard (folder, formats, max size) as defense-in-depth.
+Free-first oznacza brak Firebase Storage i brak Cloud Functions, więc uploady obrazów użytkownika/admina idą browser→Cloudinary przez **unsigned upload preset** (`src/services/cloudinaryService.ts`): bramkowane przez `VITE_CLOUDINARY_CLOUD_NAME` + `VITE_CLOUDINARY_UPLOAD_PRESET` (oba to bezpieczne do ujawnienia identyfikatory; w kliencie nie ma API secret — usuwanie jest więc niemożliwe z aplikacji, a zastąpione obrazy po prostu zostają w Cloudinary). Używane przez: upload zdjęcia okładkowego w EventForm (zapisuje `secure_url` do istniejącego pola `imageUrl`) oraz zdjęcia w event memories. Wgrane URL-e są public-by-obscurity (każdy mający URL może zobaczyć obraz) — Firestore chroni listing, nie asset w CDN. Ogranicz preset w panelu Cloudinary (folder, formaty, maksymalny rozmiar) jako defense-in-depth.
 
-## Deep links & sharing
+## Deep linki i udostępnianie
 
-No router — `src/App.tsx` reads `?venue=<id>` / `?event=<id>` once after the initial data load and opens the matching panel; panel open/close mirrors state back into the URL via `history.replaceState` (no back-stack management). `src/utils/shareLinks.ts` builds absolute share URLs on top of `BASE_URL` and wraps `navigator.share` with a clipboard fallback; both panels expose a share icon action (visible logged-out too).
+Brak routera — `src/App.tsx` czyta `?venue=<id>` / `?event=<id>` raz po początkowym załadowaniu danych i otwiera pasujący panel; otwarcie/zamknięcie panelu odzwierciedla stan z powrotem w URL przez `history.replaceState` (bez zarządzania back-stack). `src/utils/shareLinks.ts` buduje absolutne URL-e do udostępniania na bazie `BASE_URL` i opakowuje `navigator.share` fallbackiem do schowka; oba panele pokazują akcję udostępniania jako ikonę (widoczną także dla niezalogowanych).
 
-Admin status is Firestore-doc-based only (`admins/{uid}` existence), never email- or client-side-password-based.
+Status admina opiera się wyłącznie na dokumencie Firestore (`admins/{uid}` existence), nigdy na emailu ani haśle po stronie klienta.
 
 ## Service layer
 
-`src/services/*.ts` (`venueService`, `eventService`, `adminService`, `userProfileService`, `userActionService`, `ticketmasterService`, `localBackupService`) all follow the same pattern: if `db` (`src/lib/firebase.ts`) is configured, read/write Firestore; if not (`VITE_FIREBASE_*` env vars missing), fall back to `localStorage`, seeded from `mockVenues`/`mockEvents` on first use. This fallback is a real runtime path (any deployment without Firebase env vars hits it), not just a test fixture — the mock coordinates are flagged approximate in a comment and should be treated as UI-dev-only data, not shipped as real venue data.
+`src/services/*.ts` (`venueService`, `eventService`, `adminService`, `userProfileService`, `userActionService`, `ticketmasterService`, `localBackupService`) stosują ten sam wzorzec: jeśli `db` (`src/lib/firebase.ts`) jest skonfigurowane, czytają/zapisują Firestore; jeśli nie (`VITE_FIREBASE_*` env vars nie istnieją), przechodzą na `localStorage`, seedowane przy pierwszym użyciu z `mockVenues`/`mockEvents`. Ten fallback to realna ścieżka runtime (każdy deployment bez env vars Firebase w nią trafia), nie tylko fixture testowy — mockowe współrzędne są w komentarzu oznaczone jako przybliżone i powinny być traktowane jako dane wyłącznie do UI-dev, nie jako prawdziwe dane venues do wysyłki.
 
-## Map & geo
+## Mapa i geo
 
-`src/components/EventMap.tsx` renders venues as Leaflet markers: Deep Navy default, Electric Blue selected/active, no numbered cluster bubbles. `src/utils/geo.ts` / `src/utils/venueDisplay.ts` / `src/utils/googleMaps.ts` handle distance, address formatting (`ul.` prefix rules), and coordinate validation — kept separate from the map-rendering layer.
+`src/components/EventMap.tsx` renderuje venues jako markery Leafleta: Deep Navy domyślnie, Electric Blue dla wybranego/aktywnego, bez numerowanych bąbli klastrów jako głównego rozwiązania. `src/utils/geo.ts` / `src/utils/venueDisplay.ts` / `src/utils/googleMaps.ts` obsługują dystans, formatowanie adresu (zasady prefiksu `ul.`) i walidację współrzędnych — oddzielone od warstwy renderowania mapy.
 
-## Auth & account
+## Auth i konto
 
-`src/auth/AuthProvider.tsx` wraps Firebase Auth (email/password, Google sign-in; no password reset yet — see `docs/PROJECT_STATE.md`). `src/components/AccountPanel.tsx` shows a Firestore-backed activity feed + preferences (real data, no mocks). User actions (`Polubione`, `Chcę iść`, `Byłem`) live in `users/{uid}/eventActions` / `venueActions`, scoped and validated both client-side and by Firestore rules.
+`src/auth/AuthProvider.tsx` opakowuje Firebase Auth (email/password, Google sign-in; brak resetu hasła na razie — zobacz `docs/PROJECT_STATE.md`). `src/components/AccountPanel.tsx` pokazuje activity feed + preferencje oparte o Firestore (prawdziwe dane, bez mocków). Akcje użytkownika (`Polubione`, `Chcę iść`, `Byłem`) żyją w `users/{uid}/eventActions` / `venueActions`, są scope'owane i walidowane zarówno po stronie klienta, jak i przez reguły Firestore.
 
-## Admin panel
+## Panel admina
 
-`src/components/AdminPanel.tsx` + `AdminEventsSection` / `AdminDataSection` / `EventForm` / `VenueForm` / `TicketmasterImportSection` cover venue/event CRUD, pin placement by map click, JSON import/export, and a Ticketmaster search-and-import flow (`src/services/ticketmasterService.ts`, gated by `VITE_TICKETMASTER_API_KEY`). All destructive actions are behind `window.confirm`. See `docs/PROJECT_STATE.md` for known gaps (e.g. this feature is currently undocumented and not wired into the production CI secrets).
+`src/components/AdminPanel.tsx` + `AdminEventsSection` / `AdminDataSection` / `EventForm` / `VenueForm` / `TicketmasterImportSection` obejmują CRUD venues/eventów, ustawianie pinezki kliknięciem w mapę, import/export JSON oraz flow wyszukiwania i importu z Ticketmaster (`src/services/ticketmasterService.ts`, bramkowane przez `VITE_TICKETMASTER_API_KEY`). Wszystkie akcje destrukcyjne są za `window.confirm`. Zobacz `docs/PROJECT_STATE.md` dla znanych braków (np. ta funkcja jest obecnie nieudokumentowana i niepodłączona do sekretów CI produkcji).
 
 ## Mobile
 
-Single primary breakpoint at 820px (`usePanelMotion.ts` and `App.css` agree) switches venue/event/admin panels from floating desktop cards to bottom sheets, escalating to full-screen below 767px. `MobileBottomBar.tsx` is the mobile entry point for search/profile/admin. `prefers-reduced-motion` is respected in both CSS and the framer-motion panel-motion hook.
+Jeden główny breakpoint na 820px (`usePanelMotion.ts` i `App.css` są zgodne) przełącza panele venue/event/admin z pływających desktopowych kart na bottom sheets, przechodząc w full-screen poniżej 767px. `MobileBottomBar.tsx` to mobilny punkt wejścia do search/profil/admin. `prefers-reduced-motion` jest respektowane zarówno w CSS, jak i w hooku animacji paneli opartym o framer-motion.
