@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { UIEvent as ReactUIEvent } from 'react'
+import type {
+  PointerEvent as ReactPointerEvent,
+  UIEvent as ReactUIEvent,
+} from 'react'
 import type { FormEvent } from 'react'
 import {
+  ArrowLeft,
+  BadgeCheck,
   Clock,
   Image,
   LogOut,
@@ -22,6 +27,10 @@ import { MOBILE_PANEL_MEDIA_QUERY } from '../constants/breakpoints'
 import { EVENT_TYPES } from '../data/searchFilters'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { EventTimesApiConfigError } from '../services/eventTimesApi'
+import {
+  CLOUDINARY_UPLOADS_ENABLED,
+  uploadImageToCloudinary,
+} from '../services/cloudinaryService'
 import {
   clearAllUserActions,
   getAllUserActions,
@@ -81,6 +90,8 @@ const recentActivityLimit = 3
 const accountPagerPages = ['Karnet', 'Wspomnienia', 'Kolekcja i aktywność']
 const eventPreferenceOptions = EVENT_TYPES.filter((eventType) => eventType !== 'Wszystkie')
 const cityOptions = ['Leszno']
+const PASS_SWIPE_AXIS_LOCK_PX = 6
+const PASS_SWIPE_REVEAL_PX = 40
 
 const fallbackProfileSettings: UserProfileSettings = {
   profileSetupCompleted: false,
@@ -211,6 +222,7 @@ export function AccountPanel({
     linkProvider,
     unlinkProvider,
     updateProfile,
+    sendVerificationEmail,
     logout,
   } = useAuth()
   const [eventActions, setEventActions] = useState<EventAction[]>([])
@@ -229,6 +241,11 @@ export function AccountPanel({
   const [isEditing, setIsEditing] = useState(false)
   const [displayName, setDisplayName] = useState(user?.displayName ?? '')
   const [photoURL, setPhotoURL] = useState(user?.photoURL ?? '')
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false)
+  const [avatarUploadError, setAvatarUploadError] = useState('')
+  const [isSendingVerification, setIsSendingVerification] = useState(false)
+  const [verificationStatus, setVerificationStatus] = useState('')
+  const [verificationError, setVerificationError] = useState('')
   const [profileSettings, setProfileSettings] = useState<UserProfileSettings>(fallbackProfileSettings)
   const [profileDefaultCity, setProfileDefaultCity] = useState(defaultUserPreferences.defaultCity)
   const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([])
@@ -243,6 +260,9 @@ export function AccountPanel({
   const [isRecentActivityExpanded, setIsRecentActivityExpanded] = useState(false)
   const [activePagerPage, setActivePagerPage] = useState(0)
   const pagerRef = useRef<HTMLDivElement | null>(null)
+  const cancelEditingRef = useRef<() => void>(() => {})
+  const passSwipeStartRef = useRef<{ x: number; y: number } | null>(null)
+  const passSwipeAxisRef = useRef<'vertical' | 'horizontal' | null>(null)
   const eventById = useMemo(
     () => new Map(events.map((event) => [event.id, event])),
     [events],
@@ -297,14 +317,20 @@ export function AccountPanel({
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
+      if (event.key !== 'Escape') {
+        return
+      }
+
+      if (isEditing) {
+        cancelEditingRef.current()
+      } else {
         onClose()
       }
     }
 
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
-  }, [onClose])
+  }, [onClose, isEditing])
 
   const isMobile = useMediaQuery(MOBILE_PANEL_MEDIA_QUERY)
   // Mobilna strona 1: Karnet startuje na cały ekran; lekki swipe w górę
@@ -339,6 +365,9 @@ export function AccountPanel({
     setProfileDefaultCity(profileSettings.userPreferences.defaultCity)
     setSelectedEventTypes(profileSettings.userPreferences.eventTypes)
     setError('')
+    setAvatarUploadError('')
+    setVerificationError('')
+    setVerificationStatus('')
     setSuccessMessage('')
     setIsEditing(true)
   }
@@ -349,7 +378,55 @@ export function AccountPanel({
     setProfileDefaultCity(profileSettings.userPreferences.defaultCity)
     setSelectedEventTypes(profileSettings.userPreferences.eventTypes)
     setError('')
+    setAvatarUploadError('')
+    setVerificationError('')
+    setVerificationStatus('')
     setIsEditing(false)
+  }
+
+  cancelEditingRef.current = cancelEditing
+
+  async function handleAvatarUpload(fileInput: HTMLInputElement) {
+    const file = fileInput.files?.[0]
+
+    if (!file) {
+      return
+    }
+
+    try {
+      setIsAvatarUploading(true)
+      setAvatarUploadError('')
+      const { url } = await uploadImageToCloudinary(file)
+      setPhotoURL(url)
+      fileInput.value = ''
+    } catch (uploadError) {
+      setAvatarUploadError(
+        uploadError instanceof Error
+          ? uploadError.message
+          : 'Nie udało się przesłać zdjęcia. Spróbuj ponownie.',
+      )
+    } finally {
+      setIsAvatarUploading(false)
+    }
+  }
+
+  async function handleSendVerificationEmail() {
+    setIsSendingVerification(true)
+    setVerificationError('')
+    setVerificationStatus('')
+
+    try {
+      await sendVerificationEmail()
+      setVerificationStatus('Wysłano link weryfikacyjny na Twój adres e-mail.')
+    } catch (verificationErr) {
+      setVerificationError(
+        verificationErr instanceof Error
+          ? verificationErr.message
+          : 'Nie udało się wysłać linku weryfikacyjnego.',
+      )
+    } finally {
+      setIsSendingVerification(false)
+    }
   }
 
   async function handleProviderLink(providerId: 'google' | 'github') {
@@ -600,6 +677,50 @@ export function AccountPanel({
     } finally {
       setClearingData(false)
     }
+  }
+
+  function handlePassPointerDown(event: ReactPointerEvent<HTMLElement>) {
+    passSwipeStartRef.current = { x: event.clientX, y: event.clientY }
+    passSwipeAxisRef.current = null
+  }
+
+  function handlePassPointerMove(event: ReactPointerEvent<HTMLElement>) {
+    const start = passSwipeStartRef.current
+
+    if (!start || isEditing) {
+      return
+    }
+
+    const deltaX = event.clientX - start.x
+    const deltaY = event.clientY - start.y
+
+    if (!passSwipeAxisRef.current) {
+      if (
+        Math.abs(deltaX) < PASS_SWIPE_AXIS_LOCK_PX &&
+        Math.abs(deltaY) < PASS_SWIPE_AXIS_LOCK_PX
+      ) {
+        return
+      }
+
+      passSwipeAxisRef.current = Math.abs(deltaY) > Math.abs(deltaX)
+        ? 'vertical'
+        : 'horizontal'
+    }
+
+    if (passSwipeAxisRef.current !== 'vertical') {
+      return
+    }
+
+    if (deltaY < -PASS_SWIPE_REVEAL_PX) {
+      setPassRevealed(true)
+    } else if (deltaY > PASS_SWIPE_REVEAL_PX) {
+      setPassRevealed(false)
+    }
+  }
+
+  function handlePassPointerEnd() {
+    passSwipeStartRef.current = null
+    passSwipeAxisRef.current = null
   }
 
   function handlePagerScroll(event: ReactUIEvent<HTMLDivElement>) {
@@ -946,6 +1067,11 @@ export function AccountPanel({
   const activeCollectionConfig =
     collections.find((collection) => collection.key === activeCollection) ?? collections[0]
   const passYear = new Date().getFullYear()
+  const memberSinceLabel = currentUser.metadata.creationTime
+    ? new Intl.DateTimeFormat('pl-PL', { month: 'long', year: 'numeric' }).format(
+        new Date(currentUser.metadata.creationTime),
+      )
+    : null
   const setupPanelNode = isSetupOpen ? (
     <section className="account-setup-panel" aria-labelledby="account-setup-title">
       <div className="account-setup-copy">
@@ -998,6 +1124,24 @@ export function AccountPanel({
         <div className="account-role-row">
           <span className="account-role-pill">{isAdmin ? 'Administrator' : 'Użytkownik'}</span>
           {isAdmin && <span className="account-admin-badge">Panel admina</span>}
+          {memberSinceLabel && (
+            <span className="account-pass-since">Uczestnik od {memberSinceLabel}</span>
+          )}
+        </div>
+
+        <div className="account-pass-stats" role="group" aria-label="Podsumowanie Twojej aktywności">
+          <div className="account-pass-stat">
+            <strong>{savedEvents.length + savedVenues.length}</strong>
+            <span>Polubione</span>
+          </div>
+          <div className="account-pass-stat">
+            <strong>{goingEvents.length}</strong>
+            <span>Chcę iść</span>
+          </div>
+          <div className="account-pass-stat">
+            <strong>{visitedEvents.length}</strong>
+            <span>Byłem</span>
+          </div>
         </div>
 
         <div className="account-pass-footer" aria-hidden="true">
@@ -1205,65 +1349,6 @@ export function AccountPanel({
       {methodsStatus && <p className="account-methods-success" role="status">{methodsStatus}</p>}
     </section>
   )
-  const editFormNode = isEditing ? (
-    <section className="account-profile-edit" aria-labelledby="profile-edit-title">
-      <div className="account-section-heading">
-        <h2 id="profile-edit-title">Edycja profilu</h2>
-      </div>
-
-      <div className="account-profile-form">
-        <label>
-          <span>Nazwa użytkownika</span>
-          <input
-            maxLength={32}
-            value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
-          />
-        </label>
-        <label>
-          <span>Link do zdjęcia profilowego</span>
-          <input
-            type="url"
-            placeholder="https://"
-            value={photoURL}
-            onChange={(event) => setPhotoURL(event.target.value)}
-          />
-        </label>
-        <small>Zdjęcie jest ustawiane wyłącznie przez link URL. Pliki nie są wysyłane.</small>
-        <section className="account-edit-preferences" aria-labelledby="account-edit-preferences-title">
-          <h3 id="account-edit-preferences-title">Preferencje wydarzeń</h3>
-          <p>Wybierz typy wydarzeń, które najbardziej Cię interesują.</p>
-          {renderPreferenceControls(
-            'edit',
-            selectedEventTypes,
-            (eventType) => setSelectedEventTypes((currentTypes) => toggleEventTypeSelection(currentTypes, eventType)),
-            profileDefaultCity,
-            setProfileDefaultCity,
-          )}
-        </section>
-        <div className="account-profile-form-actions">
-          <button
-            className="button button-primary"
-            type="button"
-            disabled={savingProfile}
-            onClick={() => void saveProfile()}
-          >
-            {savingProfile ? 'Zapisywanie…' : 'Zapisz profil'}
-          </button>
-          <button className="button button-secondary" type="button" disabled={savingProfile} onClick={cancelEditing}>
-            Anuluj
-          </button>
-        </div>
-      </div>
-      {isMobile ? loginMethodsNode : null}
-    </section>
-  ) : null
-  const feedbackNode = (
-    <>
-      {error && <p className="account-error" role="alert">{error}</p>}
-      {successMessage && <p className="account-success" role="status">{successMessage}</p>}
-    </>
-  )
   const clearDataNode = (
     <section className="account-clear-data" aria-labelledby="clear-data-title">
       <h2 id="clear-data-title">Wyczyść aktywność</h2>
@@ -1274,6 +1359,162 @@ export function AccountPanel({
       </button>
     </section>
   )
+  const feedbackNode = (
+    <>
+      {error && <p className="account-error" role="alert">{error}</p>}
+      {successMessage && <p className="account-success" role="status">{successMessage}</p>}
+    </>
+  )
+  const editViewNode = isEditing ? (
+    <div className="account-edit-view">
+      <header className="account-edit-view-header">
+        <button
+          type="button"
+          className="account-edit-back"
+          onClick={cancelEditing}
+          aria-label="Wróć do Karnetu"
+        >
+          <ArrowLeft className="ui-icon" aria-hidden="true" />
+        </button>
+        <div>
+          <span>Tryb edycji</span>
+          <h1 id="account-panel-title">Edytuj profil</h1>
+        </div>
+      </header>
+
+      {feedbackNode}
+
+      <div className="account-edit-grid">
+        <section className="account-edit-card" aria-labelledby="account-edit-basics-title">
+          <h2 id="account-edit-basics-title">Podstawowe dane</h2>
+          <div className="account-edit-avatar-row">
+            <div className="account-edit-avatar-preview" aria-hidden="true">
+              {photoURL ? (
+                <img src={photoURL} alt="" referrerPolicy="no-referrer" />
+              ) : (
+                <span>{initial}</span>
+              )}
+            </div>
+            <label className="account-edit-name-field">
+              <span>Nazwa wyświetlana</span>
+              <input
+                maxLength={32}
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+              />
+            </label>
+          </div>
+          <label>
+            <span>Link do zdjęcia profilowego</span>
+            <input
+              type="url"
+              placeholder="https://"
+              value={photoURL}
+              onChange={(event) => {
+                setPhotoURL(event.target.value)
+                setAvatarUploadError('')
+              }}
+            />
+          </label>
+          <small>Wklej link do zdjęcia albo prześlij plik z dysku.</small>
+          {CLOUDINARY_UPLOADS_ENABLED && (
+            <div className="event-image-upload-section">
+              <div className="event-image-upload-actions">
+                <label
+                  className={`button button-secondary event-image-upload-button${
+                    isAvatarUploading ? ' is-disabled' : ''
+                  }`}
+                  aria-disabled={isAvatarUploading}
+                >
+                  <span>{isAvatarUploading ? 'Przesyłanie...' : 'Prześlij zdjęcie z dysku'}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="event-image-upload-input"
+                    disabled={isAvatarUploading}
+                    onChange={(event) => void handleAvatarUpload(event.currentTarget)}
+                  />
+                </label>
+                {photoURL && (
+                  <button
+                    type="button"
+                    className="button button-secondary"
+                    onClick={() => {
+                      setPhotoURL('')
+                      setAvatarUploadError('')
+                    }}
+                    disabled={isAvatarUploading}
+                  >
+                    Usuń zdjęcie
+                  </button>
+                )}
+              </div>
+              {avatarUploadError && (
+                <p className="account-error" role="alert">{avatarUploadError}</p>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section className="account-edit-card" aria-labelledby="account-edit-preferences-title">
+          <h2 id="account-edit-preferences-title">Preferencje wydarzeń</h2>
+          <p>Wybierz typy wydarzeń, które najbardziej Cię interesują.</p>
+          {renderPreferenceControls(
+            'edit',
+            selectedEventTypes,
+            (eventType) => setSelectedEventTypes((currentTypes) => toggleEventTypeSelection(currentTypes, eventType)),
+            profileDefaultCity,
+            setProfileDefaultCity,
+          )}
+        </section>
+
+        <section className="account-edit-card" aria-labelledby="account-edit-verification-title">
+          <h2 id="account-edit-verification-title">Status e-maila</h2>
+          {currentUser.emailVerified ? (
+            <p className="account-edit-verified">
+              <BadgeCheck className="ui-icon" aria-hidden="true" />
+              E-mail zweryfikowany
+            </p>
+          ) : (
+            <>
+              <p>Twój e-mail nie jest jeszcze zweryfikowany.</p>
+              <button
+                type="button"
+                className="button button-secondary"
+                disabled={isSendingVerification}
+                onClick={() => void handleSendVerificationEmail()}
+              >
+                {isSendingVerification ? 'Wysyłanie…' : 'Wyślij link weryfikacyjny'}
+              </button>
+              {verificationStatus && (
+                <p className="account-success" role="status">{verificationStatus}</p>
+              )}
+              {verificationError && (
+                <p className="account-error" role="alert">{verificationError}</p>
+              )}
+            </>
+          )}
+        </section>
+
+        {loginMethodsNode}
+        {clearDataNode}
+      </div>
+
+      <div className="account-profile-form-actions account-edit-view-actions">
+        <button
+          className="button button-primary"
+          type="button"
+          disabled={savingProfile}
+          onClick={() => void saveProfile()}
+        >
+          {savingProfile ? 'Zapisywanie…' : 'Zapisz profil'}
+        </button>
+        <button className="button button-secondary" type="button" disabled={savingProfile} onClick={cancelEditing}>
+          Anuluj
+        </button>
+      </div>
+    </div>
+  ) : null
   const collectionHeaderNode = (
     <header className="account-collection-header">
       <span>Moja kolekcja</span>
@@ -1321,16 +1562,15 @@ export function AccountPanel({
           <X className="ui-icon" aria-hidden="true" />
         </button>
 
-        {!isMobile ? (
+        {isEditing ? (
+          editViewNode
+        ) : !isMobile ? (
           <div className="account-profile-layout">
             {setupPanelNode}
             <section className="account-pass" aria-labelledby="account-panel-title">
               {passCardNode}
               {quickActionsNode}
-              {editFormNode}
               {feedbackNode}
-              {loginMethodsNode}
-              {clearDataNode}
             </section>
             <section className="account-collection" aria-labelledby="account-collection-title">
               {collectionHeaderNode}
@@ -1363,13 +1603,14 @@ export function AccountPanel({
               <section
                 className={`account-page account-page--pass${passRevealed ? ' is-revealed' : ''}`}
                 aria-labelledby="account-panel-title"
-                onScroll={(event) => setPassRevealed(event.currentTarget.scrollTop > 8)}
+                onPointerDown={handlePassPointerDown}
+                onPointerMove={handlePassPointerMove}
+                onPointerUp={handlePassPointerEnd}
+                onPointerCancel={handlePassPointerEnd}
               >
                 {passCardNode}
                 {quickActionsNode}
-                {editFormNode}
                 {feedbackNode}
-                {clearDataNode}
               </section>
               <section className="account-page account-page--memories" aria-label="Wspomnienia">
                 {loading ? loadingNode : memoriesNode}

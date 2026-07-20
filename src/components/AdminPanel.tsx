@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import {
   MapPinPlus,
   Move,
@@ -10,6 +11,9 @@ import {
 } from 'lucide-react'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import { MOBILE_PANEL_MEDIA_QUERY } from '../constants/breakpoints'
+import { useMediaQuery } from '../hooks/useMediaQuery'
+import { usePanelSwipeToClose } from '../hooks/usePanelSwipeToClose'
 import type { LocalBackupData } from '../services/localBackupService'
 import { getDistanceMeters } from '../utils/geo'
 import { normalizeForMatch } from '../utils/textNormalize'
@@ -79,6 +83,13 @@ export function AdminPanel({
   const [isRefreshingData, setIsRefreshingData] = useState(false)
   const [prefilledVenueDraft, setPrefilledVenueDraft] = useState<VenueFormDraft | null>(null)
   const [prefilledVenueDraftKey, setPrefilledVenueDraftKey] = useState(0)
+  const shouldReduceMotion = useReducedMotion()
+  const isMobilePanel = useMediaQuery(MOBILE_PANEL_MEDIA_QUERY)
+  const { contentRef, drag, dragConstraints, dragElastic, dragMomentum, onDragEnd } =
+    usePanelSwipeToClose({
+      onClose,
+      enabled: isMobilePanel && !shouldReduceMotion,
+    })
   const editingVenue = venues.find((venue) => venue.id === editingVenueId)
   const isAddingVenueDraft = isAddingVenue && draftVenueCoordinates !== null
   const isTicketmasterVenueDraft = prefilledVenueDraft !== null && !editingVenueId
@@ -200,7 +211,16 @@ export function AdminPanel({
   }
 
   return (
-    <aside className="admin-panel" aria-label="Developerski panel admina">
+    <motion.aside
+      className="admin-panel"
+      aria-label="Developerski panel admina"
+      drag={drag}
+      dragConstraints={dragConstraints}
+      dragElastic={dragElastic}
+      dragMomentum={dragMomentum}
+      onDragEnd={onDragEnd}
+    >
+      <div className="venue-panel-handle" aria-hidden="true" />
       <div className="admin-panel-header">
         <div>
           <span>Tryb developerski</span>
@@ -231,7 +251,7 @@ export function AdminPanel({
         </div>
       </div>
 
-      <div className="admin-panel-content">
+      <div ref={contentRef} className="admin-panel-content">
         <div className="admin-tabs" role="tablist" aria-label="Sekcje panelu admina">
           <button
             type="button"
@@ -400,6 +420,6 @@ export function AdminPanel({
           Dane testowe są zapisywane lokalnie w tej przeglądarce.
         </p>
       </div>
-    </aside>
+    </motion.aside>
   )
 }

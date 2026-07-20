@@ -25,6 +25,8 @@ Edytorska aplikacja mapowa + plakat eventowy. Odważna, ale czytelna, wyróżnia
 
 Profil ("Karnet Event Times") jest implementacją referencyjną nowej palety: electric-blue pass card z białym tekstem/elementami, jasnoszara kolumna kolekcji z białymi kartami, ink headings, niebieskie stickers/labels.
 
+**Karnet jest główną wizytówką profilu** (decyzja 2026-07-21), nie tylko kontenerem na przyciski akcji — traktuj go jako miejsce na esencję tożsamości użytkownika w Event Times (avatar, nazwa, rola, od kiedy jest uczestnikiem, skrót aktywności), nie na narzędzia/formularze. Narzędzia (edycja profilu, metody logowania, wyczyść aktywność) żyją w osobnym trybie edycji, nie na samej karcie. Na desktopie karta ma się organicznie wypełniać treścią tożsamości, a nie pustą przestrzenią — jeśli lewa kolumna robi się za krótka względem kolekcji po prawej, dodawaj informacje na karcie (nowa metryka o profilu), nie sztuczny `min-height`.
+
 **Tokeny są obowiązkowe**: kolory, radii (`--radius-sm/xs/md/lg/xl/pill`) i shadows (`--shadow-soft/float/panel/button/button-soft/cta`) pochodzą z `:root` w `src/index.css`. Nigdy nie hardcoduj nowego px radius, one-off shadow ani hex gray w `App.css` — zamiast tego świadomie rozszerz zestaw tokenów (od 2026-07-17 stylesheet jest w pełni tokenizowany; utrzymaj to). `--shadow-cta` jest zarezerwowany dla pojedynczego glow głównego CTA; nie rozmywaj go na przyciski drugorzędne.
 
 ## 3. Typografia

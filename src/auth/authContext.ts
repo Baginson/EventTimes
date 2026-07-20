@@ -24,6 +24,9 @@ export type AuthContextValue = {
   unlinkProvider: (method: 'google' | 'github' | 'password') => Promise<void>
   clearAuthNotice: () => void
   updateProfile: (displayName: string, photoURL: string | null) => Promise<void>
+  needsUsername: boolean | null
+  markUsernameSet: () => void
+  sendVerificationEmail: () => Promise<void>
   logout: () => Promise<void>
 }
 

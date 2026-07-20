@@ -15,9 +15,12 @@ import {
   X,
 } from 'lucide-react'
 import { useAuth } from '../auth/authContext'
+import { MOBILE_PANEL_MEDIA_QUERY } from '../constants/breakpoints'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { usePanelMotion } from '../hooks/usePanelMotion'
+import { usePanelSwipeToClose } from '../hooks/usePanelSwipeToClose'
 import { getVenueAction, toggleVenueSaved } from '../services/userActionService'
 import {
   formatEventDate,
@@ -108,6 +111,12 @@ export function VenuePanel({
   const [shareFeedback, setShareFeedback] = useState('')
   const panelMotion = usePanelMotion()
   const shouldReduceMotion = useReducedMotion()
+  const isMobilePanel = useMediaQuery(MOBILE_PANEL_MEDIA_QUERY)
+  const { contentRef, drag, dragConstraints, dragElastic, dragMomentum, onDragEnd } =
+    usePanelSwipeToClose({
+      onClose,
+      enabled: isMobilePanel && !shouldReduceMotion,
+    })
   const panelElementRef = useRef<HTMLElement | null>(null)
   const shareFeedbackTimeoutRef = useRef<number | null>(null)
 
@@ -405,6 +414,11 @@ export function VenuePanel({
       aria-label={`Informacje o miejscu: ${venueDisplayName}`}
       tabIndex={-1}
       {...panelMotion}
+      drag={drag}
+      dragConstraints={dragConstraints}
+      dragElastic={dragElastic}
+      dragMomentum={dragMomentum}
+      onDragEnd={onDragEnd}
       onPointerDown={(event) => event.stopPropagation()}
     >
       <div className="venue-panel-handle" aria-hidden="true" />
@@ -451,7 +465,7 @@ export function VenuePanel({
         </button>
       </div>
 
-      <div className="venue-panel-content">
+      <div ref={contentRef} className="venue-panel-content">
         {isEditingVenue ? (
           <div className="context-edit-view">
             <header className="context-edit-header">

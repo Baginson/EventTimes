@@ -7,6 +7,7 @@ import type { MapFocusPadding } from './components/EventMap'
 import { EventPanel } from './components/EventPanel'
 import { MobileBottomBar } from './components/MobileBottomBar'
 import { TopBar } from './components/TopBar'
+import { UsernameGate } from './components/UsernameGate'
 import { VenuePanel } from './components/VenuePanel'
 import type { EventTimesEvent } from './data/mockEvents'
 import type { Venue } from './data/mockVenues'
@@ -54,7 +55,7 @@ type AppToast = {
 }
 
 function App() {
-  const { isAdmin, isAuthModalOpen, openAuthModal, user } = useAuth()
+  const { isAdmin, isAuthModalOpen, needsUsername, openAuthModal, user } = useAuth()
   const [venues, setVenues] = useState<Venue[]>([])
   const [events, setEvents] = useState<EventTimesEvent[]>([])
   const [dataLoading, setDataLoading] = useState(true)
@@ -634,6 +635,7 @@ function App() {
   return (
     <div className="app-shell" lang="pl">
       <AuthModal />
+      {user && needsUsername && <UsernameGate />}
       <TopBar
         selectedCity={selectedCity}
         venues={venues}

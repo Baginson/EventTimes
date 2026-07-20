@@ -2487,6 +2487,18 @@
   animation: fade-enter 160ms var(--ease-out-soft) both;
 }
 
+.username-gate-backdrop {
+  position: fixed;
+  z-index: 4500;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(7, 20, 47, 0.4);
+  backdrop-filter: blur(10px);
+  animation: fade-enter 160ms var(--ease-out-soft) both;
+}
+
 .auth-modal {
   position: relative;
   width: min(440px, calc(100vw - 32px));
@@ -2638,7 +2650,7 @@
 
 .account-profile-layout {
   display: grid;
-  grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
   gap: 16px;
   height: 100%;
   min-height: 0;
@@ -3822,7 +3834,12 @@
   }
 
   .venue-panel-handle {
-    display: none;
+    position: absolute;
+    z-index: 3;
+    top: calc(env(safe-area-inset-top) + 10px);
+    left: 50%;
+    margin: 0;
+    transform: translateX(-50%);
   }
 
   .venue-panel-controls {
@@ -4212,7 +4229,8 @@
 /* === Profil: Karnet Event Times ============================================
    Lewa kolumna = granatowy karnet uczestnika (nazwa, zdjecie, kod kreskowy).
    Prawa kolumna = kremowa kolekcja: pasek statystyk-zakladek, lista,
-   wspomnienia jako pasek polaroidow, aktywnosc jako paragon. */
+   wspomnienia jako pasek polaroidow, aktywnosc jako paragon.
+   Karnet jest glowna wizualna wizytowka profilu, nie tylko kontenerem akcji. */
 
 .account-pass {
   display: flex;
@@ -4251,6 +4269,28 @@
 .account-pass > *,
 .account-pass-card > * {
   flex-shrink: 0;
+}
+
+/* Desktop: karta rośnie, żeby wypełnić kolumnę, zamiast zostawiać dziurę
+   przed przyciskami Edytuj/Wyloguj — .tilt-card/.tilt-card-inner muszą
+   przekazać wysokość dalej do .account-pass-card. Mobile ma własny,
+   ustalony min-height (patrz @media niżej) i tego nie dziedziczy. */
+.account-pass > .tilt-card {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.account-pass > .tilt-card .tilt-card-inner {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.account-pass .account-pass-card {
+  flex: 1 1 auto;
 }
 
 /* --- Profil mobilny: poziomy pager 3 stron (Etap H) ------------------- */
@@ -4503,6 +4543,51 @@
   border-color: var(--color-white);
 }
 
+.account-pass-since {
+  padding: 4px 12px;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: var(--font-control);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.account-pass-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding-top: var(--space-4);
+  border-top: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.account-pass-stat {
+  display: grid;
+  gap: 2px;
+  padding: 0 6px;
+  text-align: center;
+  border-right: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.account-pass-stat:last-child {
+  border-right: 0;
+}
+
+.account-pass-stat strong {
+  color: var(--color-white);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.account-pass-stat span {
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--font-control);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .account-pass .account-quick-actions,
 .account-page--pass .account-quick-actions {
   display: grid;
@@ -4534,8 +4619,173 @@
   border-radius: var(--radius-md);
 }
 
+.account-edit-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  height: 100%;
+  min-height: 0;
+  padding: var(--space-5);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.account-edit-view-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-edit-back {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  background: rgba(7, 20, 47, 0.06);
+  border: 0;
+  border-radius: 50%;
+  transition: background var(--transition-ui);
+}
+
+.account-edit-back:hover {
+  background: rgba(7, 20, 47, 0.12);
+}
+
+.account-edit-view-header span {
+  display: block;
+  color: var(--color-muted);
+  font-family: var(--font-control);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.account-edit-view-header h1 {
+  margin: 2px 0 0;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 400;
+}
+
+.account-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.account-edit-card {
+  padding: var(--space-4);
+  color: var(--color-ink);
+  background: var(--color-white);
+  border: 1px solid rgba(7, 20, 47, 0.08);
+  border-radius: var(--radius-md);
+}
+
+.account-edit-card h2 {
+  margin: 0 0 8px;
+  color: var(--color-ink);
+  font-family: var(--font-control);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.account-edit-card label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.account-edit-card label > span {
+  color: var(--color-ink-soft);
+  font-family: var(--font-control);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.account-edit-card input {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  color: var(--color-navy);
+  font: inherit;
+  background: #f7f9fb;
+  border: 1px solid #d9e1ec;
+  border-radius: var(--radius-sm);
+}
+
+.account-edit-card small {
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.account-edit-avatar-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.account-edit-name-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-edit-avatar-preview {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  color: var(--color-white);
+  font-family: var(--font-display);
+  font-size: 22px;
+  background: var(--color-primary);
+  border-radius: 50%;
+}
+
+.account-edit-avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.account-edit-verified {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.account-edit-view-actions {
+  position: sticky;
+  bottom: 0;
+  padding-top: var(--space-4);
+  background: linear-gradient(180deg, transparent, var(--color-white) 35%);
+}
+
+@media (max-width: 767px) {
+  .account-edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .account-edit-view {
+    padding: var(--space-4);
+  }
+}
+
 .account-pass .account-login-methods,
-.account-page--pass .account-login-methods {
+.account-page--pass .account-login-methods,
+.account-edit-view .account-login-methods {
   display: grid;
   gap: 12px;
   padding: var(--space-4);
@@ -4549,7 +4799,9 @@
 .account-pass .account-login-methods h2,
 .account-pass .account-username-section h3,
 .account-page--pass .account-login-methods h2,
-.account-page--pass .account-username-section h3 {
+.account-page--pass .account-username-section h3,
+.account-edit-view .account-login-methods h2,
+.account-edit-view .account-username-section h3 {
   margin: 0;
   color: var(--color-ink);
   font-family: var(--font-control);
@@ -4751,13 +5003,17 @@
   text-transform: uppercase;
 }
 
-.account-pass .account-clear-data {
+.account-pass .account-clear-data,
+.account-page--pass .account-clear-data,
+.account-edit-view .account-clear-data {
   padding: 0;
   background: transparent;
   border: 0;
 }
 
-.account-pass .account-clear-data h2 {
+.account-pass .account-clear-data h2,
+.account-page--pass .account-clear-data h2,
+.account-edit-view .account-clear-data h2 {
   margin: 0 0 2px;
   color: var(--color-ink);
   font-family: var(--font-control);
@@ -4765,14 +5021,18 @@
   font-weight: 850;
 }
 
-.account-pass .account-clear-data p {
+.account-pass .account-clear-data p,
+.account-page--pass .account-clear-data p,
+.account-edit-view .account-clear-data p {
   margin: 0 0 8px;
   color: var(--color-muted);
   font-size: 12px;
   line-height: 1.5;
 }
 
-.account-pass .account-clear-data button {
+.account-pass .account-clear-data button,
+.account-page--pass .account-clear-data button,
+.account-edit-view .account-clear-data button {
   min-height: 40px;
   color: var(--color-danger);
   background: var(--color-white);
@@ -4780,7 +5040,9 @@
   border-radius: var(--radius-sm);
 }
 
-.account-pass .account-clear-data button:hover {
+.account-pass .account-clear-data button:hover,
+.account-page--pass .account-clear-data button:hover,
+.account-edit-view .account-clear-data button:hover {
   background: rgba(239, 68, 68, 0.85);
   color: var(--color-white);
 }

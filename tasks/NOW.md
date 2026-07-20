@@ -4,30 +4,45 @@ Jeden aktywny etap. Po ukończeniu przenieś podsumowanie do `tasks/archive/<dat
 
 ## Aktualny cel
 
-**Brak aktywnego etapu — do wyboru następny.** Etap H (profil mobilny, wszystkie części) ukończony 2026-07-20, podsumowanie w `tasks/archive/2026-07-20-etap-h-profil-mobilny.md`. Etap E′ (breakpointy) też ukończony tego dnia.
+**Brak aktywnego etapu.** Duża seria zmian na profilu/Karnecie/auth (Etap I + sześć rund poprawek) ukończona 2026-07-21 (kod), zweryfikowana (`tsc`/`test`/`lint`/`build` czyste za każdym razem), **właśnie scommitowana i wypchnięta na `main`** na prośbę użytkownika. Następny krok: QA na żywej aplikacji (GitHub Pages po deployu CI) — patrz sekcja niżej.
 
-## Ukończone ostatnio
+## Ukończone i wypchnięte (2026-07-21, chronologicznie)
 
-- **Etap E′** (`3ebd1fc`): oficjalne breakpointy 767/820/1100, `src/constants/breakpoints.ts`.
-- **Etap H** (`49c26d5`, `1dadb99`, + H3 ten commit): mobilny profil = pełny 3-stronicowy pager ze swipe-reveal Karnetu, kropkami pagera, skróconą „Ostatnią aktywnością” (5→3 + rozwijanie), i naprawionym stylem „Metody logowania”/przycisków na mobile (brakujący ancestor `.account-pass` w scoped CSS). Szczegóły: `tasks/archive/2026-07-20-etap-h-profil-mobilny.md`.
+1. **Etap I** — swipe-w-dół zamyka `VenuePanel`/`EventPanel`/`AdminPanel` na mobile.
+2. **Poprawki Karnetu po QA Etapu H** — naprawiony swipe-reveal (pointer-based), „Metody logowania"/„Wyczyść aktywność" przeniesione z Karnetu, upload zdjęcia z dysku, poszerzona kolumna Karnetu.
+3. **Karnet = główna wizytówka profilu** — chip „Uczestnik od…", pasek statystyk. Zasada w `docs/UI_RULES.md` §2.
+4. **Poprawka luki karta↔przyciski** — `flex: 1 1 auto` zamiast `margin-top:auto`, karta realnie wypełnia kolumnę.
+5. **„Edytuj profil" = dedykowany pełnoszerokościowy widok** — siatka kart, podgląd avatara na żywo, status e-maila + wysyłka linku weryfikacyjnego (`sendVerificationEmail`), Escape wychodzi z edycji zamiast zamykać panel.
+6. **Nazwa użytkownika obowiązkowa** — nowy niedomykalny `src/components/UsernameGate.tsx` blokuje aplikację dla każdego zalogowanego konta bez nazwy (e-mail/hasło, Google, GitHub, retroaktywnie istniejące konta). Przy okazji: pole `displayName` w edycji profilu przemianowane z mylącego „Nazwa użytkownika" na „Nazwa wyświetlana".
 
-## Testy / kontrola (po H3)
+Pełne uzasadnienie i szczegóły każdej rundy: `docs/DECISIONS.md` (kilka wpisów pod 2026-07-21), `docs/ARCHITECTURE.md` §Auth i konto zaktualizowane o obowiązkową nazwę użytkownika.
 
-`npx tsc --noEmit` czysto ✅ · `npm run test` 85/85 ✅ · `npm run lint` czysto ✅ · `npm run build` OK ✅ (znane ostrzeżenie o bundlu 1,15 MB, P3).
+Wszystko zaimplementowane przez Codex (kilka drobnych ręcznych poprawek po moim przeglądzie diffu po drodze), diff przejrzany w całości za każdym razem, zweryfikowane niezależnie po każdym kroku: `npx tsc --noEmit` czysto, `npm run test` 85/85, `npm run lint` czysto, `npm run build` czysto.
 
-**QA WIZUALNE MOBILNEGO PROFILU WCIĄŻ NIEWYKONANE** — panel wymaga zalogowania (żywy Firebase + OAuth/hasło), nie da się headless. Do sprawdzenia przez użytkownika na telefonie: pełnoekranowy Karnet na starcie, swipe w górę wysuwa Edytuj/Wyloguj, swipe w bok między 3 stronami + kropki się aktualizują i są klikalne, „Metody logowania” w edycji ma biały box (nie goły border-top), długie nazwa/e-mail się zawijają, „Pokaż całą aktywność” działa, desktop bez zmian.
+## Status Git
 
-## Kandydaci na następny etap (z `docs/ROADMAP.md`)
+Scommitowane i wypchnięte na `main` 2026-07-21 (zobacz `git log` dla dokładnych commitów/wiadomości). GitHub Pages deploy jest bramkowany przez `npm run test`+`npm run lint` w CI (Etap A) — sprawdzić, że workflow przeszedł, zanim uzna się to za w pełni wdrożone.
 
-- **Etap I — Gesty paneli**: swipe-w-dół zamyka bottom-sheet (`usePanelMotion` nie ma dziś gestu drag), plan krótkoterminowy #4.
-- **Etap J — Wspomnienia**: redesign wizualny sekcji wspomnień w panelu eventu — najpierw projekt UX, plan krótkoterminowy #5.
-- Osobne duże projekty (nie wchodzą do batcha UI bez decyzji): dołączanie do eventu przez link (#6), pełny panel aktywności z filtrami (#7b), Etap C (usuwanie konta / eksport GDPR).
+## QA WIZUALNE PILNE — nic z tego nie było jeszcze sprawdzone na żywo
+
+- **`UsernameGate`** (najwyższe ryzyko — nowy, blokujący mechanizm dotykający każdego użytkownika): czy faktycznie pojawia się dla zalogowanego konta bez nazwy (w tym prawdopodobnie konto użytkownika przy najbliższym logowaniu), czy blokuje resztę aplikacji, czy nie da się go ominąć/zamknąć, czy `markUsernameSet()` poprawnie go chowa po sukcesie, czy błąd „zajęta nazwa"/inne błędy wyświetlają się czytelnie.
+- **Widok edycji profilu**: siatka kart, podgląd avatara na żywo, status e-maila + wysyłka linku weryfikacyjnego, strzałka powrotu, Escape (pierwszy wraca do Karnetu, drugi zamyka panel), kolaps do 1 kolumny <767px.
+- **Karnet — desktop**: karta wypełnia kolumnę bez przerwy przed przyciskami; statystyki i „Uczestnik od…" wyglądają dobrze.
+- **Karnet — mobile**: te same nowe elementy nie psują proporcji pełnoekranowej karty ani swipe-reveal; swipe w górę/dół działa płynnie, nie psuje poziomego pagera.
+- **Etap I**: swipe-w-dół zamyka VenuePanel/EventPanel/AdminPanel gdy treść jest na górze, normalnie przewija gdy nie jest.
+
+## Kandydaci na następny etap (z `docs/ROADMAP.md`, po domknięciu QA)
+
+- **Etap J — Wspomnienia**: redesign wizualny sekcji wspomnień w panelu eventu.
+- **Etap C — Cykl życia konta**: usunięcie konta / eksport danych GDPR.
+- **Etap F — Porządki techniczne**: konsolidacja `requireDb()`, spójna walidacja współrzędnych, usunięcie martwego pola `status`, redukcja duplikacji VenuePanel/EventPanel.
+- Osobne duże projekty: dołączanie do eventu przez link (#6), pełny panel aktywności z filtrami (#7b).
 
 ## Problemy / ryzyka
 
-- QA telefoniczne Etapu H (patrz wyżej) może jeszcze zwrócić drobne poprawki dosttrojenia (próg swipe, animacja, kolizja sticky-bar z `isEditing`) — sprawdzić po feedbacku użytkownika, zanim zacznie się kolejny etap.
+- **`UsernameGate` jest nowe, blokujące zachowanie na produkcji bez wcześniejszego wizualnego QA** — jeśli coś w nim nie działa (np. gate się nie zamyka po sukcesie, albo pojawia się błędnie dla kont, które mają nazwę), realnie blokuje użytkowników z korzystania z aplikacji. Sprawdzić priorytetowo zaraz po deployu.
 - #6 (link do eventu) wymaga nowej struktury Firestore + reguł — nie zaczynać bez osobnego projektu.
 
 ## Prompt do następnej sesji (gotowy do wklejenia)
 
-> Kontynuuję Event Times. Etap H (profil mobilny) i Etap E′ (breakpointy) ukończone 2026-07-20 — zobacz `tasks/archive/2026-07-20-etap-h-profil-mobilny.md`. Najpierw przeczytaj `tasks/NOW.md`, `docs/PROJECT_STATE.md`. **QA wizualne mobilnego profilu na telefonie wciąż zaległe** — jeśli mam feedback z tego QA, zacznij od niego. Jeśli nie, zapytaj mnie, który z kandydatów z `docs/ROADMAP.md` robimy dalej (Etap I — gest swipe-w-dół zamykający panele, czy Etap J — redesign wspomnień, czy coś innego).
+> Kontynuuję Event Times. Duża seria zmian na profilu/Karnecie/auth (Etap I + sześć rund, w tym nowy obowiązkowy `UsernameGate` i pełnoszerokościowy widok edycji profilu) jest scommitowana i wypchnięta na `main` (2026-07-21). Najpierw przeczytaj `tasks/NOW.md` i `docs/PROJECT_STATE.md`, sprawdź czy CI/deploy GitHub Pages przeszedł, potem zapytaj mnie o feedback z testowania na żywej aplikacji — **szczególnie `UsernameGate`, który nie miał żadnego wizualnego sprawdzenia przed wypchnięciem i blokuje całą aplikację dla kont bez nazwy użytkownika**. Jeśli feedback wymaga poprawek, zacznij od nich (priorytetowo, jeśli `UsernameGate` blokuje kogoś niesłusznie). Jeśli wszystko OK, zapytaj który etap z `docs/ROADMAP.md` robimy dalej (J, C, F, czy coś innego).

@@ -19,9 +19,9 @@ export function usePanelMotion() {
 
   if (isMobilePanel) {
     return {
-      initial: { opacity: 0, transform: 'translateY(12px)' },
-      animate: { opacity: 1, transform: 'translateY(0)' },
-      exit: { opacity: 0, transform: 'translateY(12px)' },
+      initial: { opacity: 0, y: 12 },
+      animate: { opacity: 1, y: 0 },
+      exit: { opacity: 0, y: 12 },
       transition: { duration: 0.22, ease: easeOut },
     }
   }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MutableRefObject, Ref } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import {
   ArrowLeft,
   BadgeCheck,
@@ -18,9 +18,12 @@ import {
   X,
 } from 'lucide-react'
 import { useAuth } from '../auth/authContext'
+import { MOBILE_PANEL_MEDIA_QUERY } from '../constants/breakpoints'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { usePanelMotion } from '../hooks/usePanelMotion'
+import { usePanelSwipeToClose } from '../hooks/usePanelSwipeToClose'
 import {
   getEventAction,
   toggleEventAction,
@@ -119,6 +122,13 @@ export function EventPanel({
     user && hasValidEventDate && eventStatus === 'past' && eventAction.visited,
   )
   const panelMotion = usePanelMotion()
+  const shouldReduceMotion = useReducedMotion()
+  const isMobilePanel = useMediaQuery(MOBILE_PANEL_MEDIA_QUERY)
+  const { contentRef, drag, dragConstraints, dragElastic, dragMomentum, onDragEnd } =
+    usePanelSwipeToClose({
+      onClose,
+      enabled: isMobilePanel && !shouldReduceMotion,
+    })
   const panelElementRef = useRef<HTMLElement | null>(null)
   const memoryFileInputRef = useRef<HTMLInputElement | null>(null)
   const shareFeedbackTimeoutRef = useRef<number | null>(null)
@@ -418,6 +428,11 @@ export function EventPanel({
       aria-label={`Szczegóły wydarzenia: ${event.name}`}
       tabIndex={-1}
       {...panelMotion}
+      drag={drag}
+      dragConstraints={dragConstraints}
+      dragElastic={dragElastic}
+      dragMomentum={dragMomentum}
+      onDragEnd={onDragEnd}
       onPointerDown={(event) => event.stopPropagation()}
     >
       <div className="venue-panel-handle" aria-hidden="true" />
@@ -467,7 +482,7 @@ export function EventPanel({
         </button>
       </div>
 
-      <div className="venue-panel-content">
+      <div ref={contentRef} className="venue-panel-content">
         {isEditingEvent || isDuplicatingEvent ? (
           <div className="context-edit-view">
             <header className="context-edit-header">

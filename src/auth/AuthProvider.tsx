@@ -7,6 +7,7 @@ import {
   linkWithCredential,
   linkWithPopup,
   onAuthStateChanged,
+  sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -17,7 +18,11 @@ import {
 import type { AuthCredential, User } from 'firebase/auth'
 import { auth, isFirebaseConfigured } from '../lib/firebase'
 import { getIsCurrentUserAdmin } from '../services/adminService'
-import { syncUserProfile, updateUserProfile } from '../services/userProfileService'
+import {
+  getUserProfileSettings,
+  syncUserProfile,
+  updateUserProfile,
+} from '../services/userProfileService'
 import { AuthContext } from './authContext'
 import {
   createOAuthProvider,
@@ -60,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     providerLabel: string
   } | null>(null)
   const [authVersion, setAuthVersion] = useState(0)
+  const [needsUsername, setNeedsUsername] = useState<boolean | null>(null)
   const configurationError = isFirebaseConfigured
     ? null
     : 'Firebase nie jest skonfigurowany. Uzupełnij plik .env.local.'
@@ -166,6 +172,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user])
 
+  useEffect(() => {
+    let active = true
+
+    setNeedsUsername(null)
+
+    if (!user) {
+      return () => {
+        active = false
+      }
+    }
+
+    void getUserProfileSettings(user.uid)
+      .then((settings) => {
+        if (active) {
+          setNeedsUsername(!settings.username)
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setNeedsUsername(false)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [user])
+
   async function signInWithProvider(providerId: OAuthProviderId) {
     if (!auth) {
       throw new Error(configurationError ?? getConfigurationError())
@@ -247,6 +281,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     bumpAuthVersion()
   }
 
+  async function sendVerificationEmail() {
+    const currentUser = auth?.currentUser
+
+    if (!currentUser) {
+      throw new Error('Użytkownik nie jest zalogowany.')
+    }
+
+    await sendEmailVerification(currentUser)
+  }
+
+  function markUsernameSet() {
+    setNeedsUsername(false)
+  }
+
   async function linkProvider(providerId: OAuthProviderId) {
     const currentUser = auth?.currentUser
 
@@ -315,6 +363,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         unlinkProvider,
         clearAuthNotice: () => setAuthNotice(null),
         updateProfile: updateCurrentProfile,
+        needsUsername,
+        markUsernameSet,
+        sendVerificationEmail,
         logout,
       }}
     >
