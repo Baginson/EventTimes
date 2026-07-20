@@ -5,7 +5,7 @@ Etapowy plan z pełnego audytu 2026-07-16. Każdy etap jest delegowany do Codex 
 | Etap | Cel | Status |
 |---|---|---|
 | **A — Stabilność** | Error boundary, retry ładowania danych, bramka test/lint w CI | ✅ Ukończone (2026-07-16) |
-| **B — Gotowość do publicznego launchu** | SEO/OG/theme-color meta tags, decyzja CI dla `VITE_TICKETMASTER_API_KEY`, porządki w repo (zbędne logi, nieużywany favicon) | Następne |
+| **B — Gotowość do publicznego launchu** | SEO/OG/theme-color meta tags, porządki w repo (zbędne logi, nieużywany favicon). ~~Decyzja CI dla `VITE_TICKETMASTER_API_KEY`~~ — rozwiązane 2026-07-19 backendem Cloudflare Worker (zobacz `DECISIONS.md`) | Następne |
 | **C — Cykl życia konta** | Reset hasła, usunięcie konta / eksport danych | Planowane |
 | **D — Panele i dostępność** | Skracanie opisu VenuePanel (parytet z EventPanel), Escape/`role="dialog"`/focus trap w VenuePanel + EventPanel | Planowane |
 | **E — Spójność mobile** | Uzgodnić breakpointy z `docs/UI_RULES.md`, naprawić zbyt małe touch targets/tekst (`.search-chevron`, `.event-card-description`) | Planowane |

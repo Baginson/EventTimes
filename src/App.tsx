@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion'
 import { useAuth } from './auth/authContext'
 import { AuthModal } from './components/AuthModal'
 import { EventMap } from './components/EventMap'
+import type { MapFocusPadding } from './components/EventMap'
 import { EventPanel } from './components/EventPanel'
 import { MobileBottomBar } from './components/MobileBottomBar'
 import { TopBar } from './components/TopBar'
@@ -29,6 +30,7 @@ import {
   saveVenue,
   updateVenue as persistVenueUpdate,
 } from './services/venueService'
+import { hasValidVenueCoordinates } from './utils/googleMaps'
 import './App.css'
 
 const AdminPanel = lazy(() =>
@@ -50,6 +52,9 @@ type AppToast = {
   tone: 'success' | 'error'
 }
 
+// Ten sam breakpoint co w usePanelMotion — poniżej panel jest dolnym arkuszem.
+const MOBILE_PANEL_MEDIA_QUERY = '(max-width: 820px)'
+
 function App() {
   const { isAdmin, isAuthModalOpen, openAuthModal, user } = useAuth()
   const [venues, setVenues] = useState<Venue[]>([])
@@ -65,11 +70,13 @@ function App() {
   const [mapMode, setMapMode] = useState<MapMode>({ type: 'normal' })
   const [draftVenueCoordinates, setDraftVenueCoordinates] =
     useState<Venue['coordinates'] | null>(null)
+  const [venueFocusCoordinates, setVenueFocusCoordinates] =
+    useState<Venue['coordinates'] | null>(null)
   const [isAccountPanelOpen, setIsAccountPanelOpen] = useState(false)
   const [eventOrigin, setEventOrigin] = useState<EventOrigin>('direct')
   const [mobileSearchFocusRequest, setMobileSearchFocusRequest] = useState(0)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const rightPanelRef = useRef<HTMLElement>(null)
+  const rightPanelRef = useRef<HTMLElement | null>(null)
   const hasConsumedShareParamsRef = useRef(false)
   const movingVenueId = mapMode.type === 'movingVenue' ? mapMode.venueId : null
   const isAddingVenue = mapMode.type === 'addingVenue'
@@ -239,6 +246,53 @@ function App() {
     ? events.filter((event) => event.venueId === selectedVenue.id)
     : []
 
+  // Panele miejsca i eventu współdzielą ten ref. Przy przejściu event <-> miejsce
+  // stary panel odmontowuje się po animacji wyjścia i wyzerowałby element nowego,
+  // więc null z odmontowania ignorujemy — stan "zamknięte" wykrywa isConnected.
+  const setRightPanelElement = useCallback((node: HTMLElement | null) => {
+    if (node) {
+      rightPanelRef.current = node
+    }
+  }, [])
+
+  // Zasłonięty przez otwarty panel fragment mapy (prawa kolumna na desktopie,
+  // dolny arkusz na mobile). Mierzone w momencie centrowania, przez offsetLeft/
+  // offsetTop — niewrażliwe na transformy animacji wejścia panelu.
+  const getMapFocusPadding = useCallback((): MapFocusPadding => {
+    const panel = rightPanelRef.current
+
+    if (!panel || !panel.isConnected) {
+      return { right: 0, bottom: 0 }
+    }
+
+    if (window.matchMedia(MOBILE_PANEL_MEDIA_QUERY).matches) {
+      const obscuredHeight = window.innerHeight - panel.offsetTop
+
+      // Pełnoekranowy panel (wąskie telefony) zakrywa całą mapę —
+      // wtedy zwykłe centrowanie, żeby pinezka była na środku po zamknięciu.
+      if (obscuredHeight <= 0 || obscuredHeight >= window.innerHeight * 0.95) {
+        return { right: 0, bottom: 0 }
+      }
+
+      return { right: 0, bottom: obscuredHeight }
+    }
+
+    const obscuredWidth = window.innerWidth - panel.offsetLeft
+
+    if (obscuredWidth <= 0 || obscuredWidth >= window.innerWidth * 0.95) {
+      return { right: 0, bottom: 0 }
+    }
+
+    return { right: obscuredWidth, bottom: 0 }
+  }, [])
+
+  function focusVenueOnMap(venue: Venue) {
+    // Nowy obiekt przy każdym wyborze, żeby mapa wycentrowała się ponownie.
+    setVenueFocusCoordinates(
+      hasValidVenueCoordinates(venue) ? { ...venue.coordinates } : null,
+    )
+  }
+
   function selectVenue(venue: Venue) {
     setIsAdminOpen(false)
     setIsAccountPanelOpen(false)
@@ -247,6 +301,7 @@ function App() {
     setSelectedCity(venue.city)
     setSelectedVenue(venue)
     setSelectedEvent(null)
+    focusVenueOnMap(venue)
   }
 
   function selectEvent(event: EventTimesEvent, venue: Venue) {
@@ -257,6 +312,7 @@ function App() {
     setSelectedCity(venue.city)
     setSelectedVenue(venue)
     setSelectedEvent(event)
+    focusVenueOnMap(venue)
   }
 
   function selectEventFromVenue(event: EventTimesEvent, venue: Venue) {
@@ -269,6 +325,12 @@ function App() {
     setEventOrigin('profile')
   }
 
+  function showVenueForSelectedEvent(venue: Venue) {
+    setSelectedEvent(null)
+    setEventOrigin('direct')
+    focusVenueOnMap(venue)
+  }
+
   function returnToProfileFromEvent() {
     setSelectedVenue(null)
     setSelectedEvent(null)
@@ -279,6 +341,7 @@ function App() {
   function closePanel() {
     setSelectedVenue(null)
     setSelectedEvent(null)
+    setVenueFocusCoordinates(null)
   }
 
   function focusMobileSearch() {
@@ -515,6 +578,7 @@ function App() {
   function cancelMapMode() {
     setMapMode({ type: 'normal' })
     setDraftVenueCoordinates(null)
+    setVenueFocusCoordinates(null)
   }
 
   function importLocalData(backup: LocalBackupData) {
@@ -618,7 +682,8 @@ function App() {
           selectedVenueId={selectedVenue?.id ?? null}
           isMapClickActive={mapMode.type !== 'normal'}
           temporaryVenueCoordinates={draftVenueCoordinates}
-          focusCoordinates={draftVenueCoordinates}
+          focusCoordinates={draftVenueCoordinates ?? venueFocusCoordinates}
+          getFocusPadding={getMapFocusPadding}
           onVenueSelect={selectVenue}
           onMapClick={handleMapClick}
         />
@@ -694,11 +759,12 @@ function App() {
               onUpdateEvent={updateEvent}
               onDeleteEvent={() => deleteEvent(selectedEvent.id)}
               onClose={closePanel}
+              onShowVenue={() => showVenueForSelectedEvent(selectedVenue)}
               origin={eventOrigin}
               onReturnToProfile={
                 eventOrigin === 'profile' ? returnToProfileFromEvent : undefined
               }
-              panelRef={rightPanelRef}
+              panelRef={setRightPanelElement}
             />
           ) : !isAdminOpen && !isAccountPanelOpen && selectedVenue ? (
             <VenuePanel
@@ -714,7 +780,7 @@ function App() {
               onDeleteVenue={() => deleteVenue(selectedVenue.id)}
               onMoveVenue={() => startMovingVenue(selectedVenue.id)}
               onClose={closePanel}
-              panelRef={rightPanelRef}
+              panelRef={setRightPanelElement}
             />
           ) : null}
         </AnimatePresence>

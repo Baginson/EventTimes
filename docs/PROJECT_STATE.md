@@ -1,13 +1,14 @@
 # Event Times — Stan projektu
 
-Ostatnia aktualizacja: 2026-07-19, po iteracji profilu Karnet (paleta blue/white/gray, tryb podglądu wspomnień, karta z 3D tilt) i nawigacji powrotu w panelu eventu zależnej od źródła. Utrzymuj ten plik po każdej nietrywialnej zmianie — to jedno miejsce do sprawdzenia, "co naprawdę działa teraz".
+Ostatnia aktualizacja: 2026-07-19, po drobnych poprawkach UX paneli: klasyczna ikona share (`Share`), kompaktowy przycisk nawigacji (`NavigationButton`: Android `geo:` → systemowy wybór aplikacji, iOS własne menu Apple/Google Maps, desktop Google Maps web), klikalna nazwa miejsca w panelu eventu (zamyka event, otwiera panel miejsca) oraz centrowanie pinezki w widocznej części mapy przy każdym wyborze miejsca/eventu (pomiar realnej szerokości panelu na desktopie i wysokości dolnego arkusza na mobile przez `getMapFocusPadding` w `App.tsx`; bez ponownego centrowania przy pan/zoom użytkownika). Wcześniej tego dnia: frontend podłączony do backendu Cloudflare Worker (`eventtimes-api`): Ticketmaster przez proxy Workera (bez klucza we froncie) + sekcja „Dojazd" (Geoapify) w panelach miejsca i wydarzenia. Utrzymuj ten plik po każdej nietrywialnej zmianie — to jedno miejsce do sprawdzenia, "co naprawdę działa teraz".
 
-## Działa (zweryfikowane: `npm run test` 64/64, `npm run lint` czysto, `npm run build` czysto)
+## Działa (zweryfikowane: `npm run test` 79/79, `npm run lint` czysto, `npm run build` czysto)
 
 - Mapa + pinezki venues (Leaflet), panel venue, panel eventu, search (tryby Places/Events), filtry miasta/typu/daty, grupowanie eventów (Trwa teraz/Nadchodzące/Minione).
-- Firebase Auth (email/password + Google), `venues`/`events`/akcje użytkownika oparte o Firestore, bramkowanie `admins/{uid}`, reguły Firestore — przejrzane, poprawne.
+- Firebase Auth multi-provider (2026-07-19): e-mail/hasło (logowanie, rejestracja, reset „Nie pamiętam hasła" z neutralnym komunikatem), Google i GitHub (rejestr providerów w `authProviders.ts`), łączenie kont przez pending credential po `auth/account-exists-with-different-credential`, „Ustaw hasło" dla kont Google, sekcja „Metody logowania" w profilu (Połącz/Odłącz z blokadą ostatniej metody) i nazwa użytkownika (walidacja + `usernameService` → Worker). `venues`/`events`/akcje użytkownika oparte o Firestore, bramkowanie `admins/{uid}`, reguły Firestore — przejrzane, poprawne. GitHub provider skonfigurowany w Firebase Console + GitHub OAuth App (2026-07-20); Worker `eventtimes-api` wdrożony z endpointami `/api/auth/username-login` i `/api/auth/username` (KV `AUTH_KV`, sekret `FIREBASE_WEB_API_KEY`) — zweryfikowane sondami na żywym Workerze. **Pozostaje jeszcze**: ręczna checklista logowania nazwą użytkownika i kombinacji łączenia kont w żywej aplikacji (`docs/AUTH_SETUP.md` §5) — wymaga prawdziwych popupów OAuth, nie do pokrycia testami jednostkowymi.
 - Admin CRUD (dodawanie/edycja/usuwanie/duplikowanie venue/eventu, przesuwanie pinezki kliknięciem w mapę, import/export JSON, odświeżenie Firestore) — wszystko zaimplementowane z confirmami i stanami ładowania.
-- Admin flow wyszukiwania i importu z Ticketmaster (zbudowany, ale zobacz "Zablokowane przed publicznym launchem" — niepodłączony do sekretów CI produkcji).
+- Admin flow wyszukiwania i importu z Ticketmaster — od 2026-07-19 przez backend Cloudflare Worker (`VITE_EVENTTIMES_API_URL`); frontend nie zna klucza Ticketmaster, URL Workera jest ustawiony w `.github/workflows/deploy.yml`, więc funkcja działa też w produkcji.
+- Sekcja „Dojazd" w panelu miejsca i wydarzenia (2026-07-19): tryby Samochód/Pieszo/Rower przez `POST /api/travel-time` (Geoapify w Workerze), lokalizacja pobierana dopiero po kliknięciu „Sprawdź dojazd" i trzymana tylko w pamięci; wynik w formie „Około 4 min • 1,3 km". Zweryfikowane Playwrightem E2E na żywym Workerze (sukces, zmiana trybu, błąd + retry).
 - Panel konta: prawdziwy activity feed + preferencje oparte o Firestore (bez mocków).
 - Mobile: prawdziwe bottom-sheet treatment dla paneli (nie tylko ściśnięty desktopowy CSS), `prefers-reduced-motion` obsłużone w CSS i JS.
 - CI: deploy GitHub Pages jest teraz bramkowany przez `npm run test` + `npm run lint` przed buildem (dodane w Etap A).
@@ -38,7 +39,7 @@ Ostatnia aktualizacja: 2026-07-19, po iteracji profilu Karnet (paleta blue/white
 
 1. Error boundary — **done** (Etap A).
 2. Retry przy błędzie ładowania danych — **done** (Etap A).
-3. `VITE_TICKETMASTER_API_KEY` nie jest przekazywany jako sekret w `.github/workflows/deploy.yml` — feature importu z Ticketmaster jest w pełni zbudowany, ale nieaktywny w produkcyjnym deployu GitHub Pages. Wymaga podłączenia do CI albo jawnie udokumentowanej decyzji, że zostaje tylko dev/local.
+3. ~~`VITE_TICKETMASTER_API_KEY` w CI~~ — **rozwiązane 2026-07-19**: Ticketmaster idzie przez Cloudflare Worker; frontend potrzebuje tylko `VITE_EVENTTIMES_API_URL` (nie-sekret, ustawiony wprost w `deploy.yml`). Sekret `VITE_TICKETMASTER_API_KEY` w GitHub Actions Secrets i `.env.local` jest zbędny — może zostać usunięty przez użytkownika (klucz żyje teraz w sekretach Workera).
 4. Flow resetu hasła.
 5. SEO/OG/theme-color meta tags.
 6. Skracanie opisu VenuePanel — **done** (UI polish pass, 2026-07-17): >450 znaków skraca się z Czytaj więcej/Zwiń opis, analogicznie do EventPanel.

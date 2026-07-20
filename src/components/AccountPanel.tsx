@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
 import {
   Clock,
   Image,
@@ -9,9 +10,15 @@ import {
   X,
 } from 'lucide-react'
 import { useAuth } from '../auth/authContext'
+import { getAuthErrorMessage } from '../auth/authErrors'
+import {
+  getLinkedMethods,
+  oauthProviderLabels,
+} from '../auth/authProviders'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
 import { EVENT_TYPES } from '../data/searchFilters'
+import { EventTimesApiConfigError } from '../services/eventTimesApi'
 import {
   clearAllUserActions,
   getAllUserActions,
@@ -20,14 +27,24 @@ import type { EventAction, VenueAction } from '../services/userActionService'
 import {
   defaultUserPreferences,
   getUserProfileSettings,
+  saveUsernameToProfile,
   saveUserProfileSettings,
 } from '../services/userProfileService'
 import type { UserProfileSettings } from '../services/userProfileService'
+import {
+  registerUsername,
+  UsernameTakenError,
+} from '../services/usernameService'
 import {
   getAllEventMemories,
 } from '../services/memoryService'
 import type { EventMemory } from '../services/memoryService'
 import { formatEventDate } from '../utils/eventStatus'
+import {
+  isValidUsername,
+  normalizeUsername,
+  USERNAME_RULES_MESSAGE,
+} from '../utils/username'
 import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
 import { TiltCard } from './TiltCard'
 
@@ -63,6 +80,7 @@ const cityOptions = ['Leszno']
 
 const fallbackProfileSettings: UserProfileSettings = {
   profileSetupCompleted: false,
+  username: null,
   userPreferences: defaultUserPreferences,
 }
 
@@ -182,12 +200,28 @@ export function AccountPanel({
   onEventSelect,
   onClose,
 }: AccountPanelProps) {
-  const { user, isAdmin, updateProfile, logout } = useAuth()
+  const {
+    user,
+    isAdmin,
+    linkPassword,
+    linkProvider,
+    unlinkProvider,
+    updateProfile,
+    logout,
+  } = useAuth()
   const [eventActions, setEventActions] = useState<EventAction[]>([])
   const [venueActions, setVenueActions] = useState<VenueAction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const [methodsError, setMethodsError] = useState('')
+  const [methodsStatus, setMethodsStatus] = useState('')
+  const [methodsBusy, setMethodsBusy] = useState(false)
+  const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(false)
+  const [passwordValue, setPasswordValue] = useState('')
+  const [passwordRepeat, setPasswordRepeat] = useState('')
+  const [isUsernameFormOpen, setIsUsernameFormOpen] = useState(false)
+  const [usernameValue, setUsernameValue] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const [displayName, setDisplayName] = useState(user?.displayName ?? '')
   const [photoURL, setPhotoURL] = useState(user?.photoURL ?? '')
@@ -270,6 +304,12 @@ export function AccountPanel({
   }
 
   const currentUser = user
+  const linkedMethods = getLinkedMethods(currentUser)
+  const linkedMethodCount = [
+    linkedMethods.google,
+    linkedMethods.github,
+    linkedMethods.password,
+  ].filter(Boolean).length
 
   const savedEvents = eventActions.filter((action) => action.saved)
   const goingEvents = eventActions.filter((action) => action.going)
@@ -298,6 +338,126 @@ export function AccountPanel({
     setSelectedEventTypes(profileSettings.userPreferences.eventTypes)
     setError('')
     setIsEditing(false)
+  }
+
+  async function handleProviderLink(providerId: 'google' | 'github') {
+    const label = oauthProviderLabels[providerId]
+
+    setMethodsBusy(true)
+    setMethodsError('')
+    setMethodsStatus('')
+
+    try {
+      await linkProvider(providerId)
+      setMethodsStatus(`Połączono ${label}.`)
+    } catch (providerError) {
+      setMethodsError(getAuthErrorMessage(providerError))
+    } finally {
+      setMethodsBusy(false)
+    }
+  }
+
+  async function handleMethodUnlink(method: 'google' | 'github' | 'password') {
+    const label = method === 'password' ? 'hasło' : oauthProviderLabels[method]
+
+    setMethodsBusy(true)
+    setMethodsError('')
+    setMethodsStatus('')
+
+    try {
+      await unlinkProvider(method)
+      setMethodsStatus(`Odłączono ${label}.`)
+    } catch (unlinkError) {
+      setMethodsError(getAuthErrorMessage(unlinkError))
+    } finally {
+      setMethodsBusy(false)
+    }
+  }
+
+  async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (methodsBusy) {
+      return
+    }
+
+    if (passwordValue.length < 8) {
+      setMethodsError('Hasło musi mieć co najmniej 8 znaków.')
+      setMethodsStatus('')
+      return
+    }
+
+    if (passwordValue !== passwordRepeat) {
+      setMethodsError('Hasła muszą być takie same.')
+      setMethodsStatus('')
+      return
+    }
+
+    setMethodsBusy(true)
+    setMethodsError('')
+    setMethodsStatus('')
+
+    try {
+      await linkPassword(passwordValue)
+      setPasswordValue('')
+      setPasswordRepeat('')
+      setIsPasswordFormOpen(false)
+      setMethodsStatus('Hasło ustawione. Możesz logować się e-mailem i hasłem.')
+    } catch (passwordError) {
+      setMethodsError(getAuthErrorMessage(passwordError))
+    } finally {
+      setMethodsBusy(false)
+    }
+  }
+
+  function openUsernameForm() {
+    setUsernameValue(profileSettings.username ?? '')
+    setMethodsError('')
+    setMethodsStatus('')
+    setIsUsernameFormOpen(true)
+  }
+
+  async function handleUsernameSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (methodsBusy) {
+      return
+    }
+
+    const normalizedUsername = normalizeUsername(usernameValue)
+
+    if (!isValidUsername(normalizedUsername)) {
+      setMethodsError(USERNAME_RULES_MESSAGE)
+      setMethodsStatus('')
+      return
+    }
+
+    setMethodsBusy(true)
+    setMethodsError('')
+    setMethodsStatus('')
+
+    try {
+      const idToken = await currentUser.getIdToken()
+      const savedUsername = await registerUsername(idToken, normalizedUsername)
+      await saveUsernameToProfile(currentUser.uid, savedUsername)
+      setProfileSettings((settings) => ({
+        ...settings,
+        username: savedUsername,
+      }))
+      setUsernameValue(savedUsername)
+      setIsUsernameFormOpen(false)
+      setMethodsStatus('Zapisano nazwę użytkownika. Możesz jej używać do logowania.')
+    } catch (usernameError) {
+      if (usernameError instanceof UsernameTakenError) {
+        setMethodsError(usernameError.message)
+      } else if (usernameError instanceof EventTimesApiConfigError) {
+        setMethodsError('Funkcja nazwy użytkownika jest chwilowo niedostępna.')
+      } else {
+        setMethodsError('Nie udało się zapisać nazwy użytkownika.')
+      }
+    } finally {
+      setMethodsBusy(false)
+    }
   }
 
   async function saveProfile() {
@@ -337,7 +497,10 @@ export function AccountPanel({
           true,
         ),
       ])
-      setProfileSettings(savedSettings)
+      setProfileSettings((settings) => ({
+        ...savedSettings,
+        username: settings.username,
+      }))
       setSetupDefaultCity(savedSettings.userPreferences.defaultCity)
       setSetupEventTypes(savedSettings.userPreferences.eventTypes)
       setIsSetupOpen(false)
@@ -363,7 +526,10 @@ export function AccountPanel({
         },
         true,
       )
-      setProfileSettings(savedSettings)
+      setProfileSettings((settings) => ({
+        ...savedSettings,
+        username: settings.username,
+      }))
       setProfileDefaultCity(savedSettings.userPreferences.defaultCity)
       setSelectedEventTypes(savedSettings.userPreferences.eventTypes)
       setIsSetupOpen(false)
@@ -385,7 +551,10 @@ export function AccountPanel({
         profileSettings.userPreferences,
         true,
       )
-      setProfileSettings(savedSettings)
+      setProfileSettings((settings) => ({
+        ...savedSettings,
+        username: settings.username,
+      }))
       setSetupDefaultCity(savedSettings.userPreferences.defaultCity)
       setSetupEventTypes(savedSettings.userPreferences.eventTypes)
       setIsSetupOpen(false)
@@ -874,6 +1043,191 @@ export function AccountPanel({
 
             {error && <p className="account-error" role="alert">{error}</p>}
             {successMessage && <p className="account-success" role="status">{successMessage}</p>}
+
+            <section className="account-login-methods" aria-labelledby="login-methods-title">
+              <h2 id="login-methods-title">Metody logowania</h2>
+
+              <ul className="account-login-method-list">
+                <li className="account-login-method-row">
+                  <div className="account-login-method-copy">
+                    <strong>Google</strong>
+                    <span className={`account-login-method-status${linkedMethods.google ? ' is-linked' : ''}`}>
+                      {linkedMethods.google ? 'Połączone' : 'Niepołączone'}
+                    </span>
+                  </div>
+                  {!linkedMethods.google ? (
+                    <button
+                      type="button"
+                      disabled={methodsBusy}
+                      onClick={() => void handleProviderLink('google')}
+                    >
+                      {methodsBusy ? 'Łączenie…' : 'Połącz'}
+                    </button>
+                  ) : linkedMethodCount > 1 ? (
+                    <button
+                      type="button"
+                      disabled={methodsBusy}
+                      onClick={() => void handleMethodUnlink('google')}
+                    >
+                      {methodsBusy ? 'Zapisywanie…' : 'Odłącz'}
+                    </button>
+                  ) : null}
+                </li>
+
+                <li className="account-login-method-row">
+                  <div className="account-login-method-copy">
+                    <strong>GitHub</strong>
+                    <span className={`account-login-method-status${linkedMethods.github ? ' is-linked' : ''}`}>
+                      {linkedMethods.github ? 'Połączone' : 'Niepołączone'}
+                    </span>
+                  </div>
+                  {!linkedMethods.github ? (
+                    <button
+                      type="button"
+                      disabled={methodsBusy}
+                      onClick={() => void handleProviderLink('github')}
+                    >
+                      {methodsBusy ? 'Łączenie…' : 'Połącz'}
+                    </button>
+                  ) : linkedMethodCount > 1 ? (
+                    <button
+                      type="button"
+                      disabled={methodsBusy}
+                      onClick={() => void handleMethodUnlink('github')}
+                    >
+                      {methodsBusy ? 'Zapisywanie…' : 'Odłącz'}
+                    </button>
+                  ) : null}
+                </li>
+
+                <li className="account-login-method-row">
+                  <div className="account-login-method-copy">
+                    <strong>Hasło</strong>
+                    <span className={`account-login-method-status${linkedMethods.password ? ' is-linked' : ''}`}>
+                      {linkedMethods.password ? 'Ustawione' : 'Nieustawione'}
+                    </span>
+                    {linkedMethods.password && (
+                      <small>Zmiana hasła: użyj „Nie pamiętam hasła” na ekranie logowania.</small>
+                    )}
+                  </div>
+                  {!linkedMethods.password ? (
+                    <button
+                      type="button"
+                      disabled={methodsBusy || isPasswordFormOpen}
+                      onClick={() => {
+                        setMethodsError('')
+                        setMethodsStatus('')
+                        setIsPasswordFormOpen(true)
+                      }}
+                    >
+                      Ustaw hasło
+                    </button>
+                  ) : linkedMethodCount > 1 ? (
+                    <button
+                      type="button"
+                      disabled={methodsBusy}
+                      onClick={() => void handleMethodUnlink('password')}
+                    >
+                      {methodsBusy ? 'Zapisywanie…' : 'Odłącz'}
+                    </button>
+                  ) : null}
+                </li>
+              </ul>
+
+              {isPasswordFormOpen && (
+                <form className="account-inline-form" onSubmit={(event) => void handlePasswordSubmit(event)}>
+                  <label>
+                    <span>Nowe hasło</span>
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      minLength={8}
+                      value={passwordValue}
+                      onChange={(event) => setPasswordValue(event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span>Powtórz hasło</span>
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      minLength={8}
+                      value={passwordRepeat}
+                      onChange={(event) => setPasswordRepeat(event.target.value)}
+                    />
+                  </label>
+                  <div className="account-inline-actions">
+                    <button type="submit" disabled={methodsBusy}>
+                      {methodsBusy ? 'Zapisywanie…' : 'Zapisz hasło'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={methodsBusy}
+                      onClick={() => {
+                        setPasswordValue('')
+                        setPasswordRepeat('')
+                        setIsPasswordFormOpen(false)
+                        setMethodsError('')
+                      }}
+                    >
+                      Anuluj
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              <div className="account-username-section">
+                <div className="account-username-head">
+                  <div>
+                    <h3>Nazwa użytkownika</h3>
+                    <p>
+                      Aktualna nazwa:{' '}
+                      <strong>{profileSettings.username ?? 'Nieustawiona'}</strong>
+                    </p>
+                  </div>
+                  <button type="button" disabled={methodsBusy} onClick={openUsernameForm}>
+                    {profileSettings.username ? 'Zmień nazwę' : 'Ustaw nazwę'}
+                  </button>
+                </div>
+
+                {isUsernameFormOpen && (
+                  <form className="account-inline-form" onSubmit={(event) => void handleUsernameSubmit(event)}>
+                    <label>
+                      <span>Nazwa użytkownika</span>
+                      <input
+                        maxLength={20}
+                        autoComplete="off"
+                        value={usernameValue}
+                        onChange={(event) => setUsernameValue(event.target.value)}
+                      />
+                    </label>
+                    <small>{USERNAME_RULES_MESSAGE}</small>
+                    {!linkedMethods.password && (
+                      <small>Logowanie nazwą użytkownika działa z hasłem — ustaw też hasło powyżej.</small>
+                    )}
+                    <div className="account-inline-actions">
+                      <button type="submit" disabled={methodsBusy}>
+                        {methodsBusy ? 'Zapisywanie…' : 'Zapisz'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={methodsBusy}
+                        onClick={() => {
+                          setUsernameValue(profileSettings.username ?? '')
+                          setIsUsernameFormOpen(false)
+                          setMethodsError('')
+                        }}
+                      >
+                        Anuluj
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+
+              {methodsError && <p className="account-methods-error" role="alert">{methodsError}</p>}
+              {methodsStatus && <p className="account-methods-success" role="status">{methodsStatus}</p>}
+            </section>
 
             <section className="account-clear-data" aria-labelledby="clear-data-title">
               <h2 id="clear-data-title">Wyczyść aktywność</h2>

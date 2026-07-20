@@ -1,7 +1,5 @@
 import { EVENT_TYPES } from '../data/searchFilters'
-
-const TICKETMASTER_EVENTS_ENDPOINT =
-  'https://app.ticketmaster.com/discovery/v2/events.json'
+import { getEventTimesApiUrl } from './eventTimesApi'
 
 const SUPPORTED_EVENT_TYPES = new Set<string>(
   EVENT_TYPES.filter((eventType) => eventType !== 'Wszystkie'),
@@ -109,8 +107,6 @@ export type TicketmasterVenueCandidate = {
   sourceUrl?: string
 }
 
-export class TicketmasterConfigError extends Error {}
-
 export class TicketmasterRequestError extends Error {
   readonly status?: number
 
@@ -118,16 +114,6 @@ export class TicketmasterRequestError extends Error {
     super(message)
     this.status = status
   }
-}
-
-function getTicketmasterApiKey() {
-  const apiKey = import.meta.env.VITE_TICKETMASTER_API_KEY
-
-  if (typeof apiKey !== 'string' || !apiKey.trim()) {
-    throw new TicketmasterConfigError('Brak VITE_TICKETMASTER_API_KEY w .env.local')
-  }
-
-  return apiKey
 }
 
 function appendOptionalParam(params: URLSearchParams, name: string, value?: string) {
@@ -298,7 +284,6 @@ export async function searchTicketmasterEvents(
   searchParams: TicketmasterSearchParams,
 ): Promise<TicketmasterImportCandidate[]> {
   const params = new URLSearchParams({
-    apikey: getTicketmasterApiKey(),
     countryCode: 'PL',
     unit: 'km',
     size: String(searchParams.size ?? 20),
@@ -319,7 +304,9 @@ export async function searchTicketmasterEvents(
     toTicketmasterDateTime(searchParams.endDateTime, true),
   )
 
-  const response = await fetch(`${TICKETMASTER_EVENTS_ENDPOINT}?${params.toString()}`)
+  const response = await fetch(
+    getEventTimesApiUrl(`/api/ticketmaster/events?${params.toString()}`),
+  )
 
   if (response.status === 429) {
     throw new TicketmasterRequestError(
@@ -355,4 +342,38 @@ export async function searchTicketmasterEvents(
     const candidate = mapTicketmasterEventToCandidate(rawEvent)
     return candidate ? [candidate] : []
   })
+}
+
+export async function fetchTicketmasterEventById(
+  eventId: string,
+): Promise<TicketmasterImportCandidate | null> {
+  const response = await fetch(
+    getEventTimesApiUrl(`/api/ticketmaster/events/${encodeURIComponent(eventId)}`),
+  )
+
+  if (response.status === 404) {
+    return null
+  }
+
+  if (response.status === 429) {
+    throw new TicketmasterRequestError(
+      'Ticketmaster zwraca limit zapytań. Spróbuj ponownie za chwilę.',
+      response.status,
+    )
+  }
+
+  if (!response.ok) {
+    throw new TicketmasterRequestError(
+      'Nie udało się pobrać danych z Ticketmaster.',
+      response.status,
+    )
+  }
+
+  const rawEvent = (await response.json()) as TicketmasterEvent | null
+
+  if (!rawEvent || typeof rawEvent !== 'object') {
+    throw new TicketmasterRequestError('Ticketmaster zwrócił niepoprawną odpowiedź.')
+  }
+
+  return mapTicketmasterEventToCandidate(rawEvent)
 }

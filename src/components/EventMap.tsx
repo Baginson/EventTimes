@@ -5,12 +5,18 @@ import { MapContainer, Marker, TileLayer, Tooltip, useMap, useMapEvents } from '
 import type { Venue } from '../data/mockVenues'
 import { getVenueDisplayName } from '../utils/venueDisplay'
 
+export type MapFocusPadding = {
+  right: number
+  bottom: number
+}
+
 type EventMapProps = {
   venues: Venue[]
   selectedVenueId: string | null
   isMapClickActive: boolean
   temporaryVenueCoordinates?: Venue['coordinates'] | null
   focusCoordinates?: Venue['coordinates'] | null
+  getFocusPadding?: () => MapFocusPadding
   onVenueSelect: (venue: Venue) => void
   onMapClick: (coordinates: Venue['coordinates']) => void
 }
@@ -63,8 +69,10 @@ function MapClickHandler({
 
 function MapFocusHandler({
   coordinates,
+  getFocusPadding,
 }: {
   coordinates?: Venue['coordinates'] | null
+  getFocusPadding?: () => MapFocusPadding
 }) {
   const map = useMap()
   const shouldReduceMotion = useReducedMotion()
@@ -74,10 +82,18 @@ function MapFocusHandler({
       return
     }
 
-    map.setView([coordinates.lat, coordinates.lng], Math.max(map.getZoom(), 16), {
+    const padding = getFocusPadding?.() ?? { right: 0, bottom: 0 }
+    const zoom = Math.max(map.getZoom(), 16)
+    // Środek widoku przesunięty o połowę obszaru zasłoniętego panelem,
+    // żeby pinezka wylądowała na środku widocznej części mapy.
+    const centerPoint = map
+      .project([coordinates.lat, coordinates.lng], zoom)
+      .add([padding.right / 2, padding.bottom / 2])
+
+    map.setView(map.unproject(centerPoint, zoom), zoom, {
       animate: !shouldReduceMotion,
     })
-  }, [coordinates, map, shouldReduceMotion])
+  }, [coordinates, getFocusPadding, map, shouldReduceMotion])
 
   return null
 }
@@ -88,6 +104,7 @@ export function EventMap({
   isMapClickActive,
   temporaryVenueCoordinates,
   focusCoordinates,
+  getFocusPadding,
   onVenueSelect,
   onMapClick,
 }: EventMapProps) {
@@ -100,7 +117,7 @@ export function EventMap({
       scrollWheelZoom
     >
       {isMapClickActive && <MapClickHandler onMapClick={onMapClick} />}
-      <MapFocusHandler coordinates={focusCoordinates} />
+      <MapFocusHandler coordinates={focusCoordinates} getFocusPadding={getFocusPadding} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

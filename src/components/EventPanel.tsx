@@ -11,9 +11,8 @@ import {
   ExternalLink,
   Heart,
   ImagePlus,
-  Navigation,
   Pencil,
-  Share2,
+  Share,
   Ticket,
   Trash2,
   X,
@@ -43,14 +42,12 @@ import {
   getEventStatusLabel,
   isEventDateValid,
 } from '../utils/eventStatus'
-import {
-  buildVenueDirectionsUrl,
-  getVenueGoogleMapsUrl,
-  hasValidVenueCoordinates,
-} from '../utils/googleMaps'
+import { hasValidVenueCoordinates } from '../utils/googleMaps'
 import { buildShareUrl, shareUrl } from '../utils/shareLinks'
 import { getVenueDisplayName } from '../utils/venueDisplay'
 import { EventForm } from './EventForm'
+import { NavigationButton } from './NavigationButton'
+import { TravelTimeSection } from './TravelTimeSection'
 
 type EventPanelProps = {
   event: EventTimesEvent
@@ -62,6 +59,7 @@ type EventPanelProps = {
   onUpdateEvent: (event: EventTimesEvent) => void | Promise<void>
   onDeleteEvent: () => void
   onClose: () => void
+  onShowVenue: () => void
   origin?: 'venue' | 'profile' | 'direct'
   onReturnToProfile?: () => void
   panelRef?: Ref<HTMLElement>
@@ -77,6 +75,7 @@ export function EventPanel({
   onUpdateEvent,
   onDeleteEvent,
   onClose,
+  onShowVenue,
   origin = 'direct',
   onReturnToProfile,
   panelRef,
@@ -451,7 +450,7 @@ export function EventPanel({
           onClick={() => void handleShareEvent()}
           aria-label="Udostępnij wydarzenie"
         >
-          <Share2 className="ui-icon" aria-hidden="true" />
+          <Share className="ui-icon" aria-hidden="true" />
         </button>
         {shareFeedback && (
           <span className="share-feedback" role="status">
@@ -520,23 +519,24 @@ export function EventPanel({
               <h1>{event.name}</h1>
               <div className="event-pass-meta">
                 <time dateTime={event.startDate}>{formatEventDate(event.startDate, 'long')}</time>
-                <span>{venueDisplayName}</span>
-                <a
-                  className="navigation-link"
-                  href={
-                    hasValidVenueCoordinates(venue)
-                      ? buildVenueDirectionsUrl(venue)
-                      : getVenueGoogleMapsUrl(venue)
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Navigation className="ui-icon" aria-hidden="true" />
-                  Nawiguj w Google Maps
-                  <ExternalLink className="ui-icon" aria-hidden="true" />
-                </a>
+                <div className="event-pass-venue-row">
+                  <button
+                    className="event-venue-link"
+                    type="button"
+                    onClick={onShowVenue}
+                    aria-label={`Pokaż miejsce na mapie: ${venueDisplayName}`}
+                    title="Pokaż miejsce na mapie"
+                  >
+                    {venueDisplayName}
+                  </button>
+                  <NavigationButton venue={venue} />
+                </div>
               </div>
             </header>
+
+            <TravelTimeSection
+              destination={hasValidVenueCoordinates(venue) ? venue.coordinates : null}
+            />
 
             {isAdminMode && (
               <section className="inline-admin-actions" aria-label="Akcje administratora wydarzenia">

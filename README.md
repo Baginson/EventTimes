@@ -35,10 +35,10 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 ```
 
-Opcjonalnie — import wydarzeń z Ticketmaster w panelu admina (funkcja jest ukryta, gdy klucz nie jest ustawiony):
+Opcjonalnie — backend Event Times na Cloudflare Workers (import z Ticketmaster w panelu admina i sekcja „Dojazd" w panelach; obie funkcje są ukryte lub zgłaszają brak konfiguracji, gdy zmienna nie jest ustawiona). Klucze Ticketmaster i Geoapify żyją wyłącznie w sekretach Workera — frontend ich nie zna:
 
 ```env
-VITE_TICKETMASTER_API_KEY=your_ticketmaster_api_key
+VITE_EVENTTIMES_API_URL=https://eventtimes-api.example.workers.dev
 ```
 
 Opcjonalnie — przesyłanie zdjęć (okładki wydarzeń, zdjęcia wspomnień) przez Cloudinary (funkcje uploadu są ukryte, gdy zmienne nie są ustawione):

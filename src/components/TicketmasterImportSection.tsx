@@ -13,6 +13,7 @@ import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
 import { EVENT_TYPES } from '../data/searchFilters'
 import { createEventExternalImage, getEventTitle } from '../features/events/eventModel'
+import { EVENTTIMES_API_CONFIGURED } from '../services/eventTimesApi'
 import type { TicketmasterImportCandidate } from '../services/ticketmasterService'
 import { formatEventDate } from '../utils/eventStatus'
 import { getDistanceMeters } from '../utils/geo'
@@ -35,7 +36,7 @@ type SearchForm = {
   endDate: string
 }
 
-const TICKETMASTER_IMPORTER_ENABLED = Boolean(import.meta.env.VITE_TICKETMASTER_API_KEY)
+const TICKETMASTER_IMPORTER_ENABLED = EVENTTIMES_API_CONFIGURED
 const availableEventTypes = EVENT_TYPES.filter((eventType) => eventType !== 'Wszystkie')
 
 function createId(prefix: string, value: string) {
@@ -188,7 +189,7 @@ export function TicketmasterImportSection({
   onAddEvent,
   onCreateVenueDraft,
 }: TicketmasterImportSectionProps) {
-  const hasApiKey = TICKETMASTER_IMPORTER_ENABLED
+  const hasApiBase = TICKETMASTER_IMPORTER_ENABLED
   const [form, setForm] = useState<SearchForm>({
     keyword: '',
     city: 'Leszno',
@@ -268,8 +269,8 @@ export function TicketmasterImportSection({
   async function searchEvents(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (!hasApiKey) {
-      setErrorMessage('Brak VITE_TICKETMASTER_API_KEY w .env.local')
+    if (!hasApiBase) {
+      setErrorMessage('Brak VITE_EVENTTIMES_API_URL w .env.local')
       return
     }
 
@@ -366,13 +367,13 @@ export function TicketmasterImportSection({
       <div className="admin-section-heading">
         <div>
           <h2 id="ticketmaster-import-title">Import z Ticketmaster</h2>
-          <p>Opcjonalny importer admin/dev. Wymaga VITE_TICKETMASTER_API_KEY i nie zapisuje nic bez akceptacji admina.</p>
+          <p>Opcjonalny importer admin/dev. Zapytania idą przez backend Event Times (VITE_EVENTTIMES_API_URL) i nic nie zapisuje się bez akceptacji admina.</p>
         </div>
       </div>
 
-      {!hasApiKey && (
+      {!hasApiBase && (
         <p className="admin-form-message admin-form-error" role="alert">
-          Brak VITE_TICKETMASTER_API_KEY w .env.local
+          Brak VITE_EVENTTIMES_API_URL w .env.local
         </p>
       )}
 

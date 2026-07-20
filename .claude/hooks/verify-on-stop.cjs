@@ -6,9 +6,20 @@
 // via systemMessage/additionalContext; never forces continuation.
 const { execSync } = require('child_process');
 
+// The harness can spawn this hook with a lowercase drive letter in cwd
+// (c:\... instead of C:\...). Vitest then resolves module URLs with mixed
+// casing, loads duplicate module instances and every suite fails on import
+// ("Cannot read properties of undefined (reading 'config')"). process.chdir
+// cannot fix this (case-only chdir is a no-op on Windows), so the canonical
+// path from realpathSync.native is passed as explicit cwd to every child.
+let repoCwd = process.cwd();
+try {
+  repoCwd = require('fs').realpathSync.native(repoCwd);
+} catch {}
+
 function run(cmd) {
   try {
-    const out = execSync(cmd, { stdio: 'pipe' }).toString();
+    const out = execSync(cmd, { stdio: 'pipe', cwd: repoCwd }).toString();
     return { ok: true, out };
   } catch (err) {
     const out = ((err.stdout && err.stdout.toString()) || '') + ((err.stderr && err.stderr.toString()) || '');
@@ -18,7 +29,7 @@ function run(cmd) {
 
 let status = '';
 try {
-  status = execSync('git status --porcelain', { stdio: 'pipe' }).toString();
+  status = execSync('git status --porcelain', { stdio: 'pipe', cwd: repoCwd }).toString();
 } catch {
   process.exit(0); // not a git repo / git unavailable - skip silently
 }

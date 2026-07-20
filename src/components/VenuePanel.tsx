@@ -5,13 +5,11 @@ import {
   Copy,
   ChevronDown,
   ChevronUp,
-  ExternalLink,
   Heart,
   MapPinPlus,
-  Navigation,
   Pencil,
   Plus,
-  Share2,
+  Share,
   Ticket,
   Trash2,
   X,
@@ -27,14 +25,12 @@ import {
   getEventStatus,
   isEventDateValid,
 } from '../utils/eventStatus'
-import {
-  buildVenueDirectionsUrl,
-  getVenueGoogleMapsUrl,
-  hasValidVenueCoordinates,
-} from '../utils/googleMaps'
+import { hasValidVenueCoordinates } from '../utils/googleMaps'
 import { buildShareUrl, shareUrl } from '../utils/shareLinks'
 import { formatVenueAddress, getVenueDisplayName } from '../utils/venueDisplay'
 import { EventForm } from './EventForm'
+import { NavigationButton } from './NavigationButton'
+import { TravelTimeSection } from './TravelTimeSection'
 import { VenueForm } from './VenueForm'
 
 type EventSectionVariant = 'ongoing' | 'upcoming' | 'past' | 'invalid'
@@ -438,7 +434,7 @@ export function VenuePanel({
           onClick={() => void handleShareVenue()}
           aria-label="Udostępnij miejsce"
         >
-          <Share2 className="ui-icon" aria-hidden="true" />
+          <Share className="ui-icon" aria-hidden="true" />
         </button>
         {shareFeedback && (
           <span className="share-feedback" role="status">
@@ -481,21 +477,11 @@ export function VenuePanel({
                 <span>Adres</span>
                 <p className="venue-address">{venueAddress}</p>
               </div>
-              <a
-              className="navigation-link"
-              href={
-                hasValidVenueCoordinates(venue)
-                  ? buildVenueDirectionsUrl(venue)
-                  : getVenueGoogleMapsUrl(venue)
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Navigation className="ui-icon" aria-hidden="true" />
-              Nawiguj w Google Maps
-              <ExternalLink className="ui-icon" aria-hidden="true" />
-              </a>
+              <NavigationButton venue={venue} />
             </section>
+            <TravelTimeSection
+              destination={hasValidVenueCoordinates(venue) ? venue.coordinates : null}
+            />
             {userActionError && <p className="user-action-error" role="alert">{userActionError}</p>}
             {venueDescription ? (
               <section className="venue-story">

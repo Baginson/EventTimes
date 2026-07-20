@@ -25,7 +25,7 @@ npm run build
 - Grep the diff for anything that looks like a hardcoded key/token (`grep -riE "api[_-]?key|secret|password" <changed files>` as a rough pass, then read hits with judgment — plenty of matches will be legitimate variable names).
 - Confirm `.env`, `.env.local`, `.env.*.local` are not staged (`git status` should never show them; `.gitignore` covers this, but verify no `-f`/`--force` add happened).
 - If the diff touches `.github/workflows/*.yml`, dispatch the `security-reviewer` subagent for a focused pass.
-- If a new feature needs a new secret (e.g. a new API key), confirm it's documented in `README.md`'s env/secrets list and added to GitHub Actions Secrets — not just `.env.example`. (`VITE_TICKETMASTER_API_KEY` was found missing from `.github/workflows/deploy.yml` during the 2026-07-16 audit — check `docs/PROJECT_STATE.md` for current status before assuming this is still true.)
+- If a new feature needs a new secret (e.g. a new API key), confirm it's documented in `README.md`'s env/secrets list and added to GitHub Actions Secrets — not just `.env.example`. Third-party API keys (Ticketmaster, Geoapify) belong in Cloudflare Worker secrets, never in the frontend build; the frontend only needs the non-secret `VITE_EVENTTIMES_API_URL` (set directly in `deploy.yml` since 2026-07-19).
 
 ## 4. Debug/dead-code sweep
 

@@ -9,7 +9,7 @@ Event Times — mapowa aplikacja do odkrywania miejsc i wydarzeń (React + Vite 
 ## Non-negotiable rules
 
 - **Admin** is determined only by the existence of `admins/{uid}` in Firestore. Never by email, never by a client-side password, never `VITE_ADMIN_EMAIL`. Never `getDocs(collection(db, 'admins'))` or any list/query on `admins` — only `getDoc` on the current user's own uid.
-- **Secrets**: never write API keys, passwords, or tokens into source files or commit them. `VITE_TICKETMASTER_API_KEY` and all `VITE_FIREBASE_*` keys live only in a local, non-committed env file and in GitHub Actions Secrets.
+- **Secrets**: never write API keys, passwords, or tokens into source files or commit them. All `VITE_FIREBASE_*` keys live only in a local, non-committed env file and in GitHub Actions Secrets. Ticketmaster and Geoapify keys live only as Cloudflare Worker secrets (`eventtimes-api`) — the frontend talks to them exclusively through `VITE_EVENTTIMES_API_URL` (a non-secret URL).
 - **Coordinates** are always `{ lat: number, lng: number }` on the data model. Leaflet-specific `[lat, lng]` array conversion stays isolated inside the map-adapter layer (`src/components/EventMap.tsx`), never in services/utils/models.
 - **Event status** (`upcoming`/`ongoing`/`past`) is always computed dynamically (`getEventStatus`), never stored as a literal field.
 - No `00:00` shown for events without an explicit time.

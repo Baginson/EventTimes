@@ -3,7 +3,7 @@ import type { User } from 'firebase/auth'
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 
-export type UserProvider = 'google' | 'password'
+export type UserProvider = 'google' | 'github' | 'password'
 
 export type UserPreferences = {
   defaultCity: string
@@ -12,6 +12,7 @@ export type UserPreferences = {
 
 export type UserProfileSettings = {
   profileSetupCompleted: boolean
+  username: string | null
   userPreferences: UserPreferences
 }
 
@@ -48,6 +49,9 @@ function normalizeUserProfileSettings(data: Record<string, unknown> | undefined)
 
   return {
     profileSetupCompleted: data?.profileSetupCompleted === true,
+    username: typeof data?.username === 'string' && data.username.trim()
+      ? data.username.trim().toLowerCase()
+      : null,
     userPreferences: {
       defaultCity,
       eventTypes: Array.from(new Set(normalizeStringArray(preferences.eventTypes))),
@@ -130,6 +134,18 @@ export async function saveUserProfileSettings(
 
   return {
     profileSetupCompleted,
+    username: null,
     userPreferences: normalizedPreferences,
   } satisfies UserProfileSettings
+}
+
+export async function saveUsernameToProfile(uid: string, username: string) {
+  await setDoc(
+    doc(requireDb(), 'users', uid),
+    {
+      username,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  )
 }
