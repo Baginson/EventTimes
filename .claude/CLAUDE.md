@@ -36,4 +36,18 @@ Po istotnej zmianie:
 - zaktualizuj `docs/ROADMAP.md`, jeżeli etap został rozpoczęty lub zakończony,
 - dopisz wpis na końcu `docs/DECISIONS.md`, jeżeli została podjęta trwała decyzja.
 - zaktualizuj 'tasks/NOW.md' żeby znać następny krok na nowej sesji
-- 
+
+## Ochrona przed wyczerpaniem limitu Claude Code
+
+Deterministyczny strażnik limitu planu działa przez statusline + hook (nie polegaj na samej instrukcji tekstowej):
+
+- `.claude/statusline.cjs` (statusLine) pokazuje model, użycie limitu 5h / 7d / kontekstu i czas resetu, oraz zapisuje ostatni odczyt do `.claude/usage-state.json` (gitignored).
+- `.claude/hooks/usage-guard.cjs` (UserPromptSubmit) reaguje na **wyższą** wartość z limitu 5h i 7d i przy wejściu w nowy próg **raz** wstrzykuje instrukcje (dedup w `.claude/usage-guard-state.json`).
+
+Gdy pojawi się wstrzyknięty komunikat `[OCHRONA LIMITU]`, zastosuj się do niego:
+- **75%** — nie zaczynaj nowych dużych zadań ani subagentów; domknij bieżący mały wątek.
+- **85%** — zakończ bieżącą atomową część, tylko celowana weryfikacja, zacznij przygotowanie przekazania.
+- **90%** — zaktualizuj `tasks/NOW.md` (cel, zrobione, zmienione pliki, stan test/lint/typecheck/build, następny krok) i dodaj na końcu prompt do nowej sesji, pokaż go użytkownikowi, zakończ pracę.
+- **95%** — tryb awaryjny: tylko bezpieczny zapis stanu i zakończenie sesji.
+
+Gdy dane `rate_limits` są niedostępne lub odczyt jest przeterminowany, strażnik milczy i nie blokuje pracy.

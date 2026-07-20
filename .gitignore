@@ -27,6 +27,12 @@ docs/design-references/
 
 # Local Claude Code settings (machine-specific permissions)
 .claude/settings.local.json
+
+# Local Claude Code usage readings (plan-limit guard state — machine-specific, transient)
+.claude/usage-state.json
+.claude/usage-guard-state.json
+.claude/*.tmp
+.claude/**/*.tmp
 CLAUDE.local.md
 
 # Local knowledge graph (rebuilt per-machine by the graphify post-commit hook)
