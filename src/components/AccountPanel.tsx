@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { UIEvent as ReactUIEvent } from 'react'
 import type { FormEvent } from 'react'
 import {
   Clock,
@@ -76,7 +77,8 @@ type RecentActivityItem = {
 
 type CollectionKey = 'visited' | 'going' | 'savedEvents' | 'savedVenues'
 
-const recentActivityLimit = 5
+const recentActivityLimit = 3
+const accountPagerPages = ['Karnet', 'Wspomnienia', 'Kolekcja i aktywność']
 const eventPreferenceOptions = EVENT_TYPES.filter((eventType) => eventType !== 'Wszystkie')
 const cityOptions = ['Leszno']
 
@@ -238,6 +240,9 @@ export function AccountPanel({
   const [clearingData, setClearingData] = useState(false)
   const [memories, setMemories] = useState<EventMemory[]>([])
   const [activeCollection, setActiveCollection] = useState<CollectionKey>('visited')
+  const [isRecentActivityExpanded, setIsRecentActivityExpanded] = useState(false)
+  const [activePagerPage, setActivePagerPage] = useState(0)
+  const pagerRef = useRef<HTMLDivElement | null>(null)
   const eventById = useMemo(
     () => new Map(events.map((event) => [event.id, event])),
     [events],
@@ -597,6 +602,32 @@ export function AccountPanel({
     }
   }
 
+  function handlePagerScroll(event: ReactUIEvent<HTMLDivElement>) {
+    const pager = event.currentTarget
+    const pageWidth = pager.clientWidth
+
+    if (pageWidth <= 0) {
+      return
+    }
+
+    const index = Math.min(
+      accountPagerPages.length - 1,
+      Math.max(0, Math.round(pager.scrollLeft / pageWidth)),
+    )
+
+    setActivePagerPage((current) => (current === index ? current : index))
+  }
+
+  function scrollToPagerPage(index: number) {
+    const pager = pagerRef.current
+
+    if (!pager) {
+      return
+    }
+
+    pager.scrollTo({ left: index * pager.clientWidth, behavior: 'smooth' })
+  }
+
   async function handleLogout() {
     setError('')
 
@@ -693,7 +724,6 @@ export function AccountPanel({
 
     return [...eventActivityItems, ...venueActivityItems]
       .sort((first, second) => (second.occurredAtMs ?? 0) - (first.occurredAtMs ?? 0))
-      .slice(0, recentActivityLimit)
   }
 
   function getSortedMemories() {
@@ -809,7 +839,10 @@ export function AccountPanel({
     )
   }
 
-  function renderRecentActivity(items: RecentActivityItem[]) {
+  function renderRecentActivity(allItems: RecentActivityItem[]) {
+    const hasMore = allItems.length > recentActivityLimit
+    const items = isRecentActivityExpanded ? allItems : allItems.slice(0, recentActivityLimit)
+
     return (
       <section className="account-shelf" aria-labelledby="account-recent-activity-title">
         <header className="account-shelf-header">
@@ -818,17 +851,28 @@ export function AccountPanel({
         </header>
 
         {items.length ? (
-          <ol className="account-receipt">
-            {items.map((item) => (
-              <li key={item.id}>
-                <button type="button" onClick={item.onClick}>
-                  <span className="account-receipt-label">{item.label}</span>
-                  <strong>{item.title}</strong>
-                  <small>{item.meta}</small>
-                </button>
-              </li>
-            ))}
-          </ol>
+          <>
+            <ol className="account-receipt">
+              {items.map((item) => (
+                <li key={item.id}>
+                  <button type="button" onClick={item.onClick}>
+                    <span className="account-receipt-label">{item.label}</span>
+                    <strong>{item.title}</strong>
+                    <small>{item.meta}</small>
+                  </button>
+                </li>
+              ))}
+            </ol>
+            {hasMore && (
+              <button
+                className="account-shelf-toggle"
+                type="button"
+                onClick={() => setIsRecentActivityExpanded((expanded) => !expanded)}
+              >
+                {isRecentActivityExpanded ? 'Zwiń aktywność' : 'Pokaż całą aktywność'}
+              </button>
+            )}
+          </>
         ) : (
           <p className="account-empty">Twoje ostatnie działania pojawią się tutaj.</p>
         )}
@@ -1296,7 +1340,26 @@ export function AccountPanel({
         ) : (
           <div className="account-profile-layout account-profile-layout--mobile">
             {setupPanelNode}
-            <div className="account-pager" role="group" aria-label="Sekcje profilu">
+            <div className="account-pager-dots" role="tablist" aria-label="Strony profilu">
+              {accountPagerPages.map((pageLabel, index) => (
+                <button
+                  key={pageLabel}
+                  className={`account-pager-dot${activePagerPage === index ? ' is-active' : ''}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={activePagerPage === index}
+                  aria-label={pageLabel}
+                  onClick={() => scrollToPagerPage(index)}
+                />
+              ))}
+            </div>
+            <div
+              className="account-pager"
+              ref={pagerRef}
+              role="group"
+              aria-label="Sekcje profilu"
+              onScroll={handlePagerScroll}
+            >
               <section
                 className={`account-page account-page--pass${passRevealed ? ' is-revealed' : ''}`}
                 aria-labelledby="account-panel-title"

@@ -4331,6 +4331,7 @@
 
   .account-profile-layout--mobile .account-page--pass .account-pass-head {
     grid-template-columns: 88px minmax(0, 1fr);
+    align-items: flex-start;
   }
 
   .account-profile-layout--mobile .account-page--pass .account-pass-photo {
@@ -4342,6 +4343,36 @@
   .account-profile-layout--mobile .account-page--collection .account-collection-header {
     position: static;
   }
+
+  /* Kropki/wskaźnik stron pagera — pokazują, że karty można przełączać swipe'em. */
+  .account-profile-layout--mobile .account-pager-dots {
+    position: absolute;
+    top: calc(env(safe-area-inset-top) + 12px);
+    left: 50%;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    height: 38px;
+    gap: 7px;
+    transform: translateX(-50%);
+  }
+
+  .account-profile-layout--mobile .account-pager-dot {
+    width: 7px;
+    height: 7px;
+    padding: 0;
+    background: rgba(7, 20, 47, 0.2);
+    border: 0;
+    border-radius: var(--radius-pill);
+    transition:
+      background 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .account-profile-layout--mobile .account-pager-dot.is-active {
+    background: var(--color-primary);
+    transform: scale(1.35);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4350,7 +4381,8 @@
   }
 
   .account-profile-layout--mobile .account-page--pass .account-pass-card,
-  .account-profile-layout--mobile .account-page--pass .account-quick-actions {
+  .account-profile-layout--mobile .account-page--pass .account-quick-actions,
+  .account-profile-layout--mobile .account-pager-dot {
     transition: none;
   }
 }
@@ -4372,6 +4404,10 @@
   grid-template-columns: 72px minmax(0, 1fr);
   gap: var(--space-4);
   align-items: center;
+}
+
+.account-pass-identity {
+  min-width: 0;
 }
 
 .account-pass-photo {
@@ -4467,13 +4503,15 @@
   border-color: var(--color-white);
 }
 
-.account-pass .account-quick-actions {
+.account-pass .account-quick-actions,
+.account-page--pass .account-quick-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 
-.account-pass .account-quick-actions button {
+.account-pass .account-quick-actions button,
+.account-page--pass .account-quick-actions button {
   min-height: 40px;
   justify-content: center;
   color: var(--color-primary);
@@ -4482,19 +4520,22 @@
   border-radius: var(--radius-sm);
 }
 
-.account-pass .account-quick-actions button:hover {
+.account-pass .account-quick-actions button:hover,
+.account-page--pass .account-quick-actions button:hover {
   color: var(--color-white);
   background: var(--color-primary);
 }
 
-.account-pass .account-profile-edit {
+.account-pass .account-profile-edit,
+.account-page--pass .account-profile-edit {
   padding: var(--space-4);
   color: var(--color-ink);
   background: var(--color-white);
   border-radius: var(--radius-md);
 }
 
-.account-pass .account-login-methods {
+.account-pass .account-login-methods,
+.account-page--pass .account-login-methods {
   display: grid;
   gap: 12px;
   padding: var(--space-4);
@@ -4506,7 +4547,9 @@
 }
 
 .account-pass .account-login-methods h2,
-.account-pass .account-username-section h3 {
+.account-pass .account-username-section h3,
+.account-page--pass .account-login-methods h2,
+.account-page--pass .account-username-section h3 {
   margin: 0;
   color: var(--color-ink);
   font-family: var(--font-control);
@@ -5079,6 +5122,22 @@
 
 .account-receipt button:hover strong {
   color: var(--color-primary);
+}
+
+.account-shelf-toggle {
+  justify-self: start;
+  padding: 0;
+  color: var(--color-primary);
+  font-family: var(--font-control);
+  font-size: 12px;
+  font-weight: 850;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.account-shelf-toggle:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 820px) {
