@@ -4300,10 +4300,33 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Strona 1 — Karnet na (prawie) cały ekran zamiast małego kwadratu u góry. */
+  /* Strona 1 — Karnet startuje na pełny ekran; swipe w górę skraca kartę
+     i wysuwa z dołu przyciski Edytuj/Wyloguj. */
   .account-profile-layout--mobile .account-page--pass .account-pass-card {
-    min-height: min(62dvh, 540px);
+    min-height: min(84dvh, 680px);
     justify-content: space-between;
+    transition: min-height 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .account-profile-layout--mobile .account-page--pass.is-revealed .account-pass-card {
+    min-height: min(60dvh, 480px);
+  }
+
+  .account-profile-layout--mobile .account-page--pass .account-quick-actions {
+    position: sticky;
+    bottom: calc(env(safe-area-inset-bottom) + 8px);
+    opacity: 0;
+    transform: translateY(24px);
+    pointer-events: none;
+    transition:
+      opacity 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .account-profile-layout--mobile .account-page--pass.is-revealed .account-quick-actions {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
   }
 
   .account-profile-layout--mobile .account-page--pass .account-pass-head {
@@ -4324,6 +4347,11 @@
 @media (prefers-reduced-motion: reduce) {
   .account-profile-layout--mobile .account-pager {
     scroll-behavior: auto;
+  }
+
+  .account-profile-layout--mobile .account-page--pass .account-pass-card,
+  .account-profile-layout--mobile .account-page--pass .account-quick-actions {
+    transition: none;
   }
 }
 

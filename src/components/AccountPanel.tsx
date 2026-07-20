@@ -302,6 +302,9 @@ export function AccountPanel({
   }, [onClose])
 
   const isMobile = useMediaQuery(MOBILE_PANEL_MEDIA_QUERY)
+  // Mobilna strona 1: Karnet startuje na cały ekran; lekki swipe w górę
+  // (scroll) wysuwa z dołu przyciski i skraca kartę.
+  const [passRevealed, setPassRevealed] = useState(false)
 
   if (!user) {
     return null
@@ -1294,7 +1297,11 @@ export function AccountPanel({
           <div className="account-profile-layout account-profile-layout--mobile">
             {setupPanelNode}
             <div className="account-pager" role="group" aria-label="Sekcje profilu">
-              <section className="account-page account-page--pass" aria-labelledby="account-panel-title">
+              <section
+                className={`account-page account-page--pass${passRevealed ? ' is-revealed' : ''}`}
+                aria-labelledby="account-panel-title"
+                onScroll={(event) => setPassRevealed(event.currentTarget.scrollTop > 8)}
+              >
                 {passCardNode}
                 {quickActionsNode}
                 {editFormNode}
