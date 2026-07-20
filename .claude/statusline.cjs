@@ -62,7 +62,7 @@ function writeStateAtomic(file, obj) {
       fs.writeFileSync(file, JSON.stringify(obj), 'utf-8');
     } catch {}
     try {
-      fs.existsSync(tmp) && fs.unlinkSync(tmp);
+      if (fs.existsSync(tmp)) fs.unlinkSync(tmp);
     } catch {}
   }
 }
