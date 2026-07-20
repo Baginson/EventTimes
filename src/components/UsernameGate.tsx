@@ -14,7 +14,7 @@ import {
 } from '../utils/username'
 
 export function UsernameGate() {
-  const { user, markUsernameSet } = useAuth()
+  const { user, markUsernameSet, updateProfile } = useAuth()
   const [value, setValue] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -46,6 +46,7 @@ export function UsernameGate() {
       const idToken = await currentUser.getIdToken()
       const savedUsername = await registerUsername(idToken, normalized)
       await saveUsernameToProfile(currentUser.uid, savedUsername)
+      await updateProfile(savedUsername, currentUser.photoURL ?? null)
       markUsernameSet()
     } catch (submitError) {
       if (submitError instanceof UsernameTakenError) {

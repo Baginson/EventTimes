@@ -4,7 +4,7 @@ Jeden aktywny etap. Po ukończeniu przenieś podsumowanie do `tasks/archive/<dat
 
 ## Aktualny cel
 
-**Brak aktywnego etapu.** Duża seria zmian na profilu/Karnecie/auth (Etap I + sześć rund poprawek) ukończona 2026-07-21 (kod), zweryfikowana (`tsc`/`test`/`lint`/`build` czyste za każdym razem), **właśnie scommitowana i wypchnięta na `main`** na prośbę użytkownika. Następny krok: QA na żywej aplikacji (GitHub Pages po deployu CI) — patrz sekcja niżej.
+**Brak aktywnego etapu.** Duża seria zmian na profilu/Karnecie/auth (Etap I + siedem rund poprawek) ukończona 2026-07-21 (kod), zweryfikowana (`tsc`/`test`/`lint`/`build` czyste za każdym razem). Pierwsze sześć rund scommitowane i wypchnięte na `main`. **Siódma runda (scalenie nazwy wyświetlanej z nazwą użytkownika) jest zaimplementowana i zweryfikowana, ale jeszcze NIE scommitowana/wypchnięta** — czeka na decyzję o commicie+push. Następny krok: dokończyć commit/push tej rundy, potem QA na żywej aplikacji (GitHub Pages po deployu CI) — patrz sekcja niżej.
 
 ## Ukończone i wypchnięte (2026-07-21, chronologicznie)
 
@@ -14,14 +14,15 @@ Jeden aktywny etap. Po ukończeniu przenieś podsumowanie do `tasks/archive/<dat
 4. **Poprawka luki karta↔przyciski** — `flex: 1 1 auto` zamiast `margin-top:auto`, karta realnie wypełnia kolumnę.
 5. **„Edytuj profil" = dedykowany pełnoszerokościowy widok** — siatka kart, podgląd avatara na żywo, status e-maila + wysyłka linku weryfikacyjnego (`sendVerificationEmail`), Escape wychodzi z edycji zamiast zamykać panel.
 6. **Nazwa użytkownika obowiązkowa** — nowy niedomykalny `src/components/UsernameGate.tsx` blokuje aplikację dla każdego zalogowanego konta bez nazwy (e-mail/hasło, Google, GitHub, retroaktywnie istniejące konta). Przy okazji: pole `displayName` w edycji profilu przemianowane z mylącego „Nazwa użytkownika" na „Nazwa wyświetlana".
+7. **[NIESCOMMITOWANE] Nazwa wyświetlana scalona z nazwą użytkownika** — użytkownik ocenił posiadanie obu jako bezsensowne zaraz po zobaczeniu rundy 6 na żywo. Osobna sekcja „Nazwa użytkownika" w „Metody logowania" usunięta całkowicie; jedyne pole tożsamości (w „Podstawowych danych") jest teraz walidowane regułami nazwy użytkownika i przy zapisie synchronizuje Firebase `displayName`. `UsernameGate` też synchronizuje `displayName` od razu przy pierwszym ustawieniu. **Skutek widoczny**: Karnet od teraz pokazuje techniczny handle (np. `mikolaj-baginski`) zamiast swobodnego imienia — świadomy wybór, nie błąd.
 
-Pełne uzasadnienie i szczegóły każdej rundy: `docs/DECISIONS.md` (kilka wpisów pod 2026-07-21), `docs/ARCHITECTURE.md` §Auth i konto zaktualizowane o obowiązkową nazwę użytkownika.
+Pełne uzasadnienie i szczegóły każdej rundy: `docs/DECISIONS.md` (kilka wpisów pod 2026-07-21), `docs/ARCHITECTURE.md` §Auth i konto zaktualizowane o obowiązkową i scaloną nazwę użytkownika.
 
 Wszystko zaimplementowane przez Codex (kilka drobnych ręcznych poprawek po moim przeglądzie diffu po drodze), diff przejrzany w całości za każdym razem, zweryfikowane niezależnie po każdym kroku: `npx tsc --noEmit` czysto, `npm run test` 85/85, `npm run lint` czysto, `npm run build` czysto.
 
 ## Status Git
 
-Scommitowane i wypchnięte na `main` 2026-07-21 (zobacz `git log` dla dokładnych commitów/wiadomości). GitHub Pages deploy jest bramkowany przez `npm run test`+`npm run lint` w CI (Etap A) — sprawdzić, że workflow przeszedł, zanim uzna się to za w pełni wdrożone.
+Rundy 1-6 scommitowane i wypchnięte na `main` 2026-07-21 (zobacz `git log` dla dokładnych commitów/wiadomości). GitHub Pages deploy jest bramkowany przez `npm run test`+`npm run lint` w CI (Etap A) — sprawdzić, że workflow przeszedł, zanim uzna się to za w pełni wdrożone. **Runda 7 (scalenie nazw) jest tylko w working tree, jeszcze nie scommitowana** — `git status` pokaże zmiany w `AccountPanel.tsx` i `UsernameGate.tsx`.
 
 ## QA WIZUALNE PILNE — nic z tego nie było jeszcze sprawdzone na żywo
 

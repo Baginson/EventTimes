@@ -236,10 +236,8 @@ export function AccountPanel({
   const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(false)
   const [passwordValue, setPasswordValue] = useState('')
   const [passwordRepeat, setPasswordRepeat] = useState('')
-  const [isUsernameFormOpen, setIsUsernameFormOpen] = useState(false)
-  const [usernameValue, setUsernameValue] = useState('')
   const [isEditing, setIsEditing] = useState(false)
-  const [displayName, setDisplayName] = useState(user?.displayName ?? '')
+  const [usernameValue, setUsernameValue] = useState(user?.displayName ?? '')
   const [photoURL, setPhotoURL] = useState(user?.photoURL ?? '')
   const [isAvatarUploading, setIsAvatarUploading] = useState(false)
   const [avatarUploadError, setAvatarUploadError] = useState('')
@@ -360,7 +358,7 @@ export function AccountPanel({
   const initial = (currentUser.displayName ?? currentUser.email ?? 'U').charAt(0).toLocaleUpperCase('pl-PL')
 
   function startEditing() {
-    setDisplayName(currentUser.displayName ?? '')
+    setUsernameValue(profileSettings.username ?? '')
     setPhotoURL(currentUser.photoURL ?? googlePhotoURL ?? '')
     setProfileDefaultCity(profileSettings.userPreferences.defaultCity)
     setSelectedEventTypes(profileSettings.userPreferences.eventTypes)
@@ -373,7 +371,7 @@ export function AccountPanel({
   }
 
   function cancelEditing() {
-    setDisplayName(currentUser.displayName ?? '')
+    setUsernameValue(profileSettings.username ?? '')
     setPhotoURL(currentUser.photoURL ?? googlePhotoURL ?? '')
     setProfileDefaultCity(profileSettings.userPreferences.defaultCity)
     setSelectedEventTypes(profileSettings.userPreferences.eventTypes)
@@ -499,67 +497,12 @@ export function AccountPanel({
     }
   }
 
-  function openUsernameForm() {
-    setUsernameValue(profileSettings.username ?? '')
-    setMethodsError('')
-    setMethodsStatus('')
-    setIsUsernameFormOpen(true)
-  }
-
-  async function handleUsernameSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    if (methodsBusy) {
-      return
-    }
-
-    const normalizedUsername = normalizeUsername(usernameValue)
-
-    if (!isValidUsername(normalizedUsername)) {
-      setMethodsError(USERNAME_RULES_MESSAGE)
-      setMethodsStatus('')
-      return
-    }
-
-    setMethodsBusy(true)
-    setMethodsError('')
-    setMethodsStatus('')
-
-    try {
-      const idToken = await currentUser.getIdToken()
-      const savedUsername = await registerUsername(idToken, normalizedUsername)
-      await saveUsernameToProfile(currentUser.uid, savedUsername)
-      setProfileSettings((settings) => ({
-        ...settings,
-        username: savedUsername,
-      }))
-      setUsernameValue(savedUsername)
-      setIsUsernameFormOpen(false)
-      setMethodsStatus('Zapisano nazwę użytkownika. Możesz jej używać do logowania.')
-    } catch (usernameError) {
-      if (usernameError instanceof UsernameTakenError) {
-        setMethodsError(usernameError.message)
-      } else if (usernameError instanceof EventTimesApiConfigError) {
-        setMethodsError('Funkcja nazwy użytkownika jest chwilowo niedostępna.')
-      } else {
-        setMethodsError('Nie udało się zapisać nazwy użytkownika.')
-      }
-    } finally {
-      setMethodsBusy(false)
-    }
-  }
-
   async function saveProfile() {
-    const normalizedName = displayName.trim()
+    const normalizedUsername = normalizeUsername(usernameValue)
     const normalizedPhotoURL = photoURL.trim()
 
-    if (!normalizedName) {
-      setError('Nazwa użytkownika nie może być pusta.')
-      return
-    }
-
-    if (normalizedName.length > 32) {
-      setError('Nazwa użytkownika może mieć maksymalnie 32 znaki.')
+    if (!isValidUsername(normalizedUsername)) {
+      setError(USERNAME_RULES_MESSAGE)
       return
     }
 
@@ -572,9 +515,15 @@ export function AccountPanel({
     setError('')
 
     try {
+      if (normalizedUsername !== profileSettings.username) {
+        const idToken = await currentUser.getIdToken()
+        const savedUsername = await registerUsername(idToken, normalizedUsername)
+        await saveUsernameToProfile(currentUser.uid, savedUsername)
+      }
+
       const [, savedSettings] = await Promise.all([
         updateProfile(
-          normalizedName,
+          normalizedUsername,
           normalizedPhotoURL || googlePhotoURL || null,
         ),
         saveUserProfileSettings(
@@ -586,17 +535,23 @@ export function AccountPanel({
           true,
         ),
       ])
-      setProfileSettings((settings) => ({
+      setProfileSettings({
         ...savedSettings,
-        username: settings.username,
-      }))
+        username: normalizedUsername,
+      })
       setSetupDefaultCity(savedSettings.userPreferences.defaultCity)
       setSetupEventTypes(savedSettings.userPreferences.eventTypes)
       setIsSetupOpen(false)
       setSuccessMessage('Profil został zaktualizowany.')
       setIsEditing(false)
     } catch (profileError) {
-      setError(profileError instanceof Error ? profileError.message : 'Nie udało się zapisać profilu.')
+      if (profileError instanceof UsernameTakenError) {
+        setError(profileError.message)
+      } else if (profileError instanceof EventTimesApiConfigError) {
+        setError('Funkcja nazwy użytkownika jest chwilowo niedostępna. Spróbuj ponownie później.')
+      } else {
+        setError(profileError instanceof Error ? profileError.message : 'Nie udało się zapisać profilu.')
+      }
     } finally {
       setSavingProfile(false)
     }
@@ -1296,55 +1251,6 @@ export function AccountPanel({
         </form>
       )}
 
-      <div className="account-username-section">
-        <div className="account-username-head">
-          <div>
-            <h3>Nazwa użytkownika</h3>
-            <p>
-              Aktualna nazwa:{' '}
-              <strong>{profileSettings.username ?? 'Nieustawiona'}</strong>
-            </p>
-          </div>
-          <button type="button" disabled={methodsBusy} onClick={openUsernameForm}>
-            {profileSettings.username ? 'Zmień nazwę' : 'Ustaw nazwę'}
-          </button>
-        </div>
-
-        {isUsernameFormOpen && (
-          <form className="account-inline-form" onSubmit={(event) => void handleUsernameSubmit(event)}>
-            <label>
-              <span>Nazwa użytkownika</span>
-              <input
-                maxLength={20}
-                autoComplete="off"
-                value={usernameValue}
-                onChange={(event) => setUsernameValue(event.target.value)}
-              />
-            </label>
-            <small>{USERNAME_RULES_MESSAGE}</small>
-            {!linkedMethods.password && (
-              <small>Logowanie nazwą użytkownika działa z hasłem — ustaw też hasło powyżej.</small>
-            )}
-            <div className="account-inline-actions">
-              <button type="submit" disabled={methodsBusy}>
-                {methodsBusy ? 'Zapisywanie…' : 'Zapisz'}
-              </button>
-              <button
-                type="button"
-                disabled={methodsBusy}
-                onClick={() => {
-                  setUsernameValue(profileSettings.username ?? '')
-                  setIsUsernameFormOpen(false)
-                  setMethodsError('')
-                }}
-              >
-                Anuluj
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-
       {methodsError && <p className="account-methods-error" role="alert">{methodsError}</p>}
       {methodsStatus && <p className="account-methods-success" role="status">{methodsStatus}</p>}
     </section>
@@ -1396,14 +1302,16 @@ export function AccountPanel({
               )}
             </div>
             <label className="account-edit-name-field">
-              <span>Nazwa wyświetlana</span>
+              <span>Nazwa użytkownika</span>
               <input
-                maxLength={32}
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
+                maxLength={20}
+                autoComplete="off"
+                value={usernameValue}
+                onChange={(event) => setUsernameValue(event.target.value)}
               />
             </label>
           </div>
+          <small>{USERNAME_RULES_MESSAGE}</small>
           <label>
             <span>Link do zdjęcia profilowego</span>
             <input
