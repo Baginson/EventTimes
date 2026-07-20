@@ -17,7 +17,9 @@ import {
 } from '../auth/authProviders'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import { MOBILE_PANEL_MEDIA_QUERY } from '../constants/breakpoints'
 import { EVENT_TYPES } from '../data/searchFilters'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { EventTimesApiConfigError } from '../services/eventTimesApi'
 import {
   clearAllUserActions,
@@ -298,6 +300,8 @@ export function AccountPanel({
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
   }, [onClose])
+
+  const isMobile = useMediaQuery(MOBILE_PANEL_MEDIA_QUERY)
 
   if (!user) {
     return null
@@ -895,6 +899,362 @@ export function AccountPanel({
   const activeCollectionConfig =
     collections.find((collection) => collection.key === activeCollection) ?? collections[0]
   const passYear = new Date().getFullYear()
+  const setupPanelNode = isSetupOpen ? (
+    <section className="account-setup-panel" aria-labelledby="account-setup-title">
+      <div className="account-setup-copy">
+        <span>
+          <SlidersHorizontal className="ui-icon" aria-hidden="true" />
+          Pierwsza konfiguracja
+        </span>
+        <h2 id="account-setup-title">Dostosuj Event Times</h2>
+        <p>Ustaw domyślne miasto i typy wydarzeń, które chcesz szybciej odnajdywać.</p>
+      </div>
+
+      {renderPreferenceControls(
+        'setup',
+        setupEventTypes,
+        (eventType) => setSetupEventTypes((currentTypes) => toggleEventTypeSelection(currentTypes, eventType)),
+        setupDefaultCity,
+        setSetupDefaultCity,
+      )}
+
+      <div className="account-setup-actions">
+        <button className="button button-primary" type="button" disabled={savingSetup} onClick={() => void saveSetupPreferences()}>
+          {savingSetup ? 'Zapisywanie…' : 'Zapisz preferencje'}
+        </button>
+        <button className="button button-secondary" type="button" disabled={savingSetup} onClick={() => void skipSetup()}>
+          Pomiń na razie
+        </button>
+      </div>
+    </section>
+  ) : null
+  const passCardNode = (
+    <TiltCard>
+      <div className="account-pass-card">
+        <span className="account-pass-brand" aria-hidden="true">Event Times</span>
+        <div className="account-pass-head">
+          <div className="account-pass-photo" aria-hidden="true">
+            {avatarURL ? (
+              <img src={avatarURL} alt="" referrerPolicy="no-referrer" />
+            ) : (
+              <span className="account-pass-initial">{initial}</span>
+            )}
+          </div>
+          <div className="account-pass-identity">
+            <span className="account-pass-kicker">Karnet uczestnika</span>
+            <h1 id="account-panel-title">
+              {currentUser.displayName ?? currentUser.email ?? 'Użytkownik Event Times'}
+            </h1>
+            <p className="account-pass-email">{currentUser.email}</p>
+          </div>
+        </div>
+        <div className="account-role-row">
+          <span className="account-role-pill">{isAdmin ? 'Administrator' : 'Użytkownik'}</span>
+          {isAdmin && <span className="account-admin-badge">Panel admina</span>}
+        </div>
+
+        <div className="account-pass-footer" aria-hidden="true">
+          <span className="account-pass-barcode" />
+          <span className="account-pass-serial">Event Times &middot; {passYear}</span>
+        </div>
+      </div>
+    </TiltCard>
+  )
+  const quickActionsNode = (
+    <div className="account-quick-actions" aria-label="Szybkie akcje profilu">
+      <button type="button" onClick={startEditing} disabled={isEditing}>
+        <Pencil className="ui-icon" aria-hidden="true" />
+        Edytuj profil
+      </button>
+      <button type="button" onClick={() => void handleLogout()}>
+        <LogOut className="ui-icon" aria-hidden="true" />
+        Wyloguj
+      </button>
+    </div>
+  )
+  const loginMethodsNode = (
+    <section className="account-login-methods" aria-labelledby="login-methods-title">
+      <h2 id="login-methods-title">Metody logowania</h2>
+
+      <ul className="account-login-method-list">
+        <li className="account-login-method-row">
+          <div className="account-login-method-copy">
+            <strong>Google</strong>
+            <span className={`account-login-method-status${linkedMethods.google ? ' is-linked' : ''}`}>
+              {linkedMethods.google ? 'Połączone' : 'Niepołączone'}
+            </span>
+          </div>
+          {!linkedMethods.google ? (
+            <button
+              type="button"
+              disabled={methodsBusy}
+              onClick={() => void handleProviderLink('google')}
+            >
+              {methodsBusy ? 'Łączenie…' : 'Połącz'}
+            </button>
+          ) : linkedMethodCount > 1 ? (
+            <button
+              type="button"
+              disabled={methodsBusy}
+              onClick={() => void handleMethodUnlink('google')}
+            >
+              {methodsBusy ? 'Zapisywanie…' : 'Odłącz'}
+            </button>
+          ) : null}
+        </li>
+
+        <li className="account-login-method-row">
+          <div className="account-login-method-copy">
+            <strong>GitHub</strong>
+            <span className={`account-login-method-status${linkedMethods.github ? ' is-linked' : ''}`}>
+              {linkedMethods.github ? 'Połączone' : 'Niepołączone'}
+            </span>
+          </div>
+          {!linkedMethods.github ? (
+            <button
+              type="button"
+              disabled={methodsBusy}
+              onClick={() => void handleProviderLink('github')}
+            >
+              {methodsBusy ? 'Łączenie…' : 'Połącz'}
+            </button>
+          ) : linkedMethodCount > 1 ? (
+            <button
+              type="button"
+              disabled={methodsBusy}
+              onClick={() => void handleMethodUnlink('github')}
+            >
+              {methodsBusy ? 'Zapisywanie…' : 'Odłącz'}
+            </button>
+          ) : null}
+        </li>
+
+        <li className="account-login-method-row">
+          <div className="account-login-method-copy">
+            <strong>Hasło</strong>
+            <span className={`account-login-method-status${linkedMethods.password ? ' is-linked' : ''}`}>
+              {linkedMethods.password ? 'Ustawione' : 'Nieustawione'}
+            </span>
+            {linkedMethods.password && (
+              <small>Zmiana hasła: użyj „Nie pamiętam hasła” na ekranie logowania.</small>
+            )}
+          </div>
+          {!linkedMethods.password ? (
+            <button
+              type="button"
+              disabled={methodsBusy || isPasswordFormOpen}
+              onClick={() => {
+                setMethodsError('')
+                setMethodsStatus('')
+                setIsPasswordFormOpen(true)
+              }}
+            >
+              Ustaw hasło
+            </button>
+          ) : linkedMethodCount > 1 ? (
+            <button
+              type="button"
+              disabled={methodsBusy}
+              onClick={() => void handleMethodUnlink('password')}
+            >
+              {methodsBusy ? 'Zapisywanie…' : 'Odłącz'}
+            </button>
+          ) : null}
+        </li>
+      </ul>
+
+      {isPasswordFormOpen && (
+        <form className="account-inline-form" onSubmit={(event) => void handlePasswordSubmit(event)}>
+          <label>
+            <span>Nowe hasło</span>
+            <input
+              type="password"
+              autoComplete="new-password"
+              minLength={8}
+              value={passwordValue}
+              onChange={(event) => setPasswordValue(event.target.value)}
+            />
+          </label>
+          <label>
+            <span>Powtórz hasło</span>
+            <input
+              type="password"
+              autoComplete="new-password"
+              minLength={8}
+              value={passwordRepeat}
+              onChange={(event) => setPasswordRepeat(event.target.value)}
+            />
+          </label>
+          <div className="account-inline-actions">
+            <button type="submit" disabled={methodsBusy}>
+              {methodsBusy ? 'Zapisywanie…' : 'Zapisz hasło'}
+            </button>
+            <button
+              type="button"
+              disabled={methodsBusy}
+              onClick={() => {
+                setPasswordValue('')
+                setPasswordRepeat('')
+                setIsPasswordFormOpen(false)
+                setMethodsError('')
+              }}
+            >
+              Anuluj
+            </button>
+          </div>
+        </form>
+      )}
+
+      <div className="account-username-section">
+        <div className="account-username-head">
+          <div>
+            <h3>Nazwa użytkownika</h3>
+            <p>
+              Aktualna nazwa:{' '}
+              <strong>{profileSettings.username ?? 'Nieustawiona'}</strong>
+            </p>
+          </div>
+          <button type="button" disabled={methodsBusy} onClick={openUsernameForm}>
+            {profileSettings.username ? 'Zmień nazwę' : 'Ustaw nazwę'}
+          </button>
+        </div>
+
+        {isUsernameFormOpen && (
+          <form className="account-inline-form" onSubmit={(event) => void handleUsernameSubmit(event)}>
+            <label>
+              <span>Nazwa użytkownika</span>
+              <input
+                maxLength={20}
+                autoComplete="off"
+                value={usernameValue}
+                onChange={(event) => setUsernameValue(event.target.value)}
+              />
+            </label>
+            <small>{USERNAME_RULES_MESSAGE}</small>
+            {!linkedMethods.password && (
+              <small>Logowanie nazwą użytkownika działa z hasłem — ustaw też hasło powyżej.</small>
+            )}
+            <div className="account-inline-actions">
+              <button type="submit" disabled={methodsBusy}>
+                {methodsBusy ? 'Zapisywanie…' : 'Zapisz'}
+              </button>
+              <button
+                type="button"
+                disabled={methodsBusy}
+                onClick={() => {
+                  setUsernameValue(profileSettings.username ?? '')
+                  setIsUsernameFormOpen(false)
+                  setMethodsError('')
+                }}
+              >
+                Anuluj
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {methodsError && <p className="account-methods-error" role="alert">{methodsError}</p>}
+      {methodsStatus && <p className="account-methods-success" role="status">{methodsStatus}</p>}
+    </section>
+  )
+  const editFormNode = isEditing ? (
+    <section className="account-profile-edit" aria-labelledby="profile-edit-title">
+      <div className="account-section-heading">
+        <h2 id="profile-edit-title">Edycja profilu</h2>
+      </div>
+
+      <div className="account-profile-form">
+        <label>
+          <span>Nazwa użytkownika</span>
+          <input
+            maxLength={32}
+            value={displayName}
+            onChange={(event) => setDisplayName(event.target.value)}
+          />
+        </label>
+        <label>
+          <span>Link do zdjęcia profilowego</span>
+          <input
+            type="url"
+            placeholder="https://"
+            value={photoURL}
+            onChange={(event) => setPhotoURL(event.target.value)}
+          />
+        </label>
+        <small>Zdjęcie jest ustawiane wyłącznie przez link URL. Pliki nie są wysyłane.</small>
+        <section className="account-edit-preferences" aria-labelledby="account-edit-preferences-title">
+          <h3 id="account-edit-preferences-title">Preferencje wydarzeń</h3>
+          <p>Wybierz typy wydarzeń, które najbardziej Cię interesują.</p>
+          {renderPreferenceControls(
+            'edit',
+            selectedEventTypes,
+            (eventType) => setSelectedEventTypes((currentTypes) => toggleEventTypeSelection(currentTypes, eventType)),
+            profileDefaultCity,
+            setProfileDefaultCity,
+          )}
+        </section>
+        <div className="account-profile-form-actions">
+          <button
+            className="button button-primary"
+            type="button"
+            disabled={savingProfile}
+            onClick={() => void saveProfile()}
+          >
+            {savingProfile ? 'Zapisywanie…' : 'Zapisz profil'}
+          </button>
+          <button className="button button-secondary" type="button" disabled={savingProfile} onClick={cancelEditing}>
+            Anuluj
+          </button>
+        </div>
+      </div>
+      {isMobile ? loginMethodsNode : null}
+    </section>
+  ) : null
+  const feedbackNode = (
+    <>
+      {error && <p className="account-error" role="alert">{error}</p>}
+      {successMessage && <p className="account-success" role="status">{successMessage}</p>}
+    </>
+  )
+  const clearDataNode = (
+    <section className="account-clear-data" aria-labelledby="clear-data-title">
+      <h2 id="clear-data-title">Wyczyść aktywność</h2>
+      <p>Usuwa polubione i aktywności. Konto oraz profil pozostaną bez zmian.</p>
+      <button type="button" disabled={clearingData} onClick={() => void clearUserData()}>
+        <Trash2 className="ui-icon" aria-hidden="true" />
+        {clearingData ? 'Czyszczenie…' : 'Wyczyść aktywności'}
+      </button>
+    </section>
+  )
+  const collectionHeaderNode = (
+    <header className="account-collection-header">
+      <span>Moja kolekcja</span>
+      <h2 id="account-collection-title">Twoje wydarzenia</h2>
+    </header>
+  )
+  const statStripNode = (
+    <div className="account-stat-strip" role="group" aria-label="Kolekcje aktywności">
+      {collections.map((collection) => (
+        <button
+          key={collection.key}
+          className={`account-stat${
+            activeCollection === collection.key ? ' is-active' : ''
+          }`}
+          type="button"
+          aria-pressed={activeCollection === collection.key}
+          onClick={() => setActiveCollection(collection.key)}
+        >
+          <strong>{collection.items.length}</strong>
+          <span>{collection.label}</span>
+        </button>
+      ))}
+    </div>
+  )
+  const collectionListNode = renderCollectionList(activeCollectionConfig.items, activeCollectionConfig.emptyCopy)
+  const memoriesNode = renderMemoriesSection(sortedMemories)
+  const activityNode = renderRecentActivity(recentActivityItems)
+  const loadingNode = <p className="account-loading" role="status">Ładowanie aktywności…</p>
 
   return (
     <div className="account-modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -914,364 +1274,43 @@ export function AccountPanel({
           <X className="ui-icon" aria-hidden="true" />
         </button>
 
-        <div className="account-profile-layout">
-          {isSetupOpen && (
-            <section className="account-setup-panel" aria-labelledby="account-setup-title">
-              <div className="account-setup-copy">
-                <span>
-                  <SlidersHorizontal className="ui-icon" aria-hidden="true" />
-                  Pierwsza konfiguracja
-                </span>
-                <h2 id="account-setup-title">Dostosuj Event Times</h2>
-                <p>Ustaw domyślne miasto i typy wydarzeń, które chcesz szybciej odnajdywać.</p>
-              </div>
-
-              {renderPreferenceControls(
-                'setup',
-                setupEventTypes,
-                (eventType) => setSetupEventTypes((currentTypes) => toggleEventTypeSelection(currentTypes, eventType)),
-                setupDefaultCity,
-                setSetupDefaultCity,
-              )}
-
-              <div className="account-setup-actions">
-                <button className="button button-primary" type="button" disabled={savingSetup} onClick={() => void saveSetupPreferences()}>
-                  {savingSetup ? 'Zapisywanie…' : 'Zapisz preferencje'}
-                </button>
-                <button className="button button-secondary" type="button" disabled={savingSetup} onClick={() => void skipSetup()}>
-                  Pomiń na razie
-                </button>
-              </div>
+        {!isMobile ? (
+          <div className="account-profile-layout">
+            {setupPanelNode}
+            <section className="account-pass" aria-labelledby="account-panel-title">
+              {passCardNode}
+              {quickActionsNode}
+              {editFormNode}
+              {feedbackNode}
+              {loginMethodsNode}
+              {clearDataNode}
             </section>
-          )}
-
-          <section className="account-pass" aria-labelledby="account-panel-title">
-            <TiltCard>
-              <div className="account-pass-card">
-                <span className="account-pass-brand" aria-hidden="true">Event Times</span>
-                <div className="account-pass-head">
-                  <div className="account-pass-photo" aria-hidden="true">
-                    {avatarURL ? (
-                      <img src={avatarURL} alt="" referrerPolicy="no-referrer" />
-                    ) : (
-                      <span className="account-pass-initial">{initial}</span>
-                    )}
-                  </div>
-                  <div className="account-pass-identity">
-                    <span className="account-pass-kicker">Karnet uczestnika</span>
-                    <h1 id="account-panel-title">
-                      {currentUser.displayName ?? currentUser.email ?? 'Użytkownik Event Times'}
-                    </h1>
-                    <p className="account-pass-email">{currentUser.email}</p>
-                  </div>
-                </div>
-                <div className="account-role-row">
-                  <span className="account-role-pill">{isAdmin ? 'Administrator' : 'Użytkownik'}</span>
-                  {isAdmin && <span className="account-admin-badge">Panel admina</span>}
-                </div>
-
-                <div className="account-pass-footer" aria-hidden="true">
-                  <span className="account-pass-barcode" />
-                  <span className="account-pass-serial">Event Times &middot; {passYear}</span>
-                </div>
-              </div>
-            </TiltCard>
-
-            <div className="account-quick-actions" aria-label="Szybkie akcje profilu">
-              <button type="button" onClick={startEditing} disabled={isEditing}>
-                <Pencil className="ui-icon" aria-hidden="true" />
-                Edytuj profil
-              </button>
-              <button type="button" onClick={() => void handleLogout()}>
-                <LogOut className="ui-icon" aria-hidden="true" />
-                Wyloguj
-              </button>
-            </div>
-
-            {isEditing && (
-              <section className="account-profile-edit" aria-labelledby="profile-edit-title">
-                <div className="account-section-heading">
-                  <h2 id="profile-edit-title">Edycja profilu</h2>
-                </div>
-
-                <div className="account-profile-form">
-                  <label>
-                    <span>Nazwa użytkownika</span>
-                    <input
-                      maxLength={32}
-                      value={displayName}
-                      onChange={(event) => setDisplayName(event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    <span>Link do zdjęcia profilowego</span>
-                    <input
-                      type="url"
-                      placeholder="https://"
-                      value={photoURL}
-                      onChange={(event) => setPhotoURL(event.target.value)}
-                    />
-                  </label>
-                  <small>Zdjęcie jest ustawiane wyłącznie przez link URL. Pliki nie są wysyłane.</small>
-                  <section className="account-edit-preferences" aria-labelledby="account-edit-preferences-title">
-                    <h3 id="account-edit-preferences-title">Preferencje wydarzeń</h3>
-                    <p>Wybierz typy wydarzeń, które najbardziej Cię interesują.</p>
-                    {renderPreferenceControls(
-                      'edit',
-                      selectedEventTypes,
-                      (eventType) => setSelectedEventTypes((currentTypes) => toggleEventTypeSelection(currentTypes, eventType)),
-                      profileDefaultCity,
-                      setProfileDefaultCity,
-                    )}
-                  </section>
-                  <div className="account-profile-form-actions">
-                    <button
-                      className="button button-primary"
-                      type="button"
-                      disabled={savingProfile}
-                      onClick={() => void saveProfile()}
-                    >
-                      {savingProfile ? 'Zapisywanie…' : 'Zapisz profil'}
-                    </button>
-                    <button className="button button-secondary" type="button" disabled={savingProfile} onClick={cancelEditing}>
-                      Anuluj
-                    </button>
-                  </div>
-                </div>
+            <section className="account-collection" aria-labelledby="account-collection-title">
+              {collectionHeaderNode}
+              {loading ? loadingNode : (<>{statStripNode}{collectionListNode}{memoriesNode}{activityNode}</>)}
+            </section>
+          </div>
+        ) : (
+          <div className="account-profile-layout account-profile-layout--mobile">
+            {setupPanelNode}
+            <div className="account-pager" role="group" aria-label="Sekcje profilu">
+              <section className="account-page account-page--pass" aria-labelledby="account-panel-title">
+                {passCardNode}
+                {quickActionsNode}
+                {editFormNode}
+                {feedbackNode}
+                {clearDataNode}
               </section>
-            )}
-
-            {error && <p className="account-error" role="alert">{error}</p>}
-            {successMessage && <p className="account-success" role="status">{successMessage}</p>}
-
-            <section className="account-login-methods" aria-labelledby="login-methods-title">
-              <h2 id="login-methods-title">Metody logowania</h2>
-
-              <ul className="account-login-method-list">
-                <li className="account-login-method-row">
-                  <div className="account-login-method-copy">
-                    <strong>Google</strong>
-                    <span className={`account-login-method-status${linkedMethods.google ? ' is-linked' : ''}`}>
-                      {linkedMethods.google ? 'Połączone' : 'Niepołączone'}
-                    </span>
-                  </div>
-                  {!linkedMethods.google ? (
-                    <button
-                      type="button"
-                      disabled={methodsBusy}
-                      onClick={() => void handleProviderLink('google')}
-                    >
-                      {methodsBusy ? 'Łączenie…' : 'Połącz'}
-                    </button>
-                  ) : linkedMethodCount > 1 ? (
-                    <button
-                      type="button"
-                      disabled={methodsBusy}
-                      onClick={() => void handleMethodUnlink('google')}
-                    >
-                      {methodsBusy ? 'Zapisywanie…' : 'Odłącz'}
-                    </button>
-                  ) : null}
-                </li>
-
-                <li className="account-login-method-row">
-                  <div className="account-login-method-copy">
-                    <strong>GitHub</strong>
-                    <span className={`account-login-method-status${linkedMethods.github ? ' is-linked' : ''}`}>
-                      {linkedMethods.github ? 'Połączone' : 'Niepołączone'}
-                    </span>
-                  </div>
-                  {!linkedMethods.github ? (
-                    <button
-                      type="button"
-                      disabled={methodsBusy}
-                      onClick={() => void handleProviderLink('github')}
-                    >
-                      {methodsBusy ? 'Łączenie…' : 'Połącz'}
-                    </button>
-                  ) : linkedMethodCount > 1 ? (
-                    <button
-                      type="button"
-                      disabled={methodsBusy}
-                      onClick={() => void handleMethodUnlink('github')}
-                    >
-                      {methodsBusy ? 'Zapisywanie…' : 'Odłącz'}
-                    </button>
-                  ) : null}
-                </li>
-
-                <li className="account-login-method-row">
-                  <div className="account-login-method-copy">
-                    <strong>Hasło</strong>
-                    <span className={`account-login-method-status${linkedMethods.password ? ' is-linked' : ''}`}>
-                      {linkedMethods.password ? 'Ustawione' : 'Nieustawione'}
-                    </span>
-                    {linkedMethods.password && (
-                      <small>Zmiana hasła: użyj „Nie pamiętam hasła” na ekranie logowania.</small>
-                    )}
-                  </div>
-                  {!linkedMethods.password ? (
-                    <button
-                      type="button"
-                      disabled={methodsBusy || isPasswordFormOpen}
-                      onClick={() => {
-                        setMethodsError('')
-                        setMethodsStatus('')
-                        setIsPasswordFormOpen(true)
-                      }}
-                    >
-                      Ustaw hasło
-                    </button>
-                  ) : linkedMethodCount > 1 ? (
-                    <button
-                      type="button"
-                      disabled={methodsBusy}
-                      onClick={() => void handleMethodUnlink('password')}
-                    >
-                      {methodsBusy ? 'Zapisywanie…' : 'Odłącz'}
-                    </button>
-                  ) : null}
-                </li>
-              </ul>
-
-              {isPasswordFormOpen && (
-                <form className="account-inline-form" onSubmit={(event) => void handlePasswordSubmit(event)}>
-                  <label>
-                    <span>Nowe hasło</span>
-                    <input
-                      type="password"
-                      autoComplete="new-password"
-                      minLength={8}
-                      value={passwordValue}
-                      onChange={(event) => setPasswordValue(event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    <span>Powtórz hasło</span>
-                    <input
-                      type="password"
-                      autoComplete="new-password"
-                      minLength={8}
-                      value={passwordRepeat}
-                      onChange={(event) => setPasswordRepeat(event.target.value)}
-                    />
-                  </label>
-                  <div className="account-inline-actions">
-                    <button type="submit" disabled={methodsBusy}>
-                      {methodsBusy ? 'Zapisywanie…' : 'Zapisz hasło'}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={methodsBusy}
-                      onClick={() => {
-                        setPasswordValue('')
-                        setPasswordRepeat('')
-                        setIsPasswordFormOpen(false)
-                        setMethodsError('')
-                      }}
-                    >
-                      Anuluj
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              <div className="account-username-section">
-                <div className="account-username-head">
-                  <div>
-                    <h3>Nazwa użytkownika</h3>
-                    <p>
-                      Aktualna nazwa:{' '}
-                      <strong>{profileSettings.username ?? 'Nieustawiona'}</strong>
-                    </p>
-                  </div>
-                  <button type="button" disabled={methodsBusy} onClick={openUsernameForm}>
-                    {profileSettings.username ? 'Zmień nazwę' : 'Ustaw nazwę'}
-                  </button>
-                </div>
-
-                {isUsernameFormOpen && (
-                  <form className="account-inline-form" onSubmit={(event) => void handleUsernameSubmit(event)}>
-                    <label>
-                      <span>Nazwa użytkownika</span>
-                      <input
-                        maxLength={20}
-                        autoComplete="off"
-                        value={usernameValue}
-                        onChange={(event) => setUsernameValue(event.target.value)}
-                      />
-                    </label>
-                    <small>{USERNAME_RULES_MESSAGE}</small>
-                    {!linkedMethods.password && (
-                      <small>Logowanie nazwą użytkownika działa z hasłem — ustaw też hasło powyżej.</small>
-                    )}
-                    <div className="account-inline-actions">
-                      <button type="submit" disabled={methodsBusy}>
-                        {methodsBusy ? 'Zapisywanie…' : 'Zapisz'}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={methodsBusy}
-                        onClick={() => {
-                          setUsernameValue(profileSettings.username ?? '')
-                          setIsUsernameFormOpen(false)
-                          setMethodsError('')
-                        }}
-                      >
-                        Anuluj
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
-
-              {methodsError && <p className="account-methods-error" role="alert">{methodsError}</p>}
-              {methodsStatus && <p className="account-methods-success" role="status">{methodsStatus}</p>}
-            </section>
-
-            <section className="account-clear-data" aria-labelledby="clear-data-title">
-              <h2 id="clear-data-title">Wyczyść aktywność</h2>
-              <p>Usuwa polubione i aktywności. Konto oraz profil pozostaną bez zmian.</p>
-              <button type="button" disabled={clearingData} onClick={() => void clearUserData()}>
-                <Trash2 className="ui-icon" aria-hidden="true" />
-                {clearingData ? 'Czyszczenie…' : 'Wyczyść aktywności'}
-              </button>
-            </section>
-          </section>
-
-          <section className="account-collection" aria-labelledby="account-collection-title">
-            <header className="account-collection-header">
-              <span>Moja kolekcja</span>
-              <h2 id="account-collection-title">Twoje wydarzenia</h2>
-            </header>
-
-            {loading ? (
-              <p className="account-loading" role="status">Ładowanie aktywności…</p>
-            ) : (
-              <>
-                <div className="account-stat-strip" role="group" aria-label="Kolekcje aktywności">
-                  {collections.map((collection) => (
-                    <button
-                      key={collection.key}
-                      className={`account-stat${
-                        activeCollection === collection.key ? ' is-active' : ''
-                      }`}
-                      type="button"
-                      aria-pressed={activeCollection === collection.key}
-                      onClick={() => setActiveCollection(collection.key)}
-                    >
-                      <strong>{collection.items.length}</strong>
-                      <span>{collection.label}</span>
-                    </button>
-                  ))}
-                </div>
-                {renderCollectionList(activeCollectionConfig.items, activeCollectionConfig.emptyCopy)}
-                {renderMemoriesSection(sortedMemories)}
-                {renderRecentActivity(recentActivityItems)}
-              </>
-            )}
-          </section>
-        </div>
+              <section className="account-page account-page--memories" aria-label="Wspomnienia">
+                {loading ? loadingNode : memoriesNode}
+              </section>
+              <section className="account-page account-page--collection" aria-labelledby="account-collection-title">
+                {collectionHeaderNode}
+                {loading ? loadingNode : (<>{statStripNode}{collectionListNode}{activityNode}</>)}
+              </section>
+            </div>
+          </div>
+        )}
       </aside>
     </div>
   )

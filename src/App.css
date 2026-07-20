@@ -4253,6 +4253,80 @@
   flex-shrink: 0;
 }
 
+/* --- Profil mobilny: poziomy pager 3 stron (Etap H) ------------------- */
+/* Strona 1: Karnet + narzędzia · Strona 2: Wspomnienia · Strona 3: kolekcja + aktywność. */
+@media (max-width: 820px) {
+  .account-profile-layout.account-profile-layout--mobile {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    gap: 0;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+  }
+
+  .account-profile-layout--mobile .account-pager {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: row;
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .account-profile-layout--mobile .account-pager::-webkit-scrollbar {
+    display: none;
+  }
+
+  .account-profile-layout--mobile .account-page {
+    display: flex;
+    flex: 0 0 100%;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    padding: calc(env(safe-area-inset-top) + 58px) 16px calc(env(safe-area-inset-bottom) + 24px);
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Strona 1 — Karnet na (prawie) cały ekran zamiast małego kwadratu u góry. */
+  .account-profile-layout--mobile .account-page--pass .account-pass-card {
+    min-height: min(62dvh, 540px);
+    justify-content: space-between;
+  }
+
+  .account-profile-layout--mobile .account-page--pass .account-pass-head {
+    grid-template-columns: 88px minmax(0, 1fr);
+  }
+
+  .account-profile-layout--mobile .account-page--pass .account-pass-photo {
+    width: 88px;
+    height: 88px;
+  }
+
+  /* Nagłówek kolekcji nie musi być duży na własnej stronie. */
+  .account-profile-layout--mobile .account-page--collection .account-collection-header {
+    position: static;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-profile-layout--mobile .account-pager {
+    scroll-behavior: auto;
+  }
+}
+
 .account-pass-brand {
   align-self: flex-start;
   padding: 3px 10px 2px;
