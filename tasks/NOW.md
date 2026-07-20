@@ -4,7 +4,20 @@ Jeden aktywny etap. Po ukończeniu przenieś podsumowanie do `tasks/archive/<dat
 
 ## Aktualny cel
 
-**Etap B (launch readiness) — UKOŃCZONY 2026-07-20** (commit `adf8e5e`). **Etap E′ (fundament mobilny) — UKOŃCZONY 2026-07-20** (niezacommitowany — patrz niżej). Następny: **Etap H — profil mobilny** (plan krótkoterminowy #1/#2/#7a).
+**Etap H — profil mobilny (w toku).** Ukończone wcześniej: Etap B (`adf8e5e`), Etap E′ (`3ebd1fc`).
+
+### Etap H część 1 — UKOŃCZONA (commit `49c26d5`)
+- `AccountPanel.tsx`: gałąź `isMobile` (delegacja refaktoru do Codex, diff zrecenzowany). **Desktop render bajt-identyczny (2 kolumny).** Mobile: pager 3 stron złożony z tych samych kawałków — strona 1 Karnet + narzędzia (metody logowania **na mobile wewnątrz „Edytuj profil"**), strona 2 Wspomnienia, strona 3 kolekcja + Ostatnia aktywność.
+- `App.css`: poziomy pager CSS scroll-snap (bez nowych zależności), Karnet na prawie cały ekran na mobile, `prefers-reduced-motion` obsłużone.
+- Zielono: tsc czysto, test 85/85, lint czysto, build OK.
+- **QA wizualne mobilnego widoku (zalogowany) NIEWYKONANE** — panel wymaga auth (żywy Firebase + login), nie da się headless tutaj. Do sprawdzenia przez użytkownika na żywej aplikacji na telefonie.
+
+### Etap H część 2 — DO ZROBIENIA (H3)
+- **Ucinanie nazwy użytkownika i e-maila** na karcie Karnetu — CSS: pozwolić zawijać / `clamp()` zamiast `text-overflow: ellipsis` na `.account-pass-identity h1` i `.account-pass-email` (zgłoszony bug).
+- **#7a**: `recentActivityLimit` 5 → 3 (`AccountPanel.tsx:~77`) + afordancja „Pokaż całą aktywność" (rozwija inline; pełny panel z filtrami = osobny projekt #7b).
+- **Kropki/wskaźnik stron** pagera (discoverability — dziś użytkownik może nie wiedzieć, że można swipe'ować). Wymaga małego stanu JS + onScroll.
+- Dopracowanie stylu metod logowania wewnątrz „Edytuj profil" na mobile.
+- Po H3: **Etap I** (swipe-w-dół zamyka bottom-sheet, #4), **Etap J** (redesign wspomnień, #5).
 
 ## Ukończone (Etap E′ — fundament mobilny)
 
