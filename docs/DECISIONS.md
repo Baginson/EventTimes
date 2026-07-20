@@ -112,3 +112,19 @@ Chronologiczny zapis decyzji, które kształtują projekt, wraz z ich uzasadnien
 **Dlaczego**: Wymóg produktowy — brak duplikacji profili/wspomnień/list przy zmianie metody logowania; free-first (bez Cloud Functions i płatnych SMS-ów); KV zamiast Firestore, żeby klient nie mógł czytać cudzych adresów e-mail przy zachowaniu darmowej warstwy.
 **Ograniczenie**: Istniejących historycznych duplikatów kont (dwa uid, ten sam e-mail) nie scalamy automatycznie — ewentualna migracja to osobna ręczna operacja. Rate limiting na KV jest best-effort (eventual consistency).
 **Status**: Wdrożone (2026-07-20). Worker `eventtimes-api` ma endpointy `/api/auth/username-login` i `/api/auth/username` (binding `AUTH_KV`, var `FIREBASE_PROJECT_ID=eventtimes-b4c86`, sekret `FIREBASE_WEB_API_KEY`) — zweryfikowane sondami na żywym Workerze (generyczne 401, 405 na złej metodzie, rate limit 429, CORS z `Authorization`; Ticketmaster/travel-time bez regresji). Kod Workera żyje w osobnym repo `C:\Users\Mikołaj\eventtimes-api` (zcommitowany lokalnie, bez remote). GitHub provider skonfigurowany w Firebase Console + GitHub OAuth App. Pozostaje ręczna checklista logowania nazwą/łączenia kont w żywej aplikacji (`docs/AUTH_SETUP.md` §5).
+
+## 2026-07-20 — Etap B (launch readiness) + decyzje z przeglądu przed dalszym rozwojem
+
+**Decyzja**: Domknięto Etap B: `index.html` dostał `description`, komplet Open Graph (`og:type/site_name/locale/title/description/url/image` + wymiary/alt), Twitter Card (`summary_large_image`) i `theme-color=#064BFF`. `og:image` to `public/og-image.png` (znak marki 1734×907, ≈1.91:1; źródłowy plik leży w gitignored `docs/design-references/OG-Image.png`, więc kopia trafiła do `public/`, żeby GitHub Pages ją serwował). `og:url`/`og:image` są absolutne (`https://baginson.github.io/EventTimes/…`), bo scrapery OG wymagają pełnych URL-i — dlatego nie użyto `%BASE_URL%`. Usunięto nieużywany `public/favicon.svg` (ikona to `brand/event-times-mark.png`) i lokalne `vite-*.log`.
+
+Przy okazji przeglądu ustalono kierunki (odpowiedzi użytkownika):
+- **Breakpointy**: 820/1100 zostają **oficjalnymi** breakpointami; `docs/UI_RULES.md` §18 będzie do nich dostrojone (Etap E′), zamiast refaktoryzować kod do 767/768/1024. Uzasadnienie: to najpierw strona, docelowo apka na tym samym kodzie — mniej churnu.
+- **Pole `status`** (`published/draft/…`): potwierdzone jako martwe (nieczytane w UI i nawet niezapisywane przez formularze) — **do usunięcia w Etapie F**.
+- **„Idź na event z innym użytkownikiem" (#6)**: realizowane jako **dołączanie do eventu przez link zapraszający**, bez pełnego systemu znajomych/wiadomości — osobny projekt danych+reguł, nie batch UI.
+- **Wspomnienia (#5)**: pełny redesign + rozbudowa (dziś zarys) — z krokiem projektowym UX.
+- **Pełny panel aktywności (#7b)**: osobny duży projekt z filtrowaniem po typie aktywności.
+- **Fallback localStorage**: produkcja stoi na Firebase; serwisy per-użytkownik/admina świadomie **nie mają** fallbacku (`ARCHITECTURE.md` §Service layer sprostowane).
+
+**Dlaczego**: Etap B był zadeklarowanym „następnym" i domyka gotowość do publicznego udostępnienia (podgląd linku w social/komunikatorach, czyste repo). Reszta decyzji ustawia kolejność planu krótkoterminowego użytkownika bez rozdymania Etapu B.
+
+**Status**: Obowiązuje. Zweryfikowane: `npm run test` 85/85, `npm run lint` czysto, `npm run build` czysto. Poprawiono nieaktualne dokumenty: `tasks/NOW.md`, `docs/PROJECT_STATE.md` (reset hasła nie jest już brakiem/blokerem; 85/85), `docs/ARCHITECTURE.md` (§Stack: +GitHub/username; §Service layer: brak fallbacku dla actions/memories), `docs/ROADMAP.md` (nowe etapy E′/H/I/J + osobne projekty #6/#7b/C).

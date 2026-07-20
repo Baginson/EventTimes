@@ -2,7 +2,7 @@
 
 Ostatnia aktualizacja: 2026-07-19, po drobnych poprawkach UX paneli: klasyczna ikona share (`Share`), kompaktowy przycisk nawigacji (`NavigationButton`: Android `geo:` → systemowy wybór aplikacji, iOS własne menu Apple/Google Maps, desktop Google Maps web), klikalna nazwa miejsca w panelu eventu (zamyka event, otwiera panel miejsca) oraz centrowanie pinezki w widocznej części mapy przy każdym wyborze miejsca/eventu (pomiar realnej szerokości panelu na desktopie i wysokości dolnego arkusza na mobile przez `getMapFocusPadding` w `App.tsx`; bez ponownego centrowania przy pan/zoom użytkownika). Wcześniej tego dnia: frontend podłączony do backendu Cloudflare Worker (`eventtimes-api`): Ticketmaster przez proxy Workera (bez klucza we froncie) + sekcja „Dojazd" (Geoapify) w panelach miejsca i wydarzenia. Utrzymuj ten plik po każdej nietrywialnej zmianie — to jedno miejsce do sprawdzenia, "co naprawdę działa teraz".
 
-## Działa (zweryfikowane: `npm run test` 79/79, `npm run lint` czysto, `npm run build` czysto)
+## Działa (zweryfikowane: `npm run test` 85/85, `npm run lint` czysto, `npm run build` czysto)
 
 - Mapa + pinezki venues (Leaflet), panel venue, panel eventu, search (tryby Places/Events), filtry miasta/typu/daty, grupowanie eventów (Trwa teraz/Nadchodzące/Minione).
 - Firebase Auth multi-provider (2026-07-19): e-mail/hasło (logowanie, rejestracja, reset „Nie pamiętam hasła" z neutralnym komunikatem), Google i GitHub (rejestr providerów w `authProviders.ts`), łączenie kont przez pending credential po `auth/account-exists-with-different-credential`, „Ustaw hasło" dla kont Google, sekcja „Metody logowania" w profilu (Połącz/Odłącz z blokadą ostatniej metody) i nazwa użytkownika (walidacja + `usernameService` → Worker). `venues`/`events`/akcje użytkownika oparte o Firestore, bramkowanie `admins/{uid}`, reguły Firestore — przejrzane, poprawne. GitHub provider skonfigurowany w Firebase Console + GitHub OAuth App (2026-07-20); Worker `eventtimes-api` wdrożony z endpointami `/api/auth/username-login` i `/api/auth/username` (KV `AUTH_KV`, sekret `FIREBASE_WEB_API_KEY`) — zweryfikowane sondami na żywym Workerze. **Pozostaje jeszcze**: ręczna checklista logowania nazwą użytkownika i kombinacji łączenia kont w żywej aplikacji (`docs/AUTH_SETUP.md` §5) — wymaga prawdziwych popupów OAuth, nie do pokrycia testami jednostkowymi.
@@ -30,18 +30,18 @@ Ostatnia aktualizacja: 2026-07-19, po drobnych poprawkach UX paneli: klasyczna i
 
 ## Brakuje całkowicie
 
-- Reset hasła (flow Firebase Auth niezaimplementowany nigdzie).
-- Usunięcie konta / eksport danych osobowych (istnieje tylko "clear activity").
-- SEO/Open Graph/theme-color meta tags w `index.html` (obecnie zero).
+- Usunięcie konta / eksport danych osobowych (istnieje tylko "clear activity") — Etap C.
 - Komunikat empty-Firestore dla użytkowników niebędących adminami (obecnie tylko admin-only).
+
+(Reset hasła **jest** zaimplementowany — `AuthProvider.resetPassword` + tryb reset w `AuthModal`. SEO/OG/theme-color meta **dodane w Etapie B 2026-07-20** — patrz niżej.)
 
 ## Zablokowane przed publicznym launchem (P1)
 
 1. Error boundary — **done** (Etap A).
 2. Retry przy błędzie ładowania danych — **done** (Etap A).
 3. ~~`VITE_TICKETMASTER_API_KEY` w CI~~ — **rozwiązane 2026-07-19**: Ticketmaster idzie przez Cloudflare Worker; frontend potrzebuje tylko `VITE_EVENTTIMES_API_URL` (nie-sekret, ustawiony wprost w `deploy.yml`). Sekret `VITE_TICKETMASTER_API_KEY` w GitHub Actions Secrets i `.env.local` jest zbędny — może zostać usunięty przez użytkownika (klucz żyje teraz w sekretach Workera).
-4. Flow resetu hasła.
-5. SEO/OG/theme-color meta tags.
+4. Flow resetu hasła — **done** (praca nad auth, 2026-07-19: `AuthProvider.resetPassword`, „Nie pamiętam hasła" w `AuthModal`).
+5. SEO/OG/theme-color meta tags — **done** (Etap B, 2026-07-20: `description` + Open Graph + Twitter + `theme-color` w `index.html`, `og:image` = `public/og-image.png`).
 6. Skracanie opisu VenuePanel — **done** (UI polish pass, 2026-07-17): >450 znaków skraca się z Czytaj więcej/Zwiń opis, analogicznie do EventPanel.
 7. Escape-to-close / `role="dialog"` na VenuePanel i EventPanel — **done** (UI polish pass, 2026-07-17). Celowo non-modal: bez `aria-modal`, bez focus trap (mapa musi pozostać dostępna); focus przenosi się do panelu po otwarciu. Pinezki mapy dostały też dostępne nazwy (`role="img"` + escaped `aria-label`).
 8. Bramka test/lint w CI — **done** (Etap A).
@@ -58,7 +58,7 @@ Ostatnia aktualizacja: 2026-07-19, po drobnych poprawkach UX paneli: klasyczna i
 
 ## Obecne priorytety
 
-Praca idzie według etapowego planu z audytu, po jednym małym zadaniu delegowanym do Codex naraz, zweryfikowanym przed przejściem dalej. Ukończone: Etap A (stabilność), UI polish pass 1 (2026-07-17: normalizacja design tokens — 22 ad-hoc radii/one-off shadows/zbędne grays sprowadzone do tokenów z dwoma nowymi tokenami zachowującymi hierarchię cienia CTA; parytet skracania VenuePanel; semantyka dialogów paneli; nazwy a11y pinezek; touch targets ≥40px; minimum 14px dla tekstu kart; chevrons nagłówków grup; `text-wrap: balance` na tytułach paneli). Następnie według `docs/ROADMAP.md`: Etap B (gotowość do publicznego launchu: SEO meta, decyzja sekretu CI Ticketmaster, porządki w repo).
+Praca idzie według etapowego planu z audytu, po jednym małym zadaniu naraz, zweryfikowanym przed przejściem dalej. **Etap B (gotowość do launchu) ukończony 2026-07-20**: SEO/OG/theme-color meta w `index.html` (`og:image` = `public/og-image.png`), usunięty nieużywany `public/favicon.svg` i lokalne `vite-*.log`, poprawione nieaktualne dokumenty. Następne (po decyzjach z przeglądu 2026-07-20 — patrz `docs/ROADMAP.md`): fundament mobilny (przyjęcie breakpointów 820/1100 jako oficjalnych), potem plan krótkoterminowy użytkownika (profil mobilny, gest swipe-to-close, redesign wspomnień) oraz osobne duże projekty (dołączanie do eventu przez link, pełny panel historii aktywności, Etap C — usuwanie konta/eksport GDPR). Ukończone wcześniej: Etap A (stabilność), UI polish pass 1 (2026-07-17: normalizacja design tokens — 22 ad-hoc radii/one-off shadows/zbędne grays sprowadzone do tokenów z dwoma nowymi tokenami zachowującymi hierarchię cienia CTA; parytet skracania VenuePanel; semantyka dialogów paneli; nazwy a11y pinezek; touch targets ≥40px; minimum 14px dla tekstu kart; chevrons nagłówków grup; `text-wrap: balance` na tytułach paneli). Następnie według `docs/ROADMAP.md`: Etap B (gotowość do publicznego launchu: SEO meta, decyzja sekretu CI Ticketmaster, porządki w repo).
 
 ## Obowiązujące decyzje architektoniczne
 

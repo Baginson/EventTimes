@@ -5,12 +5,22 @@ Etapowy plan z pełnego audytu 2026-07-16. Każdy etap jest delegowany do Codex 
 | Etap | Cel | Status |
 |---|---|---|
 | **A — Stabilność** | Error boundary, retry ładowania danych, bramka test/lint w CI | ✅ Ukończone (2026-07-16) |
-| **B — Gotowość do publicznego launchu** | SEO/OG/theme-color meta tags, porządki w repo (zbędne logi, nieużywany favicon). ~~Decyzja CI dla `VITE_TICKETMASTER_API_KEY`~~ — rozwiązane 2026-07-19 backendem Cloudflare Worker (zobacz `DECISIONS.md`) | Następne |
-| **C — Cykl życia konta** | Reset hasła, usunięcie konta / eksport danych | Planowane |
-| **D — Panele i dostępność** | Skracanie opisu VenuePanel (parytet z EventPanel), Escape/`role="dialog"`/focus trap w VenuePanel + EventPanel | Planowane |
-| **E — Spójność mobile** | Uzgodnić breakpointy z `docs/UI_RULES.md`, naprawić zbyt małe touch targets/tekst (`.search-chevron`, `.event-card-description`) | Planowane |
-| **F — Porządki techniczne** | Skonsolidować `requireDb()`, spójna walidacja współrzędnych, rozwiązać martwe pole `status`, zmniejszyć duplikację VenuePanel/EventPanel | Planowane |
+| **B — Gotowość do publicznego launchu** | SEO/OG/theme-color meta tags (`og:image` = `public/og-image.png`), porządki w repo (usunięte zbędne logi i nieużywany favicon). ~~Decyzja CI dla `VITE_TICKETMASTER_API_KEY`~~ — rozwiązane 2026-07-19 backendem Cloudflare Worker (zobacz `DECISIONS.md`) | ✅ Ukończone (2026-07-20) |
+| **E′ — Fundament mobilny** | Przyjęcie 820/1100 jako **oficjalnych** breakpointów (decyzja 2026-07-20), aktualizacja `docs/UI_RULES.md` §18; warunek wstępny dla etapów mobilnych H/I | Następne |
+| **H — Profil mobilny** (plan krótkoterminowy #1, #2, #7a) | Skalowanie i animacja napisu „Karnetu" na mobile (#1), przebudowa układu profilu na mobile (#2), „Ostatnia aktywność" → 3 pozycje + afordancja „pokaż więcej" (#7a) | Planowane |
+| **I — Gesty paneli** (plan krótkoterminowy #4) | Gest przeciągnięcia w dół zamyka bottom-sheet/panele na mobile; bez kolizji z wewnętrznym scrollem, z poszanowaniem `prefers-reduced-motion` | Planowane |
+| **J — Wspomnienia** (plan krótkoterminowy #5) | Redesign wizualny + rozbudowa sekcji wspomnień w panelu eventu (dziś tylko zarys); wymaga wcześniejszego projektu UX | Planowane |
+| **C — Cykl życia konta** | Usunięcie konta / eksport danych (reset hasła już zrobiony) | Planowane |
+| **D — Panele i dostępność** | Escape/`role="dialog"` już zrobione; pozostaje ewentualny dalszy parytet i drobne a11y | Planowane |
+| **E — Spójność mobile** | Po E′: naprawić pozostałe zbyt małe touch targets/tekst, dopracować bottom-sheety | Planowane |
+| **F — Porządki techniczne** | Skonsolidować `requireDb()` (4 serwisy), spójna walidacja współrzędnych, **usunąć martwe pole `status`** (decyzja 2026-07-20: nieczytane i niezapisywane w formularzach), zmniejszyć duplikację VenuePanel/EventPanel | Planowane |
 | **G — Dokumentacja** | Utrzymywać `docs/` jako aktualne po każdym etapie (ciągłe, nie jednorazowy pass) | W toku |
+
+## Osobne duże projekty (poza batchem UI — wymagają własnego projektu/decyzji)
+
+- **Dołączanie do eventu przez link** (plan krótkoterminowy #6). Skromna warstwa społeczna: właściciel akcji „Chcę iść/Byłem" generuje link zapraszający, inny zalogowany użytkownik przez link dopisuje się do tego eventu. **Bez** systemu znajomych i wiadomości w aplikacji (ewentualnie w przyszłości). Wymaga nowej, wąsko określonej struktury współdzielonej w Firestore + reguł; free-first. Wysokie ryzyko/rozmiar — nie wchodzi do batcha UI.
+- **Pełny panel historii aktywności** (plan krótkoterminowy #7b). Osobny panel z całą historią, **filtrowanie po typie aktywności** (Polubione / Chcę iść / Byłem) i rozbudowa opcji. Duży, niezależny od #7a (skrócenia do 3 pozycji).
+- Bundle 1,15 MB w jednym chunku — rozważyć lazy-load Admin/Auth (perf launchu).
 
 ## Odłożone (nie blokują MVP)
 

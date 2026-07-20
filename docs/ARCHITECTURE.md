@@ -10,7 +10,7 @@ Event Times to interaktywna mapa wydarzeń: pozwala odkrywać ciekawe miejsca i 
 
 - React 19 + TypeScript + Vite 8, aplikacja single-page (bez routera — stan paneli żyje w `App.tsx`, bez deep linków na poziomie routera).
 - Leaflet / react-leaflet do mapy.
-- Firebase Auth (email/password + Google) i Cloud Firestore dla danych.
+- Firebase Auth (email/hasło + reset, Google, GitHub, logowanie nazwą użytkownika przez Worker) i Cloud Firestore dla danych.
 - Hosting na GitHub Pages, base path `/EventTimes/` (`vite.config.ts`).
 - Vitest do testów jednostkowych, oxlint do lintowania. Brak zainstalowanej biblioteki do testów komponentów.
 - Free-first: bez Cloud Functions, bez Firebase Storage, bez płatnego Google Maps/Places API.
@@ -94,7 +94,9 @@ Status admina opiera się wyłącznie na dokumencie Firestore (`admins/{uid}` ex
 
 ## Service layer
 
-`src/services/*.ts` (`venueService`, `eventService`, `adminService`, `userProfileService`, `userActionService`, `ticketmasterService`, `localBackupService`) stosują ten sam wzorzec: jeśli `db` (`src/lib/firebase.ts`) jest skonfigurowane, czytają/zapisują Firestore; jeśli nie (`VITE_FIREBASE_*` env vars nie istnieją), przechodzą na `localStorage`, seedowane przy pierwszym użyciu z `mockVenues`/`mockEvents`. Ten fallback to realna ścieżka runtime (każdy deployment bez env vars Firebase w nią trafia), nie tylko fixture testowy — mockowe współrzędne są w komentarzu oznaczone jako przybliżone i powinny być traktowane jako dane wyłącznie do UI-dev, nie jako prawdziwe dane venues do wysyłki.
+Dane publiczne (`venueService`, `eventService`) stosują wzorzec Firestore-primary z fallbackiem localStorage: jeśli `db` (`src/lib/firebase.ts`) jest skonfigurowane, czytają/zapisują Firestore; jeśli nie (`VITE_FIREBASE_*` env vars nie istnieją), przechodzą na `localStorage`, seedowane przy pierwszym użyciu z `mockVenues`/`mockEvents`. Mockowe współrzędne są przybliżone — dane wyłącznie do UI-dev, nie do wysyłki.
+
+Serwisy per-użytkownik i admina (`userActionService`, `memoryService`, `userProfileService`, `adminService`) **wymagają Firebase**: używają lokalnego `requireDb()` i rzucają czytelny błąd, gdy `db` nie istnieje (brak fallbacku localStorage — akcje, wspomnienia, profil i bramkowanie admina nie mają sensu bez zalogowanego użytkownika). Produkcja stoi na Firebase, więc to jest ścieżka docelowa. `requireDb()` jest dziś zduplikowany w tych czterech serwisach — konsolidacja zaplanowana w Etapie F. `ticketmasterService`/`travelTimeService` idą przez Cloudflare Worker; `localBackupService` to import/eksport JSON w localStorage.
 
 ## Mapa i geo
 
