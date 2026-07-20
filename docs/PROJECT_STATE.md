@@ -23,7 +23,7 @@ Ostatnia aktualizacja: 2026-07-19, po drobnych poprawkach UX paneli: klasyczna i
 
 - **Pole `status`** (`published/draft/cancelled` na eventach, `active/draft/archived` na venues) jest zapisywane przez formularze/services, ale nigdzie nieczytane w UI — martwe, nieudokumentowane pole. Wymaga decyzji: podłączyć jako prawdziwy publish workflow albo usunąć.
 - **Mobilny panel admina** wizualnie jest bottom sheetem, ale funkcjonalnie identyczny z desktopem — pełny wielozakładkowy CRUD + Ticketmaster + narzędzia danych na ekranie telefonu, bez prawdziwego uproszczenia.
-- **Breakpointy rozjeżdżają się z `docs/UI_RULES.md`**: kod używa 820px/1100px; pisemna zasada mówi 767/768 i 1023/1024. Obecnie nie ma prawdziwego layoutu tabletowego.
+- **Breakpointy: rozjazd rozwiązany (Etap E′, 2026-07-20)** — 820/1100/767 przyjęte jako oficjalne, `docs/UI_RULES.md` §18 zaktualizowane, literał 820px scalony we wspólną stałą `src/constants/breakpoints.ts` (`App.tsx` + `usePanelMotion.ts`). Prawdziwy layout tabletowy nadal odłożony.
 - **Dwa równoległe systemy feedbacku**: globalny `AppToast` vs. per-component inline bloki error/success (Admin/Account/Event/Venue panels, AuthModal) — nieujednolicone.
 - Walidacja współrzędnych jest niespójna między `venueService.isVenue` (brak sprawdzenia zakresu lat/lng) i `googleMaps.isValidCoordinates` (sprawdza zakres).
 - Escape-to-close przy otwartym search dropdownie nad panelem zamyka oba naraz (nakładają się listenery na poziomie document — ten sam istniejący wcześniej wzorzec co AccountPanel; drobne, śledzone).

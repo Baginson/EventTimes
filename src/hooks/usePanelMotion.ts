@@ -1,11 +1,12 @@
 import { useReducedMotion } from 'framer-motion'
+import { MOBILE_PANEL_MEDIA_QUERY } from '../constants/breakpoints'
 import { useMediaQuery } from './useMediaQuery'
 
 const easeOut = [0.2, 0.8, 0.2, 1] as const
 
 export function usePanelMotion() {
   const shouldReduceMotion = useReducedMotion()
-  const isMobilePanel = useMediaQuery('(max-width: 820px)')
+  const isMobilePanel = useMediaQuery(MOBILE_PANEL_MEDIA_QUERY)
 
   if (shouldReduceMotion) {
     return {

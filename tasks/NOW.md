@@ -4,45 +4,40 @@ Jeden aktywny etap. Po ukończeniu przenieś podsumowanie do `tasks/archive/<dat
 
 ## Aktualny cel
 
-**Etap B (gotowość do publicznego launchu) — UKOŃCZONY 2026-07-20.** Następny: **Etap E′ — fundament mobilny** (przyjęcie 820/1100 jako oficjalnych breakpointów + aktualizacja `docs/UI_RULES.md` §18), warunek wstępny dla etapów mobilnych H/I z planu krótkoterminowego.
+**Etap B (launch readiness) — UKOŃCZONY 2026-07-20** (commit `adf8e5e`). **Etap E′ (fundament mobilny) — UKOŃCZONY 2026-07-20** (niezacommitowany — patrz niżej). Następny: **Etap H — profil mobilny** (plan krótkoterminowy #1/#2/#7a).
 
-## Ukończone (Etap B)
+## Ukończone (Etap E′ — fundament mobilny)
 
-- `index.html`: `description`, Open Graph (`og:type/site_name/locale/title/description/url/image` + `image:width/height/alt`), Twitter Card (`summary_large_image`), `theme-color=#064BFF`. `og:url`/`og:image` absolutne (`https://baginson.github.io/EventTimes/…`) — scrapery OG wymagają pełnych URL-i.
-- `og:image` = `public/og-image.png` (skopiowany z gitignored `docs/design-references/OG-Image.png`, żeby GitHub Pages go serwował).
-- Usunięty nieużywany `public/favicon.svg` (`git rm`) i lokalne `vite-*.log`.
-- Poprawione nieaktualne dokumenty: `PROJECT_STATE.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `DECISIONS.md` (nowy wpis).
+- **Oficjalne breakpointy** 767/820/1100 zapisane w `docs/UI_RULES.md` §18 (usunięty „znany rozjazd"); wcześniejsza spec 767/768/1024 świadomie odrzucona.
+- Wspólna stała `src/constants/breakpoints.ts` (`MOBILE_PANEL_MEDIA_QUERY` + wartości progów); literał 820px usunięty z `App.tsx` i `usePanelMotion.ts` (koniec duplikacji).
+- `docs/PROJECT_STATE.md` — wzmianka o rozjeździe oznaczona jako rozwiązana.
 
-## Zmienione pliki
+## Zmienione pliki (Etap E′, niezacommitowane)
 
-- `index.html` (meta tagi)
-- `public/og-image.png` (nowy), `public/favicon.svg` (usunięty)
-- `docs/PROJECT_STATE.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/DECISIONS.md`
-- `tasks/NOW.md` (ten plik)
+- `src/constants/breakpoints.ts` (nowy)
+- `src/App.tsx` (import stałej zamiast lokalnego literału)
+- `src/hooks/usePanelMotion.ts` (import stałej)
+- `docs/UI_RULES.md` §18, `docs/PROJECT_STATE.md`, `tasks/NOW.md`
 
-## Testy / kontrola
+## Testy / kontrola (Etap E′)
 
-- `npm run test` — **85/85** ✅
-- `npm run lint` — czysto ✅
-- `npm run build` — OK ✅ (ostrzeżenie o rozmiarze bundla 1,15 MB — znane, P3)
-- `npx tsc --noEmit` — czysto ✅
-- **Do zrobienia ręcznie po deployu**: sprawdzić podgląd OG linku (np. przez debugger udostępniania / wklejenie linku na komunikator) — działa dopiero na żywym `https://baginson.github.io/EventTimes/`.
+- `npx tsc --noEmit` — czysto ✅ · `npm run test` — **85/85** ✅ · `npm run lint` — czysto ✅ · `npm run build` — OK ✅ (znane ostrzeżenie o bundlu 1,15 MB, P3)
 
 ## Niedokończona praca / następny krok
 
-**Następny krok: Etap E′ (fundament mobilny).** Zakres: w `docs/UI_RULES.md` §18 zapisać 820/1100 jako oficjalne breakpointy (usunąć „znany rozjazd"), zsynchronizować literały (dziś 820px zduplikowany w `App.tsx:56` i `usePanelMotion.ts:8` — rozważyć wspólną stałą). Potem etapy mobilne:
-- **H** — profil mobilny: skalowanie/animacja „Karnetu" (#1) + przebudowa układu profilu mobile (#2) + „Ostatnia aktywność" → 3 pozycje (`recentActivityLimit` w `AccountPanel.tsx:77`) + afordancja „pokaż więcej" (#7a).
-- **I** — swipe-w-dół zamyka bottom-sheet (#4) — dziś `usePanelMotion` nie ma żadnego gestu drag.
-- **J** — redesign wspomnień w EventPanel (#5) — najpierw projekt UX.
+**Następny: Etap H — profil mobilny** (plan krótkoterminowy):
+- **#1** skalowanie i animacja napisu „Karnetu" na mobile,
+- **#2** przebudowa układu profilu na mobile,
+- **#7a** „Ostatnia aktywność" → 3 pozycje (`recentActivityLimit` w `AccountPanel.tsx:77`, `.slice` ~l. 689) + afordancja „pokaż więcej".
 
-Osobne duże projekty (po decyzjach/projektach): dołączanie do eventu przez link (#6), pełny panel historii aktywności z filtrami (#7b), Etap C (usuwanie konta / eksport GDPR).
+Potem **I** (swipe-w-dół zamyka bottom-sheet, #4 — `usePanelMotion` nie ma dziś gestu drag), **J** (redesign wspomnień, #5 — najpierw projekt UX). Osobne duże projekty: dołączanie do eventu przez link (#6), pełny panel aktywności z filtrami (#7b), Etap C (usuwanie konta / eksport GDPR).
 
 ## Problemy / ryzyka
 
-- Etap E′ dotyka `docs/UI_RULES.md` — zmiana stałej zasady UI (dozwolona, bo to świadoma decyzja użytkownika z 2026-07-20).
 - Zadania mobilne H/I mają ryzyko regresji wizualnej (karta „Karnet" jest implementacją referencyjną palety) — weryfikować Playwrightem na 375px.
 - #6 (link do eventu) wymaga nowej struktury Firestore + reguł — nie zaczynać bez osobnego projektu.
+- Etap B: podgląd OG linku sprawdzalny dopiero na żywym `https://baginson.github.io/EventTimes/`.
 
 ## Prompt do następnej sesji
 
-> Kontynuuję Event Times po ukończeniu Etapu B (SEO/OG meta + porządki). Zacznij Etap E′ (fundament mobilny): w `docs/UI_RULES.md` §18 przyjmij 820/1100 jako oficjalne breakpointy i usuń zapis o „znanym rozjeździe", rozważ wspólną stałą dla literału 820px (`App.tsx:56`, `usePanelMotion.ts:8`). Przeczytaj najpierw `tasks/NOW.md`, `docs/PROJECT_STATE.md` i `docs/UI_RULES.md`. Nie ruszaj kodu aplikacji poza uzgodnieniem breakpointów. Po zmianach: `npm run test`/`lint`/`build` i aktualizacja `PROJECT_STATE.md`/`ROADMAP.md`.
+> Kontynuuję Event Times po Etapach B (SEO/OG meta) i E′ (oficjalne breakpointy 767/820/1100 + wspólna stała `src/constants/breakpoints.ts`). Zacznij **Etap H — profil mobilny**: #1 skalowanie/animacja „Karnetu" na mobile, #2 przebudowa układu profilu mobile, #7a „Ostatnia aktywność" → 3 pozycje + „pokaż więcej". Przeczytaj najpierw `tasks/NOW.md`, `docs/PROJECT_STATE.md`, `docs/UI_RULES.md`. Praca głównie w `src/components/AccountPanel.tsx` (1278 l.) + `App.css`. Weryfikuj Playwrightem na 375px (ryzyko regresji karty „Karnet"). Po zmianach: `npm run test`/`lint`/`build` + aktualizacja `PROJECT_STATE.md`/`ROADMAP.md`.

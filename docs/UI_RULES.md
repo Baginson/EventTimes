@@ -105,7 +105,12 @@ Nigdy nie pokazuj pustki bez wyjaśnienia: "Brak wydarzeń dla tego miejsca.", "
 
 ## 18. Responsywność
 
-Mobile nie jest mniejszym desktopem. Breakpointy według tej specyfikacji: mobile ≤767px, tablet 768–1023px, desktop 1024px+ — **uwaga**: obecna implementacja faktycznie używa 820px/1100px jako głównych breakpointów (zobacz `docs/PROJECT_STATE.md`), co jest znanym, śledzonym rozjazdem, jeszcze nieuzgodnionym z tą specyfikacją.
+Mobile nie jest mniejszym desktopem. **Oficjalne breakpointy (decyzja 2026-07-20):**
+- **≤767px** — panele w trybie full-screen;
+- **≤820px** — panele venue/event/admin renderują się jako bottom sheet (mobilny punkt przełączenia);
+- **821–1100px** — węższy panel desktopowy; **>1100px** — pełny desktop.
+
+Progi w JS pochodzą z `src/constants/breakpoints.ts` (`MOBILE_PANEL_MEDIA_QUERY` używane w `App.tsx` i `usePanelMotion.ts`); media queries w `src/App.css` są ich świadomym lustrem — trzymaj je zsynchronizowane. Wcześniejsza spec 767/768/1024 została odrzucona na rzecz realnych progów kodu (mniej churnu; „najpierw strona, docelowo apka na tym kodzie"). Prawdziwy layout tabletowy pozostaje odłożony (`docs/ROADMAP.md`).
 
 Mobile: bottom sheet, większe przyciski, większe odstępy dotykowe, mniej naraz, search jako główny punkt wejścia, admin mniej eksponowany. Desktop: pływający search, pływający prawy panel, mapa zawsze widoczna, admin/profil top-right.
 

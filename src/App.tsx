@@ -30,6 +30,7 @@ import {
   saveVenue,
   updateVenue as persistVenueUpdate,
 } from './services/venueService'
+import { MOBILE_PANEL_MEDIA_QUERY } from './constants/breakpoints'
 import { hasValidVenueCoordinates } from './utils/googleMaps'
 import './App.css'
 
@@ -51,9 +52,6 @@ type AppToast = {
   message: string
   tone: 'success' | 'error'
 }
-
-// Ten sam breakpoint co w usePanelMotion — poniżej panel jest dolnym arkuszem.
-const MOBILE_PANEL_MEDIA_QUERY = '(max-width: 820px)'
 
 function App() {
   const { isAdmin, isAuthModalOpen, openAuthModal, user } = useAuth()
