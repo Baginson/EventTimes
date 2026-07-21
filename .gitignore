@@ -23,7 +23,6 @@ event-times-local-backup*.json
 CODEX_INSTRUCTIONS.md
 EVENT_TIMES_SPEC.md
 EVENT_TIMES_UI_RULES.md
-docs/design-references/
 
 # Local Claude Code settings (machine-specific permissions)
 .claude/settings.local.json
@@ -41,9 +40,8 @@ graphify-out/
 # Playwright CLI session output (screenshots, traces from UI QA runs)
 .playwright-cli/
 
-# Obsidian vault artifacts inside docs/ (user-local editor state and plugins)
-docs/.obsidian/
-docs/.smart-env/
+# docs/ vault — local-only knowledge base (public repo; contains business/security-sensitive content), not versioned in git
+docs/
 
 # Local working briefs pasted from external tools (third-party prompts/code)
 tasks/references/
