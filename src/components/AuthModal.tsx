@@ -232,7 +232,7 @@ export function AuthModal() {
         <form className="auth-form" onSubmit={handleSubmit} aria-busy={submitting}>
           {mode === 'register' && (
             <label>
-              <span>Nazwa wyświetlana</span>
+              <span>Imię i nazwisko</span>
               <input
                 autoFocus
                 autoComplete="name"

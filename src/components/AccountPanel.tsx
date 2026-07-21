@@ -238,6 +238,7 @@ export function AccountPanel({
   const [passwordRepeat, setPasswordRepeat] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const [usernameValue, setUsernameValue] = useState(user?.displayName ?? '')
+  const [displayName, setDisplayName] = useState(user?.displayName ?? '')
   const [photoURL, setPhotoURL] = useState(user?.photoURL ?? '')
   const [isAvatarUploading, setIsAvatarUploading] = useState(false)
   const [avatarUploadError, setAvatarUploadError] = useState('')
@@ -359,6 +360,7 @@ export function AccountPanel({
 
   function startEditing() {
     setUsernameValue(profileSettings.username ?? '')
+    setDisplayName(currentUser.displayName ?? '')
     setPhotoURL(currentUser.photoURL ?? googlePhotoURL ?? '')
     setProfileDefaultCity(profileSettings.userPreferences.defaultCity)
     setSelectedEventTypes(profileSettings.userPreferences.eventTypes)
@@ -372,6 +374,7 @@ export function AccountPanel({
 
   function cancelEditing() {
     setUsernameValue(profileSettings.username ?? '')
+    setDisplayName(currentUser.displayName ?? '')
     setPhotoURL(currentUser.photoURL ?? googlePhotoURL ?? '')
     setProfileDefaultCity(profileSettings.userPreferences.defaultCity)
     setSelectedEventTypes(profileSettings.userPreferences.eventTypes)
@@ -498,6 +501,7 @@ export function AccountPanel({
   }
 
   async function saveProfile() {
+    const normalizedFullName = displayName.trim()
     const normalizedUsername = normalizeUsername(usernameValue)
     const normalizedPhotoURL = photoURL.trim()
 
@@ -523,7 +527,7 @@ export function AccountPanel({
 
       const [, savedSettings] = await Promise.all([
         updateProfile(
-          normalizedUsername,
+          normalizedFullName || normalizedUsername,
           normalizedPhotoURL || googlePhotoURL || null,
         ),
         saveUserProfileSettings(
@@ -1302,15 +1306,24 @@ export function AccountPanel({
               )}
             </div>
             <label className="account-edit-name-field">
-              <span>Nazwa użytkownika</span>
+              <span>Imię i nazwisko</span>
               <input
-                maxLength={20}
-                autoComplete="off"
-                value={usernameValue}
-                onChange={(event) => setUsernameValue(event.target.value)}
+                maxLength={64}
+                autoComplete="name"
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
               />
             </label>
           </div>
+          <label>
+            <span>Nazwa użytkownika</span>
+            <input
+              maxLength={20}
+              autoComplete="off"
+              value={usernameValue}
+              onChange={(event) => setUsernameValue(event.target.value)}
+            />
+          </label>
           <small>{USERNAME_RULES_MESSAGE}</small>
           <label>
             <span>Link do zdjęcia profilowego</span>
