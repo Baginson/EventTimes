@@ -92,6 +92,8 @@ const eventPreferenceOptions = EVENT_TYPES.filter((eventType) => eventType !== '
 const cityOptions = ['Leszno']
 const PASS_SWIPE_AXIS_LOCK_PX = 6
 const PASS_SWIPE_REVEAL_PX = 40
+const PAGER_CLOSE_OFFSET_PX = 120
+const PAGER_CLOSE_VELOCITY_PX_MS = 0.5
 
 const fallbackProfileSettings: UserProfileSettings = {
   profileSetupCompleted: false,
@@ -260,8 +262,10 @@ export function AccountPanel({
   const [activePagerPage, setActivePagerPage] = useState(0)
   const pagerRef = useRef<HTMLDivElement | null>(null)
   const cancelEditingRef = useRef<() => void>(() => {})
-  const passSwipeStartRef = useRef<{ x: number; y: number } | null>(null)
+  const passSwipeStartRef = useRef<{ x: number; y: number; time: number } | null>(null)
   const passSwipeAxisRef = useRef<'vertical' | 'horizontal' | null>(null)
+  const pagerSwipeScrollTopAtStartRef = useRef(0)
+  const passRevealedAtDragStartRef = useRef(false)
   const eventById = useMemo(
     () => new Map(events.map((event) => [event.id, event])),
     [events],
@@ -372,7 +376,22 @@ export function AccountPanel({
     setIsEditing(true)
   }
 
+  function isEditFormDirty() {
+    return (
+      displayName !== (currentUser.displayName ?? '') ||
+      usernameValue !== (profileSettings.username ?? '') ||
+      photoURL !== (currentUser.photoURL ?? googlePhotoURL ?? '') ||
+      profileDefaultCity !== profileSettings.userPreferences.defaultCity ||
+      JSON.stringify([...selectedEventTypes].sort()) !==
+        JSON.stringify([...profileSettings.userPreferences.eventTypes].sort())
+    )
+  }
+
   function cancelEditing() {
+    if (isEditFormDirty() && !window.confirm('Czy na pewno chcesz wyjść? Masz niezapisane zmiany.')) {
+      return
+    }
+
     setUsernameValue(profileSettings.username ?? '')
     setDisplayName(currentUser.displayName ?? '')
     setPhotoURL(currentUser.photoURL ?? googlePhotoURL ?? '')
@@ -638,15 +657,25 @@ export function AccountPanel({
     }
   }
 
-  function handlePassPointerDown(event: ReactPointerEvent<HTMLElement>) {
-    passSwipeStartRef.current = { x: event.clientX, y: event.clientY }
-    passSwipeAxisRef.current = null
+  function getAccountPageElement(target: EventTarget | null): HTMLElement | null {
+    return target instanceof HTMLElement ? target.closest('.account-page') : null
   }
 
-  function handlePassPointerMove(event: ReactPointerEvent<HTMLElement>) {
+  function handlePagerPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (isEditing || isSetupOpen) {
+      return
+    }
+
+    passSwipeStartRef.current = { x: event.clientX, y: event.clientY, time: Date.now() }
+    passSwipeAxisRef.current = null
+    pagerSwipeScrollTopAtStartRef.current = getAccountPageElement(event.target)?.scrollTop ?? 0
+    passRevealedAtDragStartRef.current = passRevealed
+  }
+
+  function handlePagerPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
     const start = passSwipeStartRef.current
 
-    if (!start || isEditing) {
+    if (!start || isEditing || isSetupOpen) {
       return
     }
 
@@ -670,14 +699,41 @@ export function AccountPanel({
       return
     }
 
-    if (deltaY < -PASS_SWIPE_REVEAL_PX) {
-      setPassRevealed(true)
-    } else if (deltaY > PASS_SWIPE_REVEAL_PX) {
-      setPassRevealed(false)
+    // Strona Karnetu ma własny gest: w górę odsłania przyciski, w dół chowa je z powrotem.
+    // Dalsze ciągnięcie w dół (poniżej) zamyka cały panel, tak jak na pozostałych stronach.
+    if (activePagerPage === 0) {
+      if (deltaY < -PASS_SWIPE_REVEAL_PX) {
+        setPassRevealed(true)
+      } else if (deltaY > PASS_SWIPE_REVEAL_PX) {
+        setPassRevealed(false)
+      }
     }
   }
 
-  function handlePassPointerEnd() {
+  function handlePagerPointerEnd(event: ReactPointerEvent<HTMLDivElement>) {
+    const start = passSwipeStartRef.current
+    const axis = passSwipeAxisRef.current
+
+    if (start && axis === 'vertical' && !isEditing && !isSetupOpen) {
+      const deltaY = event.clientY - start.y
+      const elapsedMs = Math.max(1, Date.now() - start.time)
+      const velocity = deltaY / elapsedMs
+
+      // Karta musi być już zwinięta OD POCZĄTKU tego gestu — inaczej pierwszy
+      // swipe w dół (który właśnie chował przyciski) zamykałby panel od razu.
+      const canCloseFromPassPage = activePagerPage === 0 && !passRevealedAtDragStartRef.current
+      const canCloseFromOtherPage =
+        activePagerPage !== 0 && pagerSwipeScrollTopAtStartRef.current <= 0
+
+      if (
+        (canCloseFromPassPage || canCloseFromOtherPage) &&
+        deltaY > 0 &&
+        (deltaY > PAGER_CLOSE_OFFSET_PX || velocity > PAGER_CLOSE_VELOCITY_PX_MS)
+      ) {
+        onClose()
+      }
+    }
+
     passSwipeStartRef.current = null
     passSwipeAxisRef.current = null
   }
@@ -1031,35 +1087,6 @@ export function AccountPanel({
         new Date(currentUser.metadata.creationTime),
       )
     : null
-  const setupPanelNode = isSetupOpen ? (
-    <section className="account-setup-panel" aria-labelledby="account-setup-title">
-      <div className="account-setup-copy">
-        <span>
-          <SlidersHorizontal className="ui-icon" aria-hidden="true" />
-          Pierwsza konfiguracja
-        </span>
-        <h2 id="account-setup-title">Dostosuj Event Times</h2>
-        <p>Ustaw domyślne miasto i typy wydarzeń, które chcesz szybciej odnajdywać.</p>
-      </div>
-
-      {renderPreferenceControls(
-        'setup',
-        setupEventTypes,
-        (eventType) => setSetupEventTypes((currentTypes) => toggleEventTypeSelection(currentTypes, eventType)),
-        setupDefaultCity,
-        setSetupDefaultCity,
-      )}
-
-      <div className="account-setup-actions">
-        <button className="button button-primary" type="button" disabled={savingSetup} onClick={() => void saveSetupPreferences()}>
-          {savingSetup ? 'Zapisywanie…' : 'Zapisz preferencje'}
-        </button>
-        <button className="button button-secondary" type="button" disabled={savingSetup} onClick={() => void skipSetup()}>
-          Pomiń na razie
-        </button>
-      </div>
-    </section>
-  ) : null
   const passCardNode = (
     <TiltCard>
       <div className="account-pass-card">
@@ -1325,19 +1352,6 @@ export function AccountPanel({
             />
           </label>
           <small>{USERNAME_RULES_MESSAGE}</small>
-          <label>
-            <span>Link do zdjęcia profilowego</span>
-            <input
-              type="url"
-              placeholder="https://"
-              value={photoURL}
-              onChange={(event) => {
-                setPhotoURL(event.target.value)
-                setAvatarUploadError('')
-              }}
-            />
-          </label>
-          <small>Wklej link do zdjęcia albo prześlij plik z dysku.</small>
           {CLOUDINARY_UPLOADS_ENABLED && (
             <div className="event-image-upload-section">
               <div className="event-image-upload-actions">
@@ -1464,9 +1478,48 @@ export function AccountPanel({
   const memoriesNode = renderMemoriesSection(sortedMemories)
   const activityNode = renderRecentActivity(recentActivityItems)
   const loadingNode = <p className="account-loading" role="status">Ładowanie aktywności…</p>
+  const setupViewNode = (
+    <div className="account-setup-view">
+      <header className="account-setup-view-header">
+        <span>
+          <SlidersHorizontal className="ui-icon" aria-hidden="true" />
+          Pierwsza konfiguracja
+        </span>
+        <h1 id="account-setup-title">Dostosuj Event Times</h1>
+        <p>Ustaw domyślne miasto i typy wydarzeń, które chcesz szybciej odnajdywać. Wrócisz do tego później w „Edytuj profil”.</p>
+      </header>
+
+      {renderPreferenceControls(
+        'setup',
+        setupEventTypes,
+        (eventType) => setSetupEventTypes((currentTypes) => toggleEventTypeSelection(currentTypes, eventType)),
+        setupDefaultCity,
+        setSetupDefaultCity,
+      )}
+
+      {feedbackNode}
+
+      <div className="account-setup-view-actions">
+        <button className="button button-primary" type="button" disabled={savingSetup} onClick={() => void saveSetupPreferences()}>
+          {savingSetup ? 'Zapisywanie…' : 'Zapisz preferencje'}
+        </button>
+        <button className="button button-secondary" type="button" disabled={savingSetup} onClick={() => void skipSetup()}>
+          Pomiń na razie
+        </button>
+      </div>
+    </div>
+  )
+
+  function handlePanelClose() {
+    if (isEditing && isEditFormDirty() && !window.confirm('Czy na pewno chcesz wyjść? Masz niezapisane zmiany.')) {
+      return
+    }
+
+    onClose()
+  }
 
   return (
-    <div className="account-modal-backdrop" role="presentation" onMouseDown={onClose}>
+    <div className="account-modal-backdrop" role="presentation" onMouseDown={handlePanelClose}>
       <aside
         className="account-panel"
         aria-labelledby="account-panel-title"
@@ -1477,7 +1530,7 @@ export function AccountPanel({
         <button
           className="account-panel-close"
           type="button"
-          onClick={onClose}
+          onClick={handlePanelClose}
           aria-label="Zamknij panel profilu"
         >
           <X className="ui-icon" aria-hidden="true" />
@@ -1485,9 +1538,10 @@ export function AccountPanel({
 
         {isEditing ? (
           editViewNode
+        ) : isSetupOpen ? (
+          setupViewNode
         ) : !isMobile ? (
           <div className="account-profile-layout">
-            {setupPanelNode}
             <section className="account-pass" aria-labelledby="account-panel-title">
               {passCardNode}
               {quickActionsNode}
@@ -1500,7 +1554,6 @@ export function AccountPanel({
           </div>
         ) : (
           <div className="account-profile-layout account-profile-layout--mobile">
-            {setupPanelNode}
             <div className="account-pager-dots" role="tablist" aria-label="Strony profilu">
               {accountPagerPages.map((pageLabel, index) => (
                 <button
@@ -1520,14 +1573,14 @@ export function AccountPanel({
               role="group"
               aria-label="Sekcje profilu"
               onScroll={handlePagerScroll}
+              onPointerDown={handlePagerPointerDown}
+              onPointerMove={handlePagerPointerMove}
+              onPointerUp={handlePagerPointerEnd}
+              onPointerCancel={handlePagerPointerEnd}
             >
               <section
                 className={`account-page account-page--pass${passRevealed ? ' is-revealed' : ''}`}
                 aria-labelledby="account-panel-title"
-                onPointerDown={handlePassPointerDown}
-                onPointerMove={handlePassPointerMove}
-                onPointerUp={handlePassPointerEnd}
-                onPointerCancel={handlePassPointerEnd}
               >
                 {passCardNode}
                 {quickActionsNode}

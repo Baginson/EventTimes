@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '../auth/authContext'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { EventTimesApiConfigError } from '../services/eventTimesApi'
 import { saveUsernameToProfile } from '../services/userProfileService'
 import {
@@ -15,6 +16,7 @@ import {
 
 export function UsernameGate() {
   const { user, markUsernameSet } = useAuth()
+  const isFinePointer = useMediaQuery('(pointer: fine)')
   const [value, setValue] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -76,7 +78,7 @@ export function UsernameGate() {
           <label>
             <span>Nazwa użytkownika</span>
             <input
-              autoFocus
+              autoFocus={isFinePointer}
               maxLength={20}
               autoComplete="off"
               value={value}

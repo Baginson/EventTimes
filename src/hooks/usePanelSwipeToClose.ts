@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import type { PanInfo } from 'framer-motion'
 
 const CLOSE_OFFSET_PX = 120
-const CLOSE_VELOCITY = 500
+const CLOSE_VELOCITY = 450
+const SNAP_BACK_TRANSITION = { type: 'spring', stiffness: 500, damping: 40, mass: 0.9 } as const
 
 type PanelDragEvent = MouseEvent | TouchEvent | PointerEvent
 
@@ -46,7 +47,8 @@ export function usePanelSwipeToClose({
     drag: (dragEnabled ? 'y' : false) as 'y' | false,
     dragConstraints: { top: 0, bottom: 0 },
     dragElastic: { top: 0, bottom: 1 },
-    dragMomentum: false,
+    dragMomentum: true,
+    dragTransition: SNAP_BACK_TRANSITION,
     onDragEnd: handleDragEnd,
   }
 }

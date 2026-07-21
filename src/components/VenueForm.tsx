@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { VENUE_TYPES } from '../data/searchFilters'
 import type { Venue } from '../data/mockVenues'
+import { useMediaQuery } from '../hooks/useMediaQuery'
+import {
+  CLOUDINARY_UPLOADS_ENABLED,
+  uploadImageToCloudinary,
+} from '../services/cloudinaryService'
 import {
   isShortGoogleMapsUrl,
   isValidGoogleMapsUrl,
@@ -90,12 +95,16 @@ export function VenueForm({
   onSave,
   onCancel,
 }: VenueFormProps) {
+  const isFinePointer = useMediaQuery('(pointer: fine)')
   const [form, setForm] = useState<VenueFormState>(() =>
     createFormState(initialVenue, initialCoordinates, initialDraft),
   )
+  const initialFormRef = useRef(form)
   const [formError, setFormError] = useState('')
   const [formNotice, setFormNotice] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [imageUploadError, setImageUploadError] = useState('')
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const previousInitialCoordinates = useRef(initialCoordinates)
 
   useEffect(() => {
@@ -125,6 +134,43 @@ export function VenueForm({
     setForm((current) => ({ ...current, [field]: value }))
     setFormError('')
     setFormNotice('')
+    if (field === 'imageUrl') {
+      setImageUploadError('')
+    }
+  }
+
+  function handleCancel() {
+    const isDirty = JSON.stringify(form) !== JSON.stringify(initialFormRef.current)
+
+    if (isDirty && !window.confirm('Czy na pewno chcesz wyjść? Masz niezapisane zmiany.')) {
+      return
+    }
+
+    onCancel?.()
+  }
+
+  async function handleImageUpload(fileInput: HTMLInputElement) {
+    const file = fileInput.files?.[0]
+
+    if (!file) {
+      return
+    }
+
+    try {
+      setIsUploadingImage(true)
+      setImageUploadError('')
+      const { url } = await uploadImageToCloudinary(file)
+      updateField('imageUrl', url)
+      fileInput.value = ''
+    } catch (error) {
+      setImageUploadError(
+        error instanceof Error
+          ? error.message
+          : 'Nie udało się przesłać zdjęcia. Spróbuj ponownie.',
+      )
+    } finally {
+      setIsUploadingImage(false)
+    }
   }
 
   function setCoordinatesFromGoogleMapsUrl() {
@@ -268,7 +314,7 @@ export function VenueForm({
       <label>
         <span>Nazwa miejsca</span>
         <input
-          autoFocus
+          autoFocus={isFinePointer}
           value={form.name}
           onChange={(event) => updateField('name', event.target.value)}
         />
@@ -349,6 +395,54 @@ export function VenueForm({
           Opcjonalny obraz miejsca. Obraz eventu z Ticketmaster nie jest tu wpisywany automatycznie.
         </small>
       </label>
+
+      {CLOUDINARY_UPLOADS_ENABLED && (
+        <div className="admin-form-wide event-image-upload-section">
+          <div className="event-image-upload-actions">
+            <label
+              className={`button button-secondary event-image-upload-button${
+                isUploadingImage ? ' is-disabled' : ''
+              }`}
+              aria-disabled={isUploadingImage}
+            >
+              <span>{isUploadingImage ? 'Przesyłanie...' : 'Prześlij zdjęcie'}</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="event-image-upload-input"
+                disabled={isUploadingImage}
+                onChange={(event) => handleImageUpload(event.currentTarget)}
+              />
+            </label>
+
+            {form.imageUrl && (
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={() => updateField('imageUrl', '')}
+                disabled={isUploadingImage}
+              >
+                Usuń zdjęcie
+              </button>
+            )}
+          </div>
+
+          {imageUploadError && (
+            <p className="admin-form-message admin-form-error" role="alert">
+              {imageUploadError}
+            </p>
+          )}
+
+          {form.imageUrl && (
+            <img
+              className="event-image-upload-preview"
+              src={form.imageUrl}
+              alt="Podgląd zdjęcia miejsca"
+            />
+          )}
+        </div>
+      )}
+
       <div className="admin-form-wide google-maps-coordinate-actions">
         <button
           className="button button-secondary"
@@ -426,7 +520,7 @@ export function VenueForm({
           <button
             className="button button-secondary"
             type="button"
-            onClick={onCancel}
+            onClick={handleCancel}
             disabled={isSubmitting}
           >
             Anuluj

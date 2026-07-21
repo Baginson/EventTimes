@@ -2657,28 +2657,25 @@
   padding: 20px;
 }
 
-.account-profile-layout:has(.account-setup-panel) {
-  grid-template-rows: auto minmax(0, 1fr);
+.account-setup-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  height: 100%;
+  min-height: 0;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--space-5);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
-.account-setup-panel {
+.account-setup-view-header {
   display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr) auto;
-  gap: 14px;
-  align-items: center;
-  padding: 15px 58px 15px 15px;
-  background: var(--color-white);
-  border: 1px dashed rgba(6, 75, 255, 0.45);
-  border-radius: var(--radius-lg);
+  gap: 6px;
 }
 
-.account-setup-copy {
-  display: grid;
-  gap: 4px;
-}
-
-.account-setup-copy > span {
+.account-setup-view-header > span {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2691,27 +2688,30 @@
   text-transform: uppercase;
 }
 
-.account-setup-copy h2 {
+.account-setup-view-header h1 {
   margin: 0;
-  color: var(--color-navy);
-  font-family: var(--font-control);
-  font-size: 19px;
-  font-weight: 850;
-  line-height: 1.1;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 400;
 }
 
-.account-setup-copy p {
+.account-setup-view-header p {
   margin: 0;
   color: var(--color-muted);
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.account-setup-actions {
+.account-setup-view-actions {
   display: grid;
   gap: 8px;
-  align-self: stretch;
-  min-width: 158px;
+  margin-top: auto;
+  padding-top: var(--space-4);
+}
+
+.account-setup-view-actions button {
+  min-height: 48px;
 }
 
 .account-profile > span,
@@ -3649,18 +3649,9 @@
     padding: calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 18px);
   }
 
-  .account-profile-layout:has(.account-setup-panel) {
-    grid-template-rows: none;
-  }
-
-  .account-setup-panel {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-    padding: 16px 58px 16px 16px;
-  }
-
-  .account-setup-actions {
-    min-width: 0;
+  .account-setup-view {
+    max-width: none;
+    padding: calc(env(safe-area-inset-top) + 24px) 18px calc(env(safe-area-inset-bottom) + 18px);
   }
 
   .account-city-field select {
@@ -4054,6 +4045,8 @@
 
 .event-memory {
   display: grid;
+  min-width: 0;
+  max-width: 100%;
   gap: var(--space-4);
   margin-top: var(--space-5);
   padding: var(--space-4);
@@ -4066,9 +4059,15 @@
 .event-memory-header {
   display: flex;
   flex-wrap: wrap;
+  min-width: 0;
   gap: var(--space-2);
   align-items: baseline;
   justify-content: space-between;
+}
+
+.event-memory-header h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .event-memory-header h2 {
@@ -4089,6 +4088,8 @@
 
 .event-memory-field {
   display: grid;
+  min-width: 0;
+  max-width: 100%;
   gap: var(--space-2);
   color: var(--color-ink-soft);
   font-family: var(--font-control);
@@ -4118,6 +4119,9 @@
 
 .event-memory-photo-grid {
   display: grid;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   grid-template-columns: repeat(auto-fill, minmax(72px, 72px));
   gap: var(--space-2);
 }
@@ -4158,12 +4162,15 @@
 .event-memory-actions {
   display: flex;
   flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
   gap: var(--space-2);
   align-items: center;
 }
 
 .event-memory-actions button {
   min-height: 40px;
+  max-width: 100%;
   padding: 0 var(--space-4);
   font-family: var(--font-control);
   font-weight: 800;
@@ -4341,7 +4348,13 @@
   }
 
   /* Strona 1 — Karnet startuje na pełny ekran; swipe w górę skraca kartę
-     i wysuwa z dołu przyciski Edytuj/Wyloguj. */
+     i wysuwa z dołu przyciski Edytuj/Wyloguj. touch-action: pan-x oddaje
+     oś pionową w całości naszemu gestowi (bez fightu z natywnym scrollem
+     strony), zostawiając poziomy swipe pagera nietkniętym. */
+  .account-profile-layout--mobile .account-page--pass {
+    touch-action: pan-x;
+  }
+
   .account-profile-layout--mobile .account-page--pass .account-pass-card {
     min-height: min(84dvh, 680px);
     justify-content: space-between;
@@ -5456,15 +5469,19 @@
 
 .event-memory-view {
   display: grid;
+  min-width: 0;
+  max-width: 100%;
   gap: 10px;
 }
 
 .event-memory-note {
   margin: 0;
+  min-width: 0;
   color: var(--color-ink);
   font-size: 14px;
   line-height: 1.6;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .event-memory-note-empty {

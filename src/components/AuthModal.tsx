@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { X } from 'lucide-react'
 import { getAuthErrorMessage } from '../auth/authErrors'
 import { useAuth } from '../auth/authContext'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { EventTimesApiConfigError } from '../services/eventTimesApi'
 import { resolveEmailForUsernameLogin, UsernameLoginError } from '../services/usernameService'
 import { classifyLoginIdentifier } from '../utils/username'
@@ -23,6 +24,7 @@ export function AuthModal() {
     clearAuthNotice,
     pendingLinkInfo,
   } = useAuth()
+  const isFinePointer = useMediaQuery('(pointer: fine)')
   const [mode, setMode] = useState<AuthMode>('login')
   const [identifier, setIdentifier] = useState('')
   const [displayName, setDisplayName] = useState('')
@@ -234,7 +236,7 @@ export function AuthModal() {
             <label>
               <span>Imię i nazwisko</span>
               <input
-                autoFocus
+                autoFocus={isFinePointer}
                 autoComplete="name"
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
@@ -246,7 +248,7 @@ export function AuthModal() {
             <label>
               <span>E-mail lub nazwa użytkownika</span>
               <input
-                autoFocus
+                autoFocus={isFinePointer}
                 required
                 type="text"
                 autoComplete="username"
@@ -258,7 +260,7 @@ export function AuthModal() {
             <label>
               <span>E-mail</span>
               <input
-                autoFocus={mode === 'reset'}
+                autoFocus={mode === 'reset' && isFinePointer}
                 required
                 type="email"
                 autoComplete="email"

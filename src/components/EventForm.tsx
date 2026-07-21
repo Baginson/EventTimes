@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { EVENT_TYPES } from '../data/searchFilters'
 import type { EventTimesEvent } from '../data/mockEvents'
 import type { Venue } from '../data/mockVenues'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import {
   CLOUDINARY_UPLOADS_ENABLED,
   uploadImageToCloudinary,
@@ -135,9 +136,11 @@ export function EventForm({
   onSave,
   onCancel,
 }: EventFormProps) {
+  const isFinePointer = useMediaQuery('(pointer: fine)')
   const [form, setForm] = useState<EventFormState>(() =>
     createFormState(venues, initialEvent, lockedVenueId),
   )
+  const initialFormRef = useRef(form)
   const [formError, setFormError] = useState('')
   const [imageUploadError, setImageUploadError] = useState('')
   const [isUploadingImage, setIsUploadingImage] = useState(false)
@@ -156,6 +159,16 @@ export function EventForm({
 
   function clearTimeField(field: 'startTime' | 'endTime') {
     updateField(field, '')
+  }
+
+  function handleCancel() {
+    const isDirty = JSON.stringify(form) !== JSON.stringify(initialFormRef.current)
+
+    if (isDirty && !window.confirm('Czy na pewno chcesz wyjść? Masz niezapisane zmiany.')) {
+      return
+    }
+
+    onCancel?.()
   }
 
   async function handleImageUpload(fileInput: HTMLInputElement) {
@@ -258,7 +271,7 @@ export function EventForm({
         <span>Nazwa wydarzenia</span>
         <input
           required
-          autoFocus
+          autoFocus={isFinePointer}
           value={form.name}
           onChange={(event) => updateField('name', event.target.value)}
         />
@@ -467,7 +480,7 @@ export function EventForm({
           <button
             className="button button-secondary"
             type="button"
-            onClick={onCancel}
+            onClick={handleCancel}
             disabled={isSubmitting}
           >
             Anuluj
