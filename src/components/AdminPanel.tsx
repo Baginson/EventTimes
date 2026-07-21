@@ -85,7 +85,7 @@ export function AdminPanel({
   const [prefilledVenueDraftKey, setPrefilledVenueDraftKey] = useState(0)
   const shouldReduceMotion = useReducedMotion()
   const isMobilePanel = useMediaQuery(MOBILE_PANEL_MEDIA_QUERY)
-  const { contentRef, drag, dragConstraints, dragElastic, dragMomentum, onDragEnd } =
+  const { contentRef, dragControls, handleProps, drag, dragListener, dragConstraints, dragElastic, dragMomentum, dragTransition, onDragEnd } =
     usePanelSwipeToClose({
       onClose,
       enabled: isMobilePanel && !shouldReduceMotion,
@@ -215,12 +215,15 @@ export function AdminPanel({
       className="admin-panel"
       aria-label="Developerski panel admina"
       drag={drag}
+      dragListener={dragListener}
+      dragControls={dragControls}
       dragConstraints={dragConstraints}
       dragElastic={dragElastic}
       dragMomentum={dragMomentum}
+      dragTransition={dragTransition}
       onDragEnd={onDragEnd}
     >
-      <div className="venue-panel-handle" aria-hidden="true" />
+      <div className="venue-panel-handle" aria-hidden="true" {...handleProps} />
       <div className="admin-panel-header">
         <div>
           <span>Tryb developerski</span>

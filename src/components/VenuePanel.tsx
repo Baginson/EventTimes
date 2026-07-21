@@ -112,7 +112,7 @@ export function VenuePanel({
   const panelMotion = usePanelMotion()
   const shouldReduceMotion = useReducedMotion()
   const isMobilePanel = useMediaQuery(MOBILE_PANEL_MEDIA_QUERY)
-  const { contentRef, drag, dragConstraints, dragElastic, dragMomentum, onDragEnd } =
+  const { contentRef, dragControls, handleProps, drag, dragListener, dragConstraints, dragElastic, dragMomentum, dragTransition, onDragEnd } =
     usePanelSwipeToClose({
       onClose,
       enabled: isMobilePanel && !shouldReduceMotion,
@@ -415,13 +415,16 @@ export function VenuePanel({
       tabIndex={-1}
       {...panelMotion}
       drag={drag}
+      dragListener={dragListener}
+      dragControls={dragControls}
       dragConstraints={dragConstraints}
       dragElastic={dragElastic}
       dragMomentum={dragMomentum}
+      dragTransition={dragTransition}
       onDragEnd={onDragEnd}
       onPointerDown={(event) => event.stopPropagation()}
     >
-      <div className="venue-panel-handle" aria-hidden="true" />
+      <div className="venue-panel-handle" aria-hidden="true" {...handleProps} />
       <div className="venue-panel-controls" aria-label="Akcje panelu miejsca">
         {user && !isEditingVenue && (
           <button
