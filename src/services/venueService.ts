@@ -12,6 +12,7 @@ import { mockVenues } from '../data/mockVenues'
 import type { Venue } from '../data/mockVenues'
 import { isMediaImage } from '../features/media/mediaModel'
 import { db } from '../lib/firebase'
+import { isValidCoordinates } from '../utils/geo'
 import { isValidGoogleMapsUrl } from '../utils/googleMaps'
 
 const VENUES_STORAGE_KEY = 'event-times.venues.v1'
@@ -52,15 +53,10 @@ function isVenue(value: unknown): value is Venue {
     (venue.capacity === undefined || typeof venue.capacity === 'number') &&
     (venue.imageUrl === undefined || typeof venue.imageUrl === 'string') &&
     (venue.websiteUrl === undefined || typeof venue.websiteUrl === 'string') &&
-    (venue.status === undefined ||
-      venue.status === 'active' ||
-      venue.status === 'draft' ||
-      venue.status === 'archived') &&
     (images === undefined || (Array.isArray(images) && images.every(isMediaImage))) &&
     typeof coordinates?.lat === 'number' &&
-    Number.isFinite(coordinates.lat) &&
     typeof coordinates.lng === 'number' &&
-    Number.isFinite(coordinates.lng)
+    isValidCoordinates(coordinates.lat, coordinates.lng)
   )
 }
 
@@ -98,10 +94,6 @@ function normalizeVenue(value: unknown, fallbackId: string): Venue {
     images:
       Array.isArray(venue.images) && venue.images.every(isMediaImage)
         ? venue.images
-        : undefined,
-    status:
-      venue.status === 'active' || venue.status === 'draft' || venue.status === 'archived'
-        ? venue.status
         : undefined,
     createdAt: typeof venue.createdAt === 'string' ? venue.createdAt : undefined,
     updatedAt: typeof venue.updatedAt === 'string' ? venue.updatedAt : undefined,

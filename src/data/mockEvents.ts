@@ -19,7 +19,6 @@ export type EventTimesEvent = {
   images?: MediaImage[]
   organizer?: string
   isPromoted?: boolean
-  status?: 'published' | 'draft' | 'cancelled'
   externalIds?: {
     ticketmaster?: string
   }

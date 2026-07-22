@@ -1,7 +1,7 @@
 import { updateProfile } from 'firebase/auth'
 import type { User } from 'firebase/auth'
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
-import { db } from '../lib/firebase'
+import { db, requireDb } from '../lib/firebase'
 
 export type UserProvider = 'google' | 'github' | 'password'
 
@@ -19,14 +19,6 @@ export type UserProfileSettings = {
 export const defaultUserPreferences: UserPreferences = {
   defaultCity: 'Leszno',
   eventTypes: [],
-}
-
-function requireDb() {
-  if (!db) {
-    throw new Error('Firebase nie jest skonfigurowany.')
-  }
-
-  return db
 }
 
 function normalizeStringArray(value: unknown) {

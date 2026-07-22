@@ -83,10 +83,6 @@ function parseVenue(value: unknown, index: number): Venue {
     imageUrl: optionalString(value.imageUrl),
     images: optionalImages(value.images),
     capacity: typeof value.capacity === 'number' ? value.capacity : undefined,
-    status:
-      value.status === 'active' || value.status === 'draft' || value.status === 'archived'
-        ? value.status
-        : undefined,
     coordinates: {
       lat: coordinates.lat,
       lng: coordinates.lng,
@@ -142,10 +138,6 @@ function parseEvent(value: unknown, index: number): EventTimesEvent {
     images: optionalImages(value.images),
     organizer: optionalString(value.organizer),
     isPromoted: typeof value.isPromoted === 'boolean' ? value.isPromoted : undefined,
-    status:
-      value.status === 'published' || value.status === 'draft' || value.status === 'cancelled'
-        ? value.status
-        : undefined,
     externalIds:
       isRecord(value.externalIds) && typeof value.externalIds.ticketmaster === 'string'
         ? { ticketmaster: value.externalIds.ticketmaster }

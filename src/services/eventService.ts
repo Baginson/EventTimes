@@ -66,7 +66,6 @@ function isEvent(value: unknown): value is EventTimesEvent {
     isOptionalString(event.title) &&
     isOptionalString(event.slug) &&
     isOptionalString(event.category) &&
-    isOptionalString(event.status) &&
     isMediaImages(event.images) &&
     isExternalIds(event.externalIds)
   )
@@ -104,10 +103,6 @@ function normalizeEvent(value: unknown, fallbackId: string): EventTimesEvent {
     images: isMediaImages(event.images) ? event.images : undefined,
     organizer: typeof event.organizer === 'string' ? event.organizer : undefined,
     isPromoted: typeof event.isPromoted === 'boolean' ? event.isPromoted : undefined,
-    status:
-      event.status === 'published' || event.status === 'draft' || event.status === 'cancelled'
-        ? event.status
-        : undefined,
     externalIds: isExternalIds(event.externalIds) ? event.externalIds : undefined,
     createdAt: typeof event.createdAt === 'string' ? event.createdAt : undefined,
     updatedAt: typeof event.updatedAt === 'string' ? event.updatedAt : undefined,

@@ -20,7 +20,6 @@ export type Venue = {
   websiteUrl?: string
   imageUrl?: string
   images?: MediaImage[]
-  status?: 'active' | 'draft' | 'archived'
   createdAt?: string
   updatedAt?: string
 }

@@ -7,7 +7,7 @@ import {
   serverTimestamp,
   setDoc,
 } from 'firebase/firestore'
-import { db } from '../lib/firebase'
+import { requireDb } from '../lib/firebase'
 
 export const MAX_MEMORY_PHOTOS = 6
 
@@ -27,13 +27,6 @@ export type EventMemory = {
   updatedAt?: unknown
 }
 
-function requireDb() {
-  if (!db) {
-    throw new Error('Firebase nie jest skonfigurowany.')
-  }
-
-  return db
-}
 
 function validateEventMemory(memory: Omit<EventMemory, 'createdAt' | 'updatedAt'>) {
   if (memory.photos.length > MAX_MEMORY_PHOTOS) {

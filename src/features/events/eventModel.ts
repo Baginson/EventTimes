@@ -9,7 +9,6 @@ export type CompatibleEvent = EventTimesEvent & {
   startTime?: string
   endTime?: string
   images?: MediaImage[]
-  status?: 'published' | 'draft' | 'cancelled'
 }
 
 export function getEventTitle(event: CompatibleEvent) {

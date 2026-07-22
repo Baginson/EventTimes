@@ -22,3 +22,14 @@ export const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null
 
 export const auth = app ? getAuth(app) : null
 export const db = app ? getFirestore(app) : null
+
+// Serwisy per-użytkownik/admina wymagają Firebase (bez fallbacku localStorage —
+// patrz docs/ARCHITECTURE.md §Service layer). Rzuca czytelny błąd zamiast
+// pozwalać na null-referencję głębiej w kodzie.
+export function requireDb() {
+  if (!db) {
+    throw new Error('Firebase nie jest skonfigurowany.')
+  }
+
+  return db
+}

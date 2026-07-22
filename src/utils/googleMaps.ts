@@ -1,4 +1,5 @@
 import type { Venue } from '../data/mockVenues'
+import { isValidCoordinates } from './geo'
 
 type Coordinates = Venue['coordinates']
 
@@ -16,17 +17,6 @@ export function isValidGoogleMapsUrl(value: string) {
   } catch {
     return false
   }
-}
-
-function isValidCoordinates(lat: number, lng: number) {
-  return (
-    Number.isFinite(lat) &&
-    Number.isFinite(lng) &&
-    lat >= -90 &&
-    lat <= 90 &&
-    lng >= -180 &&
-    lng <= 180
-  )
 }
 
 function createCoordinates(latValue: string, lngValue: string): Coordinates | null {

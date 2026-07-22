@@ -8,7 +8,7 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 import type { EventTimesEvent } from '../data/mockEvents'
-import { db } from '../lib/firebase'
+import { requireDb } from '../lib/firebase'
 
 export type EventActionKey = 'going' | 'visited' | 'saved'
 
@@ -34,14 +34,6 @@ const emptyEventAction = (event: EventTimesEvent): EventAction => ({
   visited: false,
   saved: false,
 })
-
-function requireDb() {
-  if (!db) {
-    throw new Error('Firebase nie jest skonfigurowany.')
-  }
-
-  return db
-}
 
 export async function getEventAction(uid: string, event: EventTimesEvent) {
   const actionSnapshot = await getDoc(
